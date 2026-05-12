@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { CartDrawer } from "@/components/CartDrawer";
 
 export function SiteHeader() {
   return (
@@ -10,21 +11,31 @@ export function SiteHeader() {
           </span>
         </Link>
         <nav className="hidden items-center gap-8 text-sm md:flex">
-          <Link to="/" activeOptions={{ exact: true }} className="text-muted-foreground transition-colors hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+          <Link
+            to="/"
+            activeOptions={{ exact: true }}
+            className="text-muted-foreground transition-colors hover:text-foreground"
+            activeProps={{ className: "text-foreground" }}
+          >
             Home
           </Link>
-          <Link to="/shop" className="text-muted-foreground transition-colors hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+          <Link
+            to="/shop"
+            className="text-muted-foreground transition-colors hover:text-foreground"
+            activeProps={{ className: "text-foreground" }}
+          >
             Shop
           </Link>
-          <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">Journal</a>
-          <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">Contact</a>
+          <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
+            Journal
+          </a>
+          <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
+            Contact
+          </a>
         </nav>
-        <Link
-          to="/shop"
-          className="inline-flex h-10 items-center justify-center rounded-sm bg-gold px-5 text-xs font-semibold uppercase tracking-widest text-gold-foreground transition-transform hover:-translate-y-0.5 shadow-gold"
-        >
-          Shop
-        </Link>
+        <div className="flex items-center gap-3">
+          <CartDrawer />
+        </div>
       </div>
     </header>
   );
