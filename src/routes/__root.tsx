@@ -82,6 +82,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "ResoFit — Premium Fitness Hardware" },
+      { name: "twitter:description", content: "Engineered barbells, plates, and racks for athletes who train with intent." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/bdcgAbwS2IeBihMh9SoqBMc7zVy1/social-images/social-1778548309673-resofit-hero-banner-neural-architekt.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/bdcgAbwS2IeBihMh9SoqBMc7zVy1/social-images/social-1778548309673-resofit-hero-banner-neural-architekt.webp" },
     ],
     links: [
       {
