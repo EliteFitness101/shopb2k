@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { useCartSync } from "@/hooks/useCartSync";
+import { WhatsAppFloat } from "@/components/WhatsAppFloat";
 
 import appCss from "../styles.css?url";
 
@@ -129,6 +130,7 @@ function AppInner() {
   return (
     <>
       <Outlet />
+      <WhatsAppFloat />
       <Toaster position="top-center" />
     </>
   );
