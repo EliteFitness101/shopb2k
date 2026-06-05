@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Loader2, Truck, ShieldCheck, Package } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { ProductImage } from "@/components/ProductImage";
 import {
   PRODUCT_BY_HANDLE_QUERY,
   approxUSD,
@@ -141,19 +142,13 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
       <div className="grid gap-12 lg:grid-cols-2">
         {/* Gallery */}
         <div className="space-y-4">
-          <div className="aspect-square overflow-hidden bg-card">
-            {images[activeImg] ? (
-              <img
-                src={images[activeImg].url}
-                alt={images[activeImg].altText ?? product.title}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center text-muted-foreground">
-                No image
-              </div>
-            )}
-          </div>
+          <ProductImage
+            src={images[activeImg]?.url}
+            alt={images[activeImg]?.altText}
+            title={product.title}
+            category={product.productType}
+            priority
+          />
           {images.length > 1 && (
             <div className="grid grid-cols-5 gap-2">
               {images.map((img, i) => (
@@ -161,12 +156,14 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
                   key={img.url}
                   type="button"
                   onClick={() => setActiveImg(i)}
-                  className={`aspect-square overflow-hidden border ${i === activeImg ? "border-gold" : "border-border/60"}`}
+                  aria-label={`View image ${i + 1}`}
+                  className={`overflow-hidden border ${i === activeImg ? "border-gold" : "border-border/60"}`}
                 >
-                  <img
+                  <ProductImage
                     src={img.url}
-                    alt={img.altText ?? `${product.title} ${i + 1}`}
-                    className="h-full w-full object-cover"
+                    alt={img.altText}
+                    title={`${product.title} view ${i + 1}`}
+                    category={product.productType}
                   />
                 </button>
               ))}

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { ProductImage } from "@/components/ProductImage";
 import {
   PRODUCTS_QUERY,
   approxUSD,
@@ -155,22 +156,17 @@ function ProductCard({ product }: { product: ShopifyProduct }) {
       <Link
         to="/product/$handle"
         params={{ handle: node.handle }}
-        className="relative block aspect-square overflow-hidden"
+        className="relative block"
       >
-        {image ? (
-          <img
-            src={image.url}
-            alt={image.altText ?? node.title}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-            No image
-          </div>
-        )}
+        <ProductImage
+          src={image?.url}
+          alt={image?.altText}
+          title={node.title}
+          category={node.productType}
+          className="group-hover:[&>img]:scale-105"
+        />
         {node.productType && (
-          <span className="absolute left-4 top-4 rounded-sm bg-background/80 px-3 py-1 text-[10px] uppercase tracking-widest text-gold backdrop-blur">
+          <span className="absolute left-4 top-4 z-10 rounded-sm bg-background/80 px-3 py-1 text-[10px] uppercase tracking-widest text-gold backdrop-blur">
             {node.productType}
           </span>
         )}
