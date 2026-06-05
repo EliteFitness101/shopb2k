@@ -5,6 +5,7 @@ import heroImg from "@/assets/hero-barbell.jpg";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TrustBar } from "@/components/TrustBar";
+import { ProductImage } from "@/components/ProductImage";
 import {
   PRODUCTS_QUERY,
   approxUSD,
@@ -183,7 +184,7 @@ function Index() {
 
           {featured && featured.length > 0 ? (
             <div className="grid gap-px bg-border/60 md:grid-cols-2 lg:grid-cols-4">
-              {featured.map((p) => {
+              {featured.map((p, i) => {
                 const img = p.node.images.edges[0]?.node;
                 const price = p.node.priceRange.minVariantPrice;
                 return (
@@ -193,26 +194,14 @@ function Index() {
                     params={{ handle: p.node.handle }}
                     className="group flex flex-col bg-background p-6 transition-colors hover:bg-card"
                   >
-                    <div className="relative aspect-square overflow-hidden bg-card">
-                      {img ? (
-                        <img
-                          src={img.url}
-                          alt={img.altText ?? p.node.title}
-                          loading="lazy"
-                          decoding="async"
-                          width={600}
-                          height={600}
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).style.opacity = "0";
-                          }}
-                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                          No image
-                        </div>
-                      )}
-                    </div>
+                    <ProductImage
+                      src={img?.url}
+                      alt={img?.altText}
+                      title={p.node.title}
+                      category={p.node.productType}
+                      priority={i < 2}
+                      className="group-hover:[&>img]:scale-105"
+                    />
                     <div className="mt-5 flex items-start justify-between gap-4">
                       <div className="min-w-0">
                         {p.node.productType && (
