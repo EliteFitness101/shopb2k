@@ -113,6 +113,12 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
   const addItem = useCartStore((s) => s.addItem);
   const isLoading = useCartStore((s) => s.isLoading);
 
+  // Engagement signals: record PDP view depth + idle-preload other gallery images.
+  useEffect(() => {
+    recordEngagement(product.id, "pdp_depth");
+    preloadOnIdle(images.slice(1, 4).map((i) => i.url));
+  }, [product.id, images]);
+
   const handleAdd = async () => {
     if (!selectedVariant) return;
     await addItem({
@@ -128,6 +134,7 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
       quantity: qty,
       selectedOptions: selectedVariant.selectedOptions,
     });
+    recordEngagement(product.id, "add_to_cart");
     toast.success(`Added ${qty}× ${product.title} to cart`, { position: "top-center" });
   };
 
@@ -148,6 +155,7 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
             alt={images[activeImg]?.altText}
             title={product.title}
             category={product.productType}
+            productId={product.id}
             priority
           />
           {images.length > 1 && (
@@ -165,6 +173,7 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
                     alt={img.altText}
                     title={`${product.title} view ${i + 1}`}
                     category={product.productType}
+                    tier={i === 0 ? "medium" : "low"}
                   />
                 </button>
               ))}
