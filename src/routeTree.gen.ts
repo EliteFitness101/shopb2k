@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ShopRouteImport } from './routes/shop'
+import { Route as PersonalizeRouteImport } from './routes/personalize'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductHandleRouteImport } from './routes/product.$handle'
 
 const ShopRoute = ShopRouteImport.update({
   id: '/shop',
   path: '/shop',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PersonalizeRoute = PersonalizeRouteImport.update({
+  id: '/personalize',
+  path: '/personalize',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -31,30 +37,34 @@ const ProductHandleRoute = ProductHandleRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/personalize': typeof PersonalizeRoute
   '/shop': typeof ShopRoute
   '/product/$handle': typeof ProductHandleRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/personalize': typeof PersonalizeRoute
   '/shop': typeof ShopRoute
   '/product/$handle': typeof ProductHandleRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/personalize': typeof PersonalizeRoute
   '/shop': typeof ShopRoute
   '/product/$handle': typeof ProductHandleRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/shop' | '/product/$handle'
+  fullPaths: '/' | '/personalize' | '/shop' | '/product/$handle'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/shop' | '/product/$handle'
-  id: '__root__' | '/' | '/shop' | '/product/$handle'
+  to: '/' | '/personalize' | '/shop' | '/product/$handle'
+  id: '__root__' | '/' | '/personalize' | '/shop' | '/product/$handle'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PersonalizeRoute: typeof PersonalizeRoute
   ShopRoute: typeof ShopRoute
   ProductHandleRoute: typeof ProductHandleRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/shop'
       fullPath: '/shop'
       preLoaderRoute: typeof ShopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/personalize': {
+      id: '/personalize'
+      path: '/personalize'
+      fullPath: '/personalize'
+      preLoaderRoute: typeof PersonalizeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PersonalizeRoute: PersonalizeRoute,
   ShopRoute: ShopRoute,
   ProductHandleRoute: ProductHandleRoute,
 }
