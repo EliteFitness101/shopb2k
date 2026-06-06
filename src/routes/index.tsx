@@ -19,6 +19,7 @@ import {
   trackEvent,
   type CtaVariant,
 } from "@/lib/revenueOS";
+import { preloadOnIdle } from "@/lib/imagePriority";
 
 const RESET_URL = "https://joy-funnel-ai.lovable.app";
 const ASSESSMENT_URL = "https://reso-fit.lovable.app";
@@ -76,6 +77,13 @@ function Index() {
     setVariant(getActiveVariant());
     trackEvent("landing_view");
   }, []);
+
+  // Idle-preload medium-tier images (3rd–6th featured) once data lands.
+  useEffect(() => {
+    if (!featured || featured.length === 0) return;
+    const urls = featured.slice(2, 6).map((p) => p.node.images.edges[0]?.node.url);
+    preloadOnIdle(urls);
+  }, [featured]);
 
   const handlePrimaryCta = () => {
     trackEvent("cta_click");
@@ -199,6 +207,8 @@ function Index() {
                       alt={img?.altText}
                       title={p.node.title}
                       category={p.node.productType}
+                      productId={p.node.id}
+                      placement={i}
                       priority={i < 2}
                       className="group-hover:[&>img]:scale-105"
                     />
