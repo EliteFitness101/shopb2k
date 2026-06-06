@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ProductImage } from "@/components/ProductImage";
+import { recordEngagement } from "@/lib/imagePriority";
 import {
   PRODUCTS_QUERY,
   approxUSD,
@@ -103,8 +104,8 @@ function ShopGrid() {
 
         {data && data.length > 0 && (
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {data.map((p) => (
-              <ProductCard key={p.node.id} product={p} />
+            {data.map((p, i) => (
+              <ProductCard key={p.node.id} product={p} placement={i} />
             ))}
           </div>
         )}
@@ -117,7 +118,7 @@ function ShopGrid() {
   );
 }
 
-function ProductCard({ product }: { product: ShopifyProduct }) {
+function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; placement?: number }) {
   const node = product.node;
   const variants = node.variants.edges.map((e) => e.node);
   const firstAvail = variants.find((v) => v.availableForSale) ?? variants[0];
@@ -145,6 +146,7 @@ function ProductCard({ product }: { product: ShopifyProduct }) {
         quantity: 1,
         selectedOptions: firstAvail.selectedOptions,
       });
+      recordEngagement(node.id, "add_to_cart");
       toast.success(`Added ${node.title} to cart`, { position: "top-center" });
     } finally {
       setBusy(false);
@@ -163,6 +165,8 @@ function ProductCard({ product }: { product: ShopifyProduct }) {
           alt={image?.altText}
           title={node.title}
           category={node.productType}
+          productId={node.id}
+          placement={placement}
           className="group-hover:[&>img]:scale-105"
         />
         {node.productType && (
