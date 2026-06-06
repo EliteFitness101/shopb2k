@@ -5,8 +5,9 @@
 // - Aspect-ratio container prevents layout shift
 // - SEO alt: "{Title} – premium {category} for home gym strength training"
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { recordEngagement, resolveTier, type PriorityTier } from "@/lib/imagePriority";
 
 const FALLBACK_SVG =
   "data:image/svg+xml;utf8," +
@@ -34,13 +35,20 @@ export interface ProductImageProps {
   alt?: string | null;
   title: string;
   category?: string | null;
-  priority?: boolean; // true = preload hero-adjacent
+  /** Force HIGH tier (hero / above-the-fold safety layer). */
+  priority?: boolean;
   className?: string;
   /** Container shape. Default square keeps catalog consistent. */
   aspect?: "square" | "portrait" | "landscape";
   sizes?: string;
   /** "cover" (default) for cards, "contain" for studio detail shots. */
   fit?: "cover" | "contain";
+  /** Smart-priority inputs (frontend-only). */
+  productId?: string;
+  /** 0-based index in the list this image appears in. */
+  placement?: number;
+  /** Override the computed tier (rare). */
+  tier?: PriorityTier;
 }
 
 function buildAlt(title: string, category?: string | null, provided?: string | null) {
