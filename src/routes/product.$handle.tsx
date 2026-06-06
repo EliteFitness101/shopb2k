@@ -1,5 +1,7 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { preloadOnIdle, recordEngagement } from "@/lib/imagePriority";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Truck, ShieldCheck, Package } from "lucide-react";
