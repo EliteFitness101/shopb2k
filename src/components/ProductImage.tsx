@@ -73,10 +73,25 @@ export function ProductImage({
   aspect = "square",
   sizes = "(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw",
   fit = "cover",
+  productId,
+  placement = 99,
+  tier: tierOverride,
 }: ProductImageProps) {
   const [errored, setErrored] = useState(false);
   const resolvedSrc = !src || errored ? FALLBACK_SVG : src;
   const resolvedAlt = buildAlt(title, category, alt);
+
+  // Smart-priority tier: explicit override > priority flag > computed from signals.
+  const tier: PriorityTier =
+    tierOverride ?? (priority ? "high" : resolveTier(productId, placement));
+
+  // Record a view signal once per mount for learning loop.
+  useEffect(() => {
+    if (productId) recordEngagement(productId, "view");
+  }, [productId]);
+
+  const isHigh = tier === "high";
+  const isMedium = tier === "medium";
 
   return (
     <div
@@ -89,11 +104,13 @@ export function ProductImage({
       <img
         src={resolvedSrc}
         alt={resolvedAlt}
-        loading={priority ? "eager" : "lazy"}
+        loading={isHigh ? "eager" : "lazy"}
         decoding="async"
-        fetchPriority={priority ? "high" : "auto"}
+        fetchPriority={isHigh ? "high" : isMedium ? "auto" : "low"}
         sizes={sizes}
+        data-priority-tier={tier}
         onError={() => setErrored(true)}
+        onClick={() => productId && recordEngagement(productId, "click")}
         className={cn(
           "h-full w-full transition-transform duration-700",
           fit === "cover" ? "object-cover" : "object-contain",
