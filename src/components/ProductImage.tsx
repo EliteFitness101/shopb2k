@@ -88,8 +88,11 @@ export function ProductImage({
 
   // Record a view signal once per mount for learning loop.
   useEffect(() => {
-    if (productId) recordEngagement(productId, "view");
-  }, [productId]);
+    if (productId) {
+      recordEngagement(productId, "view");
+      track("product_view", { productId, placement, tier });
+    }
+  }, [productId, placement, tier]);
 
   const isHigh = tier === "high";
   const isMedium = tier === "medium";
