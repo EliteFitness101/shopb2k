@@ -12,6 +12,7 @@ import { useCartSync } from "@/hooks/useCartSync";
 import { WhatsAppFloat } from "@/components/WhatsAppFloat";
 import { useEffect } from "react";
 import { captureAttributionFromUrl } from "@/lib/attribution";
+import { auditCatalog } from "@/lib/productIntelligence";
 
 import appCss from "../styles.css?url";
 
