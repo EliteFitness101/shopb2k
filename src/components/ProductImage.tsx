@@ -114,7 +114,11 @@ export function ProductImage({
         sizes={sizes}
         data-priority-tier={tier}
         onError={() => setErrored(true)}
-        onClick={() => productId && recordEngagement(productId, "click")}
+        onClick={() => {
+          if (!productId) return;
+          recordEngagement(productId, "click");
+          track("product_click", { productId, placement, tier });
+        }}
         className={cn(
           "h-full w-full transition-transform duration-700",
           fit === "cover" ? "object-cover" : "object-contain",
