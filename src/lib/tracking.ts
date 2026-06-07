@@ -9,8 +9,15 @@ const ANON_KEY = "resofit:anon_id";
 export type TrackEvent =
   | "product_view"
   | "product_click"
+  | "add_to_cart"
   | "checkout_start"
-  | "purchase_success";
+  | "purchase_success"
+  | "product_score_update"
+  | "asset_regenerated"
+  | "price_test_triggered"
+  | "hero_promoted"
+  | "demoted";
+
 
 function getAnonId(): string {
   if (typeof window === "undefined") return "ssr";

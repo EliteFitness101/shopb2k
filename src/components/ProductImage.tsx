@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { recordEngagement, resolveTier, type PriorityTier } from "@/lib/imagePriority";
+import { track } from "@/lib/tracking";
 
 const FALLBACK_SVG =
   "data:image/svg+xml;utf8," +
@@ -87,8 +88,11 @@ export function ProductImage({
 
   // Record a view signal once per mount for learning loop.
   useEffect(() => {
-    if (productId) recordEngagement(productId, "view");
-  }, [productId]);
+    if (productId) {
+      recordEngagement(productId, "view");
+      track("product_view", { productId, placement, tier });
+    }
+  }, [productId, placement, tier]);
 
   const isHigh = tier === "high";
   const isMedium = tier === "medium";
@@ -110,7 +114,11 @@ export function ProductImage({
         sizes={sizes}
         data-priority-tier={tier}
         onError={() => setErrored(true)}
-        onClick={() => productId && recordEngagement(productId, "click")}
+        onClick={() => {
+          if (!productId) return;
+          recordEngagement(productId, "click");
+          track("product_click", { productId, placement, tier });
+        }}
         className={cn(
           "h-full w-full transition-transform duration-700",
           fit === "cover" ? "object-cover" : "object-contain",
