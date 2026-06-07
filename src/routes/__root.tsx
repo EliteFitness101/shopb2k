@@ -10,6 +10,8 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { useCartSync } from "@/hooks/useCartSync";
 import { WhatsAppFloat } from "@/components/WhatsAppFloat";
+import { useEffect } from "react";
+import { captureAttributionFromUrl } from "@/lib/attribution";
 
 import appCss from "../styles.css?url";
 
@@ -127,6 +129,9 @@ function RootComponent() {
 
 function AppInner() {
   useCartSync();
+  useEffect(() => {
+    captureAttributionFromUrl();
+  }, []);
   return (
     <>
       <Outlet />

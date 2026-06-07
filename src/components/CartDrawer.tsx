@@ -12,6 +12,8 @@ import {
 import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2 } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
 import { approxUSD, formatMoney } from "@/lib/shopify";
+import { withAttribution } from "@/lib/attribution";
+import { track } from "@/lib/tracking";
 
 export function CartDrawer() {
   const [open, setOpen] = useState(false);
@@ -35,7 +37,13 @@ export function CartDrawer() {
   const handleCheckout = () => {
     const url = getCheckoutUrl();
     if (url) {
-      window.open(url, "_blank");
+      const finalUrl = withAttribution(url);
+      track("checkout_start", {
+        item_count: totalItems,
+        total: totalAmount,
+        currency,
+      });
+      window.open(finalUrl, "_blank");
       setOpen(false);
     }
   };
