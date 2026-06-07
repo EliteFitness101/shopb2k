@@ -132,6 +132,17 @@ function AppInner() {
   useCartSync();
   useEffect(() => {
     captureAttributionFromUrl();
+    // Run product intelligence audit against any SKUs we've seen engagement on.
+    try {
+      const raw = localStorage.getItem("resofit:imgPriority:v1");
+      if (raw) {
+        const parsed = JSON.parse(raw) as { products?: Record<string, unknown> };
+        const ids = Object.keys(parsed.products ?? {});
+        if (ids.length) auditCatalog(ids);
+      }
+    } catch {
+      /* noop */
+    }
   }, []);
   return (
     <>
