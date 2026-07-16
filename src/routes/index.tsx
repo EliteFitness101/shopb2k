@@ -103,39 +103,35 @@ function Index() {
           <div className="max-w-2xl">
             <p className="mb-6 inline-flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-gold">
               <span className="h-px w-10 bg-gold" />
-              CoachB2K · ResoFit
+              ChatB2K™ · ResoFit
             </p>
             <h1 className="font-display text-6xl leading-[0.95] sm:text-7xl md:text-8xl lg:text-9xl">
-              Built for the
+              Africa's
               <br />
-              <span className="text-gradient-gold">heaviest</span> set
+              <span className="text-gradient-gold">personalized</span>
               <br />
-              of your life.
+              wellness platform.
             </h1>
             <p className="mt-8 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Start your ₦1,000 Reset today. Personalized coaching, premium hardware, and a
-              transformation built around how you actually train.
+              Programs, premium equipment and ChatB2K™ wellness intelligence — matched to how you
+              live, eat and move.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
-              <a
-                href={RESET_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/personalize"
                 onClick={handlePrimaryCta}
                 className="group inline-flex h-14 items-center justify-center gap-3 rounded-sm bg-gold px-8 text-sm font-semibold uppercase tracking-widest text-gold-foreground shadow-gold transition-transform hover:-translate-y-0.5"
               >
-                {variant.label}
+                {CTA.primary}
                 <span className="transition-transform group-hover:translate-x-1">→</span>
-              </a>
-              <a
-                href={ASSESSMENT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+              </Link>
+              <Link
+                to="/personalize"
                 onClick={handleAssessment}
                 className="inline-flex h-14 items-center justify-center rounded-sm border border-border px-8 text-sm font-semibold uppercase tracking-widest text-foreground transition-colors hover:border-gold hover:text-gold"
               >
-                Take Assessment
-              </a>
+                {CTA.assessment}
+              </Link>
             </div>
 
             <dl className="mt-16 grid max-w-md grid-cols-3 gap-6 border-t border-border/60 pt-8">
