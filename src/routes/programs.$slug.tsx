@@ -85,7 +85,7 @@ function ProgramDetail() {
             <section>
               <h2 className="font-display text-3xl">Benefits</h2>
               <ul className="mt-4 space-y-3">
-                {p.benefits.map((b) => (
+                {p.benefits.map((b: string) => (
                   <li key={b} className="flex items-start gap-3 text-sm">
                     <Check className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
                     <span>{b}</span>
@@ -96,7 +96,7 @@ function ProgramDetail() {
             <section>
               <h2 className="font-display text-3xl">Who it's for</h2>
               <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-                {p.audience.map((a) => (
+                {p.audience.map((a: string) => (
                   <li key={a}>• {a}</li>
                 ))}
               </ul>
@@ -104,7 +104,7 @@ function ProgramDetail() {
             <section>
               <h2 className="font-display text-3xl">Expected outcomes</h2>
               <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-                {p.outcomes.map((o) => (
+                {p.outcomes.map((o: string) => (
                   <li key={o}>• {o}</li>
                 ))}
               </ul>
@@ -112,7 +112,7 @@ function ProgramDetail() {
             <section>
               <h2 className="font-display text-3xl">FAQs</h2>
               <div className="mt-4 space-y-4">
-                {p.faqs.map((f) => (
+                {p.faqs.map((f: { q: string; a: string }) => (
                   <details key={f.q} className="group border border-border/60 p-4">
                     <summary className="cursor-pointer font-semibold">{f.q}</summary>
                     <p className="mt-2 text-sm text-muted-foreground">{f.a}</p>

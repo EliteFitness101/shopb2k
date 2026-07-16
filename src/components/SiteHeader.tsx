@@ -3,7 +3,7 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { ShieldCheck, Sparkles } from "lucide-react";
 import { CTA } from "@/lib/ctas";
 
-const NAV = [
+const NAV: Array<{ to: string; label: string; exact?: boolean }> = [
   { to: "/", label: "Home", exact: true },
   { to: "/programs", label: "Programs" },
   { to: "/personalize", label: "Assessment" },
@@ -12,7 +12,7 @@ const NAV = [
   { to: "/success-stories", label: "Success Stories" },
   { to: "/about", label: "About" },
   { to: "/contact", label: "Contact" },
-] as const;
+];
 
 export function SiteHeader() {
   return (

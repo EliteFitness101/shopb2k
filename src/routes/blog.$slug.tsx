@@ -77,7 +77,7 @@ function ArticleView() {
         </p>
 
         <article className="prose prose-invert mt-10 max-w-none text-muted-foreground">
-          {a.body.split("\n\n").map((p, i) => (
+          {a.body.split("\n\n").map((p: string, i: number) => (
             <p key={i}>{p}</p>
           ))}
         </article>
