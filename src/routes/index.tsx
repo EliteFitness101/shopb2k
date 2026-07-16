@@ -244,38 +244,38 @@ function Index() {
         </div>
       </section>
 
+      {/* Ecosystem carousel */}
+      <EcosystemCarousel surface="home" />
+
       {/* Final CTA */}
       <section className="border-t border-border/60 py-24">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold">Start Today</p>
           <h2 className="font-display text-4xl leading-tight md:text-6xl">
-            One thousand naira.
+            Your body,
             <br />
-            <span className="text-gradient-gold">A new body by next quarter.</span>
+            <span className="text-gradient-gold">personalized for life.</span>
           </h2>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <a
-              href={RESET_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to="/personalize"
               onClick={handlePrimaryCta}
               className="inline-flex h-14 items-center justify-center gap-3 rounded-sm bg-gold px-8 text-sm font-semibold uppercase tracking-widest text-gold-foreground shadow-gold transition-transform hover:-translate-y-0.5"
             >
-              {variant.label}
+              {CTA.primary}
               <span>→</span>
-            </a>
-            <a
-              href={ASSESSMENT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+            </Link>
+            <Link
+              to="/programs"
               onClick={handleAssessment}
               className="inline-flex h-14 items-center justify-center rounded-sm border border-border px-8 text-sm font-semibold uppercase tracking-widest text-foreground transition-colors hover:border-gold hover:text-gold"
             >
-              Take Assessment
-            </a>
+              Explore Programs
+            </Link>
           </div>
         </div>
       </section>
+
 
       <SiteFooter />
     </div>
