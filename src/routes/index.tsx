@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import heroImg from "@/assets/hero-barbell.jpg";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TrustBar } from "@/components/TrustBar";
 import { ProductImage } from "@/components/ProductImage";
+import { EcosystemCarousel } from "@/components/EcosystemCarousel";
 import {
   PRODUCTS_QUERY,
   approxUSD,
@@ -13,33 +14,30 @@ import {
   storefrontApiRequest,
   type ShopifyProduct,
 } from "@/lib/shopify";
-import {
-  CTA_VARIANTS,
-  getActiveVariant,
-  trackEvent,
-  type CtaVariant,
-} from "@/lib/revenueOS";
+import { trackEvent } from "@/lib/revenueOS";
 import { preloadOnIdle } from "@/lib/imagePriority";
-
-const RESET_URL = "https://joy-funnel-ai.lovable.app";
-const ASSESSMENT_URL = "https://reso-fit.lovable.app";
+import { CTA } from "@/lib/ctas";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ResoFit — Start Your ₦1,000 Reset" },
+      { title: "ResoFit — Africa's Personalized Wellness Platform" },
       {
         name: "description",
         content:
-          "Join the ₦1,000 Reset with CoachB2K. Personalized fitness coaching, premium hardware, nationwide delivery.",
+          "Africa's personalized wellness platform. Programs, premium equipment and ChatB2K™ wellness intelligence for strength, longevity and healthy living.",
       },
-      { property: "og:title", content: "ResoFit — Start Your ₦1,000 Reset" },
+      { property: "og:title", content: "ResoFit — Africa's Personalized Wellness Platform" },
       {
         property: "og:description",
-        content: "Personalized coaching with CoachB2K. Start your transformation today.",
+        content: "Programs, equipment and ChatB2K™ intelligence for personalized wellness.",
       },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://shopb2k.lovable.app/" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
+      { rel: "canonical", href: "https://shopb2k.lovable.app/" },
       { rel: "preload", as: "image", href: heroImg, fetchpriority: "high" },
     ],
   }),
@@ -68,31 +66,18 @@ function Index() {
     staleTime: 60_000,
   });
 
-  const [variant, setVariant] = useState<{ variant: CtaVariant; label: string }>({
-    variant: "A",
-    label: CTA_VARIANTS.A,
-  });
-
   useEffect(() => {
-    setVariant(getActiveVariant());
     trackEvent("landing_view");
   }, []);
 
-  // Idle-preload medium-tier images (3rd–6th featured) once data lands.
   useEffect(() => {
     if (!featured || featured.length === 0) return;
     const urls = featured.slice(2, 6).map((p) => p.node.images.edges[0]?.node.url);
     preloadOnIdle(urls);
   }, [featured]);
 
-  const handlePrimaryCta = () => {
-    trackEvent("cta_click");
-    trackEvent("checkout_start");
-  };
-
-  const handleAssessment = () => {
-    trackEvent("assessment_click");
-  };
+  const handlePrimaryCta = () => trackEvent("cta_click");
+  const handleAssessment = () => trackEvent("assessment_click");
 
   return (
     <div className="min-h-screen bg-background">
@@ -118,39 +103,35 @@ function Index() {
           <div className="max-w-2xl">
             <p className="mb-6 inline-flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-gold">
               <span className="h-px w-10 bg-gold" />
-              CoachB2K · ResoFit
+              ChatB2K™ · ResoFit
             </p>
             <h1 className="font-display text-6xl leading-[0.95] sm:text-7xl md:text-8xl lg:text-9xl">
-              Built for the
+              Africa's
               <br />
-              <span className="text-gradient-gold">heaviest</span> set
+              <span className="text-gradient-gold">personalized</span>
               <br />
-              of your life.
+              wellness platform.
             </h1>
             <p className="mt-8 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Start your ₦1,000 Reset today. Personalized coaching, premium hardware, and a
-              transformation built around how you actually train.
+              Programs, premium equipment and ChatB2K™ wellness intelligence — matched to how you
+              live, eat and move.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
-              <a
-                href={RESET_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/personalize"
                 onClick={handlePrimaryCta}
                 className="group inline-flex h-14 items-center justify-center gap-3 rounded-sm bg-gold px-8 text-sm font-semibold uppercase tracking-widest text-gold-foreground shadow-gold transition-transform hover:-translate-y-0.5"
               >
-                {variant.label}
+                {CTA.primary}
                 <span className="transition-transform group-hover:translate-x-1">→</span>
-              </a>
-              <a
-                href={ASSESSMENT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+              </Link>
+              <Link
+                to="/personalize"
                 onClick={handleAssessment}
                 className="inline-flex h-14 items-center justify-center rounded-sm border border-border px-8 text-sm font-semibold uppercase tracking-widest text-foreground transition-colors hover:border-gold hover:text-gold"
               >
-                Take Assessment
-              </a>
+                {CTA.assessment}
+              </Link>
             </div>
 
             <dl className="mt-16 grid max-w-md grid-cols-3 gap-6 border-t border-border/60 pt-8">
@@ -263,38 +244,38 @@ function Index() {
         </div>
       </section>
 
+      {/* Ecosystem carousel */}
+      <EcosystemCarousel surface="home" />
+
       {/* Final CTA */}
       <section className="border-t border-border/60 py-24">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold">Start Today</p>
           <h2 className="font-display text-4xl leading-tight md:text-6xl">
-            One thousand naira.
+            Your body,
             <br />
-            <span className="text-gradient-gold">A new body by next quarter.</span>
+            <span className="text-gradient-gold">personalized for life.</span>
           </h2>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <a
-              href={RESET_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to="/personalize"
               onClick={handlePrimaryCta}
               className="inline-flex h-14 items-center justify-center gap-3 rounded-sm bg-gold px-8 text-sm font-semibold uppercase tracking-widest text-gold-foreground shadow-gold transition-transform hover:-translate-y-0.5"
             >
-              {variant.label}
+              {CTA.primary}
               <span>→</span>
-            </a>
-            <a
-              href={ASSESSMENT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+            </Link>
+            <Link
+              to="/programs"
               onClick={handleAssessment}
               className="inline-flex h-14 items-center justify-center rounded-sm border border-border px-8 text-sm font-semibold uppercase tracking-widest text-foreground transition-colors hover:border-gold hover:text-gold"
             >
-              Take Assessment
-            </a>
+              Explore Programs
+            </Link>
           </div>
         </div>
       </section>
+
 
       <SiteFooter />
     </div>
