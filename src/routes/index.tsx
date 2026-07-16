@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import heroImg from "@/assets/hero-barbell.jpg";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TrustBar } from "@/components/TrustBar";
 import { ProductImage } from "@/components/ProductImage";
+import { EcosystemCarousel } from "@/components/EcosystemCarousel";
 import {
   PRODUCTS_QUERY,
   approxUSD,
@@ -13,33 +14,30 @@ import {
   storefrontApiRequest,
   type ShopifyProduct,
 } from "@/lib/shopify";
-import {
-  CTA_VARIANTS,
-  getActiveVariant,
-  trackEvent,
-  type CtaVariant,
-} from "@/lib/revenueOS";
+import { trackEvent } from "@/lib/revenueOS";
 import { preloadOnIdle } from "@/lib/imagePriority";
-
-const RESET_URL = "https://joy-funnel-ai.lovable.app";
-const ASSESSMENT_URL = "https://reso-fit.lovable.app";
+import { CTA } from "@/lib/ctas";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ResoFit — Start Your ₦1,000 Reset" },
+      { title: "ResoFit — Africa's Personalized Wellness Platform" },
       {
         name: "description",
         content:
-          "Join the ₦1,000 Reset with CoachB2K. Personalized fitness coaching, premium hardware, nationwide delivery.",
+          "Africa's personalized wellness platform. Programs, premium equipment and ChatB2K™ wellness intelligence for strength, longevity and healthy living.",
       },
-      { property: "og:title", content: "ResoFit — Start Your ₦1,000 Reset" },
+      { property: "og:title", content: "ResoFit — Africa's Personalized Wellness Platform" },
       {
         property: "og:description",
-        content: "Personalized coaching with CoachB2K. Start your transformation today.",
+        content: "Programs, equipment and ChatB2K™ intelligence for personalized wellness.",
       },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://shopb2k.lovable.app/" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
+      { rel: "canonical", href: "https://shopb2k.lovable.app/" },
       { rel: "preload", as: "image", href: heroImg, fetchpriority: "high" },
     ],
   }),
@@ -68,31 +66,18 @@ function Index() {
     staleTime: 60_000,
   });
 
-  const [variant, setVariant] = useState<{ variant: CtaVariant; label: string }>({
-    variant: "A",
-    label: CTA_VARIANTS.A,
-  });
-
   useEffect(() => {
-    setVariant(getActiveVariant());
     trackEvent("landing_view");
   }, []);
 
-  // Idle-preload medium-tier images (3rd–6th featured) once data lands.
   useEffect(() => {
     if (!featured || featured.length === 0) return;
     const urls = featured.slice(2, 6).map((p) => p.node.images.edges[0]?.node.url);
     preloadOnIdle(urls);
   }, [featured]);
 
-  const handlePrimaryCta = () => {
-    trackEvent("cta_click");
-    trackEvent("checkout_start");
-  };
-
-  const handleAssessment = () => {
-    trackEvent("assessment_click");
-  };
+  const handlePrimaryCta = () => trackEvent("cta_click");
+  const handleAssessment = () => trackEvent("assessment_click");
 
   return (
     <div className="min-h-screen bg-background">
