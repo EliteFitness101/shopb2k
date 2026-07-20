@@ -16,7 +16,14 @@ export type TrackEvent =
   | "asset_regenerated"
   | "price_test_triggered"
   | "hero_promoted"
-  | "demoted";
+  | "demoted"
+  | "cinematic_view"
+  | "cinematic_play"
+  | "cinematic_complete"
+  | "cinematic_cta_click"
+  | "identity_started"
+  | "identity_created"
+  | "chatb2k_handoff";
 
 
 function getAnonId(): string {

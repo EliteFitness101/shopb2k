@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { TrustBar } from "@/components/TrustBar";
 import { ProductImage } from "@/components/ProductImage";
 import { EcosystemCarousel } from "@/components/EcosystemCarousel";
+import { CinematicWellnessExperience } from "@/components/CinematicWellnessExperience";
 import {
   PRODUCTS_QUERY,
   approxUSD,
@@ -82,6 +83,9 @@ function Index() {
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
+
+      {/* Cinematic wellness intro — 3–8s trust + personalization layer */}
+      <CinematicWellnessExperience />
 
       {/* Hero */}
       <section className="relative overflow-hidden">
