@@ -26,12 +26,12 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Africa's personalized wellness platform. Programs, premium equipment and ChatB2K™ wellness intelligence for strength, longevity and healthy living.",
+          "Discover premium Services, Custom Equipment  Offers & Proprietary ChatB2K™ Ancestral Intelligence deployment for clarity strength, longevity & healthy living.",
       },
       { property: "og:title", content: "ResoFit — Africa's Personalized Wellness Platform" },
       {
         property: "og:description",
-        content: "Programs, equipment and ChatB2K™ intelligence for personalized wellness.",
+        content: "Discover premium Services, Custom Equipment  Offers & Proprietary ChatB2K™ Ancestral Intelligence deployment for clarity strength, longevity & healthy living.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://shopb2k.lovable.app/" },

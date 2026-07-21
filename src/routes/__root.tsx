@@ -79,48 +79,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "ResoFit — Africa's Personalized Wellness Platform" },
-      {
-        name: "description",
-        content:
-          "Africa's personalized wellness platform. Programs, premium equipment and ChatB2K™ intelligence for strength, mobility, longevity and healthy living.",
-      },
+      { name: "description", content: "Discover premium Services, Custom Equipment  Offers & Proprietary ChatB2K™ Ancestral Intelligence deployment for clarity strength, longevity & healthy living." },
       { name: "author", content: "ResoFit" },
-      { property: "og:site_name", content: "ResoFit" },
       { property: "og:title", content: "ResoFit — Africa's Personalized Wellness Platform" },
-      {
-        property: "og:description",
-        content:
-          "Programs, premium equipment and ChatB2K™ intelligence for personalized wellness.",
-      },
+      { property: "og:description", content: "Discover premium Services, Custom Equipment  Offers & Proprietary ChatB2K™ Ancestral Intelligence deployment for clarity strength, longevity & healthy living." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "ResoFit — Africa's Personalized Wellness Platform" },
-      {
-        name: "twitter:description",
-        content:
-          "Programs, premium equipment and ChatB2K™ intelligence for personalized wellness.",
-      },
+      { name: "twitter:description", content: "Discover premium Services, Custom Equipment  Offers & Proprietary ChatB2K™ Ancestral Intelligence deployment for clarity strength, longevity & healthy living." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/bdcgAbwS2IeBihMh9SoqBMc7zVy1/social-images/social-1778548309673-resofit-hero-banner-neural-architekt.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/bdcgAbwS2IeBihMh9SoqBMc7zVy1/social-images/social-1778548309673-resofit-hero-banner-neural-architekt.webp" },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
-    scripts: [
+    links: [
       {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          name: "ResoFit",
-          url: "https://resofit.fit",
-          sameAs: ["https://shopb2k.lovable.app"],
-        }),
-      },
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          name: "ResoFit",
-          url: "https://resofit.fit",
-        }),
+        rel: "stylesheet",
+        href: appCss,
       },
     ],
   }),
