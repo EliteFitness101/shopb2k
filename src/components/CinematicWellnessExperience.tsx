@@ -190,14 +190,23 @@ interface Props {
   /** Optional video enhancement URL (mp4/webm). Loaded on idle only. */
   videoSrc?: string;
   posterSrc?: string;
+  /** Optional captions track (WebVTT). If absent, a caption fallback message is provided for AT. */
+  captionsSrc?: string;
 }
 
-export function CinematicWellnessExperience({ videoSrc, posterSrc }: Props) {
+export function CinematicWellnessExperience({
+  videoSrc = DEFAULT_VIDEO,
+  posterSrc = DEFAULT_POSTER,
+  captionsSrc = DEFAULT_CAPTIONS,
+}: Props) {
   const navigate = useNavigate();
   const reducedMotion = useReducedMotion();
   const [phase, setPhase] = useState(0);
   const [videoReady, setVideoReady] = useState(false);
   const [showGate, setShowGate] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [playing, setPlaying] = useState(false);
+  const [captionsAvailable, setCaptionsAvailable] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
   const viewFiredRef = useRef(false);
@@ -254,9 +263,49 @@ export function CinematicWellnessExperience({ videoSrc, posterSrc }: Props) {
 
   useEffect(() => {
     if (videoReady && videoRef.current) {
-      videoRef.current.play().then(() => track("cinematic_play")).catch(() => {});
+      videoRef.current
+        .play()
+        .then(() => {
+          setPlaying(true);
+          track("cinematic_play");
+        })
+        .catch(() => {});
     }
   }, [videoReady]);
+
+  // Probe captions availability (HEAD) so we can hide the toggle when unavailable.
+  useEffect(() => {
+    if (!captionsSrc) return;
+    let cancelled = false;
+    fetch(captionsSrc, { method: "HEAD" })
+      .then((r) => {
+        if (!cancelled) setCaptionsAvailable(r.ok);
+      })
+      .catch(() => {
+        if (!cancelled) setCaptionsAvailable(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [captionsSrc]);
+
+  const toggleMute = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = !v.muted;
+    setMuted(v.muted);
+  };
+
+  const togglePlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      v.play().then(() => setPlaying(true)).catch(() => {});
+    } else {
+      v.pause();
+      setPlaying(false);
+    }
+  };
 
   const openGate = () => {
     track("cinematic_cta_click", { phase });
@@ -293,19 +342,53 @@ export function CinematicWellnessExperience({ videoSrc, posterSrc }: Props) {
             ref={videoRef}
             src={videoSrc}
             poster={posterSrc}
-            muted
+            muted={muted}
             playsInline
             loop
             autoPlay
             preload="none"
-            aria-hidden="true"
+            aria-label="ResoFit community wellness intro video"
             className="absolute inset-0 h-full w-full object-cover opacity-70"
             onEnded={() => track("cinematic_complete")}
-          />
+            onPlay={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
+          >
+            {captionsAvailable && (
+              <track kind="captions" src={captionsSrc} srcLang="en" label="English" default />
+            )}
+          </video>
+        )}
+        {!captionsAvailable && videoReady && videoSrc && (
+          <p className="sr-only" aria-live="polite">
+            Captions unavailable for this intro video. Full transcript available on request.
+          </p>
         )}
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/75 to-background/10" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/40" />
       </div>
+
+      {/* Accessible video controls (visible only when video is loaded) */}
+      {videoReady && videoSrc && (
+        <div className="absolute right-4 top-4 z-10 flex gap-2">
+          <button
+            type="button"
+            onClick={togglePlay}
+            aria-label={playing ? "Pause background video" : "Play background video"}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/70 text-foreground backdrop-blur transition-colors hover:border-gold hover:text-gold focus-visible:outline-2 focus-visible:outline-gold"
+          >
+            {playing ? <Pause className="h-4 w-4" aria-hidden /> : <Play className="h-4 w-4" aria-hidden />}
+          </button>
+          <button
+            type="button"
+            onClick={toggleMute}
+            aria-label={muted ? "Unmute background video" : "Mute background video"}
+            aria-pressed={!muted}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/70 text-foreground backdrop-blur transition-colors hover:border-gold hover:text-gold focus-visible:outline-2 focus-visible:outline-gold"
+          >
+            {muted ? <VolumeX className="h-4 w-4" aria-hidden /> : <Volume2 className="h-4 w-4" aria-hidden />}
+          </button>
+        </div>
+      )}
 
       {/* Phase indicator (accessible timeline) */}
       <div
