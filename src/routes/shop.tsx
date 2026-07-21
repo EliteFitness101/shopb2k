@@ -130,7 +130,7 @@ function ShopGrid() {
   }, [data, search.type, search.vendor, search.sort]);
 
   const updateSearch = (patch: Partial<typeof search>) =>
-    navigate({ search: (prev) => ({ ...prev, ...patch }) as any, replace: true });
+    navigate({ search: (prev: typeof search) => ({ ...prev, ...patch }), replace: true });
 
   return (
     <section className="py-16">
