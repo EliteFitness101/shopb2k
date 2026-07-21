@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -15,6 +15,8 @@ import {
   type ShopifyProduct,
 } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
+
+type SortKey = "featured" | "newest" | "price_asc" | "price_desc";
 
 export const Route = createFileRoute("/shop")({
   head: () => ({
@@ -32,6 +34,11 @@ export const Route = createFileRoute("/shop")({
           "Competition-grade barbells, bumper plates, dumbbells, and power racks. Ships from Lagos.",
       },
     ],
+  }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    type: typeof s.type === "string" ? (s.type as string) : undefined,
+    vendor: typeof s.vendor === "string" ? (s.vendor as string) : undefined,
+    sort: (typeof s.sort === "string" ? s.sort : "featured") as SortKey,
   }),
   component: Shop,
 });
@@ -72,15 +79,130 @@ function Shop() {
 }
 
 function ShopGrid() {
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   const { data, isLoading, isError } = useQuery({
     queryKey: ["products", "all"],
     queryFn: fetchProducts,
     staleTime: 60_000,
   });
 
+  const productTypes = useMemo(() => {
+    const set = new Set<string>();
+    (data ?? []).forEach((p) => p.node.productType && set.add(p.node.productType));
+    return Array.from(set).sort();
+  }, [data]);
+
+  const vendors = useMemo(() => {
+    const set = new Set<string>();
+    (data ?? []).forEach((p) => p.node.vendor && set.add(p.node.vendor));
+    return Array.from(set).sort();
+  }, [data]);
+
+  const filtered = useMemo(() => {
+    let list = data ?? [];
+    if (search.type) list = list.filter((p) => p.node.productType === search.type);
+    if (search.vendor) list = list.filter((p) => p.node.vendor === search.vendor);
+    const sorted = [...list];
+    switch (search.sort) {
+      case "price_asc":
+        sorted.sort(
+          (a, b) =>
+            parseFloat(a.node.priceRange.minVariantPrice.amount) -
+            parseFloat(b.node.priceRange.minVariantPrice.amount),
+        );
+        break;
+      case "price_desc":
+        sorted.sort(
+          (a, b) =>
+            parseFloat(b.node.priceRange.minVariantPrice.amount) -
+            parseFloat(a.node.priceRange.minVariantPrice.amount),
+        );
+        break;
+      case "newest":
+        // Shopify products ordered by id descending approximates newest first
+        sorted.sort((a, b) => (a.node.id < b.node.id ? 1 : -1));
+        break;
+      default:
+        break;
+    }
+    return sorted;
+  }, [data, search.type, search.vendor, search.sort]);
+
+  const updateSearch = (patch: Partial<typeof search>) =>
+    navigate({ search: (prev) => ({ ...prev, ...patch }) as any, replace: true });
+
   return (
     <section className="py-16">
       <div className="mx-auto max-w-7xl px-6">
+        {/* Filters + sort */}
+        {data && data.length > 0 && (
+          <div className="mb-10 flex flex-wrap items-end gap-4 border-b border-border/60 pb-6">
+            {productTypes.length > 0 && (
+              <label className="flex flex-col gap-1 text-[11px] uppercase tracking-widest text-muted-foreground">
+                Category
+                <select
+                  value={search.type ?? ""}
+                  onChange={(e) => updateSearch({ type: e.target.value || undefined })}
+                  aria-label="Filter by category"
+                  className="min-w-40 rounded-sm border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-gold focus-visible:outline-2 focus-visible:outline-gold"
+                >
+                  <option value="">All categories</option>
+                  {productTypes.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {vendors.length > 0 && (
+              <label className="flex flex-col gap-1 text-[11px] uppercase tracking-widest text-muted-foreground">
+                Collection
+                <select
+                  value={search.vendor ?? ""}
+                  onChange={(e) => updateSearch({ vendor: e.target.value || undefined })}
+                  aria-label="Filter by collection"
+                  className="min-w-40 rounded-sm border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-gold focus-visible:outline-2 focus-visible:outline-gold"
+                >
+                  <option value="">All collections</option>
+                  {vendors.map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <label className="flex flex-col gap-1 text-[11px] uppercase tracking-widest text-muted-foreground">
+              Sort
+              <select
+                value={search.sort}
+                onChange={(e) => updateSearch({ sort: e.target.value as SortKey })}
+                aria-label="Sort products"
+                className="min-w-40 rounded-sm border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-gold focus-visible:outline-2 focus-visible:outline-gold"
+              >
+                <option value="featured">Featured</option>
+                <option value="newest">Newest</option>
+                <option value="price_asc">Price: Low → High</option>
+                <option value="price_desc">Price: High → Low</option>
+              </select>
+            </label>
+            {(search.type || search.vendor) && (
+              <button
+                type="button"
+                onClick={() => updateSearch({ type: undefined, vendor: undefined })}
+                className="ml-auto text-[11px] uppercase tracking-widest text-muted-foreground hover:text-gold focus-visible:outline-2 focus-visible:outline-gold"
+              >
+                Reset filters
+              </button>
+            )}
+            <p className="ml-auto text-[11px] uppercase tracking-widest text-muted-foreground">
+              {filtered.length} {filtered.length === 1 ? "product" : "products"}
+            </p>
+          </div>
+        )}
+
         {isLoading && (
           <div className="flex justify-center py-32 text-muted-foreground">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -93,18 +215,18 @@ function ShopGrid() {
           </p>
         )}
 
-        {data && data.length === 0 && (
+        {data && filtered.length === 0 && (
           <div className="py-24 text-center">
             <p className="font-display text-2xl">No products found</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Tell the AI what you'd like to add to your Shopify catalogue.
+              Try clearing filters, or tell the AI what to add to your Shopify catalogue.
             </p>
           </div>
         )}
 
-        {data && data.length > 0 && (
+        {filtered.length > 0 && (
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {data.map((p, i) => (
+            {filtered.map((p, i) => (
               <ProductCard key={p.node.id} product={p} placement={i} />
             ))}
           </div>
