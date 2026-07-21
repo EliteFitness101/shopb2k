@@ -5,6 +5,7 @@ import { getAttribution } from "./attribution";
 
 const WEBHOOK_URL = "https://hook.eu1.make.com/p0c26asklninfrxhp2sw6nkdjjb19a89";
 const ANON_KEY = "resofit:anon_id";
+const VARIANT_KEY = "resofit:landing_variant";
 
 export type TrackEvent =
   | "product_view"
@@ -25,7 +26,6 @@ export type TrackEvent =
   | "identity_created"
   | "chatb2k_handoff";
 
-
 function getAnonId(): string {
   if (typeof window === "undefined") return "ssr";
   try {
@@ -40,18 +40,49 @@ function getAnonId(): string {
   }
 }
 
+function getLandingVariant(): string {
+  if (typeof window === "undefined") return "default";
+  try {
+    let v = localStorage.getItem(VARIANT_KEY);
+    if (!v) {
+      v = Math.random() < 0.5 ? "A" : "B";
+      localStorage.setItem(VARIANT_KEY, v);
+    }
+    return v;
+  } catch {
+    return "default";
+  }
+}
+
+function getDevice(): string {
+  if (typeof window === "undefined") return "ssr";
+  const ua = navigator.userAgent || "";
+  if (/Mobi|Android|iPhone|iPad|iPod/i.test(ua)) return "mobile";
+  if (/Tablet|iPad/i.test(ua)) return "tablet";
+  return "desktop";
+}
+
 export function track(event: TrackEvent, payload: Record<string, unknown> = {}) {
   if (typeof window === "undefined") return;
+  const attr = getAttribution();
   const body = JSON.stringify({
     event,
     anon_id: getAnonId(),
-    attribution: getAttribution(),
-    path: window.location.pathname,
-    ts: new Date().toISOString(),
+    rsid: attr.rsid ?? null,
+    utm_source: attr.utm_source ?? null,
+    utm_medium: attr.utm_medium ?? null,
+    utm_campaign: attr.utm_campaign ?? null,
+    utm_content: attr.utm_content ?? null,
+    utm_term: attr.utm_term ?? null,
+    landing_variant: getLandingVariant(),
+    timestamp: new Date().toISOString(),
+    page: window.location.pathname,
+    device: getDevice(),
+    referrer: document.referrer || null,
+    attribution: attr,
     ...payload,
   });
   try {
-    // keepalive lets the request survive navigation (e.g. checkout open in new tab)
     fetch(WEBHOOK_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
