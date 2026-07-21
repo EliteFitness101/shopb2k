@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
+import { Volume2, VolumeX, Play, Pause } from "lucide-react";
 import { track } from "@/lib/tracking";
 import { createIdentity, handoffToChatB2K, type IdentityChannel } from "@/lib/identity";
 import { CTA } from "@/lib/ctas";
 import heroImg from "@/assets/hero-barbell.jpg";
+
+const DEFAULT_POSTER = "/assets/resofit-community-poster.webp";
+const DEFAULT_VIDEO = "/assets/resofit-community-intro.mp4";
+const DEFAULT_CAPTIONS = "/assets/resofit-community-intro.vtt";
 
 // Four cinematic phases — 0–2 / 2–4 / 4–6 / 6–8 seconds.
 // Poster-first (no LCP hit); optional muted video enhancement on idle.
@@ -85,11 +90,18 @@ function IdentityGate({ open, onClose, onComplete }: IdentityGateProps) {
           ? "@yourhandle"
           : "you@gmail.com";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const router = useRouter();
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!handle.trim() || submitting) return;
     setSubmitting(true);
     createIdentity(channel, handle);
+    // Preload /personalize before handoff for instant mobile navigation.
+    try {
+      await router.preloadRoute({ to: "/personalize" });
+    } catch {
+      /* preload best-effort */
+    }
     handoffToChatB2K("personalized_journey");
     onComplete();
   };
