@@ -24,7 +24,19 @@ export type TrackEvent =
   | "cinematic_cta_click"
   | "identity_started"
   | "identity_created"
-  | "chatb2k_handoff";
+  | "chatb2k_handoff"
+  | "play_home_view"
+  | "game_selected"
+  | "quick_match"
+  | "match_started"
+  | "match_finished"
+  | "achievement_unlocked"
+  | "reward_claimed"
+  | "leaderboard_view"
+  | "tournament_joined"
+  | "friend_invited"
+  | "wellness_bonus"
+  | "chatb2k_play_assist";
 
 function getAnonId(): string {
   if (typeof window === "undefined") return "ssr";

@@ -9,6 +9,7 @@ const NAV: Array<{ to: string; label: string; exact?: boolean }> = [
   { to: "/personalize", label: "Assessment" },
   { to: "/shop", label: "Shop" },
   { to: "/blog", label: "Blog" },
+  { to: "/community/play", label: "Play ⭐" },
   { to: "/success-stories", label: "Success Stories" },
   { to: "/about", label: "About" },
   { to: "/contact", label: "Contact" },

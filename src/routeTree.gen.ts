@@ -17,11 +17,14 @@ import { Route as PersonalizeRouteImport } from './routes/personalize'
 import { Route as KnowledgeRouteImport } from './routes/knowledge'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as BlogRouteImport } from './routes/blog'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProgramsSlugRouteImport } from './routes/programs.$slug'
 import { Route as ProductHandleRouteImport } from './routes/product.$handle'
+import { Route as CommunityPlayRouteImport } from './routes/community.play'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as CommunityPlayGameRouteImport } from './routes/community.play.$game'
 
 const SuccessStoriesRoute = SuccessStoriesRouteImport.update({
   id: '/success-stories',
@@ -63,6 +66,11 @@ const BlogRoute = BlogRouteImport.update({
   path: '/blog',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -83,15 +91,26 @@ const ProductHandleRoute = ProductHandleRouteImport.update({
   path: '/product/$handle',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CommunityPlayRoute = CommunityPlayRouteImport.update({
+  id: '/community/play',
+  path: '/community/play',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BlogSlugRoute = BlogSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => BlogRoute,
 } as any)
+const CommunityPlayGameRoute = CommunityPlayGameRouteImport.update({
+  id: '/$game',
+  path: '/$game',
+  getParentRoute: () => CommunityPlayRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
   '/contact': typeof ContactRoute
   '/knowledge': typeof KnowledgeRoute
@@ -101,12 +120,15 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/success-stories': typeof SuccessStoriesRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/community/play': typeof CommunityPlayRouteWithChildren
   '/product/$handle': typeof ProductHandleRoute
   '/programs/$slug': typeof ProgramsSlugRoute
+  '/community/play/$game': typeof CommunityPlayGameRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
   '/contact': typeof ContactRoute
   '/knowledge': typeof KnowledgeRoute
@@ -116,13 +138,16 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/success-stories': typeof SuccessStoriesRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/community/play': typeof CommunityPlayRouteWithChildren
   '/product/$handle': typeof ProductHandleRoute
   '/programs/$slug': typeof ProgramsSlugRoute
+  '/community/play/$game': typeof CommunityPlayGameRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
   '/contact': typeof ContactRoute
   '/knowledge': typeof KnowledgeRoute
@@ -132,14 +157,17 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/success-stories': typeof SuccessStoriesRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/community/play': typeof CommunityPlayRouteWithChildren
   '/product/$handle': typeof ProductHandleRoute
   '/programs/$slug': typeof ProgramsSlugRoute
+  '/community/play/$game': typeof CommunityPlayGameRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/about'
+    | '/auth'
     | '/blog'
     | '/contact'
     | '/knowledge'
@@ -149,12 +177,15 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/success-stories'
     | '/blog/$slug'
+    | '/community/play'
     | '/product/$handle'
     | '/programs/$slug'
+    | '/community/play/$game'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
+    | '/auth'
     | '/blog'
     | '/contact'
     | '/knowledge'
@@ -164,12 +195,15 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/success-stories'
     | '/blog/$slug'
+    | '/community/play'
     | '/product/$handle'
     | '/programs/$slug'
+    | '/community/play/$game'
   id:
     | '__root__'
     | '/'
     | '/about'
+    | '/auth'
     | '/blog'
     | '/contact'
     | '/knowledge'
@@ -179,13 +213,16 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/success-stories'
     | '/blog/$slug'
+    | '/community/play'
     | '/product/$handle'
     | '/programs/$slug'
+    | '/community/play/$game'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  AuthRoute: typeof AuthRoute
   BlogRoute: typeof BlogRouteWithChildren
   ContactRoute: typeof ContactRoute
   KnowledgeRoute: typeof KnowledgeRoute
@@ -194,6 +231,7 @@ export interface RootRouteChildren {
   ShopRoute: typeof ShopRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SuccessStoriesRoute: typeof SuccessStoriesRoute
+  CommunityPlayRoute: typeof CommunityPlayRouteWithChildren
   ProductHandleRoute: typeof ProductHandleRoute
 }
 
@@ -255,6 +293,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -283,12 +328,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductHandleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/community/play': {
+      id: '/community/play'
+      path: '/community/play'
+      fullPath: '/community/play'
+      preLoaderRoute: typeof CommunityPlayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/$slug': {
       id: '/blog/$slug'
       path: '/$slug'
       fullPath: '/blog/$slug'
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof BlogRoute
+    }
+    '/community/play/$game': {
+      id: '/community/play/$game'
+      path: '/$game'
+      fullPath: '/community/play/$game'
+      preLoaderRoute: typeof CommunityPlayGameRouteImport
+      parentRoute: typeof CommunityPlayRoute
     }
   }
 }
@@ -315,9 +374,22 @@ const ProgramsRouteWithChildren = ProgramsRoute._addFileChildren(
   ProgramsRouteChildren,
 )
 
+interface CommunityPlayRouteChildren {
+  CommunityPlayGameRoute: typeof CommunityPlayGameRoute
+}
+
+const CommunityPlayRouteChildren: CommunityPlayRouteChildren = {
+  CommunityPlayGameRoute: CommunityPlayGameRoute,
+}
+
+const CommunityPlayRouteWithChildren = CommunityPlayRoute._addFileChildren(
+  CommunityPlayRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  AuthRoute: AuthRoute,
   BlogRoute: BlogRouteWithChildren,
   ContactRoute: ContactRoute,
   KnowledgeRoute: KnowledgeRoute,
@@ -326,18 +398,9 @@ const rootRouteChildren: RootRouteChildren = {
   ShopRoute: ShopRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SuccessStoriesRoute: SuccessStoriesRoute,
+  CommunityPlayRoute: CommunityPlayRouteWithChildren,
   ProductHandleRoute: ProductHandleRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
