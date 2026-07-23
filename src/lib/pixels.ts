@@ -1,0 +1,191 @@
+// Ads pixel loader — Meta Pixel, TikTok Pixel, GA4.
+// Fully inert until the matching VITE_ env var is set at build time.
+// Reuses existing tracking.ts; no new dependencies.
+
+const META_ID = import.meta.env.VITE_META_PIXEL_ID as string | undefined;
+const TIKTOK_ID = import.meta.env.VITE_TIKTOK_PIXEL_ID as string | undefined;
+const GA4_ID = import.meta.env.VITE_GA4_ID as string | undefined;
+
+let initialized = false;
+
+declare global {
+  interface Window {
+    fbq?: (...args: unknown[]) => void;
+    ttq?: {
+      load: (id: string) => void;
+      page: () => void;
+      track: (event: string, params?: Record<string, unknown>) => void;
+      identify?: (params: Record<string, unknown>) => void;
+      instance?: (id: string) => unknown;
+    };
+    dataLayer?: unknown[];
+    gtag?: (...args: unknown[]) => void;
+  }
+}
+
+function loadScript(src: string, id: string) {
+  if (document.getElementById(id)) return;
+  const s = document.createElement("script");
+  s.async = true;
+  s.src = src;
+  s.id = id;
+  document.head.appendChild(s);
+}
+
+export function initPixels() {
+  if (initialized || typeof window === "undefined") return;
+  initialized = true;
+
+  // Meta Pixel
+  if (META_ID) {
+    (function (f: any, b: any, e: string, v: string) {
+      if (f.fbq) return;
+      const n: any = (f.fbq = function () {
+        n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+      });
+      if (!f._fbq) f._fbq = n;
+      n.push = n;
+      n.loaded = true;
+      n.version = "2.0";
+      n.queue = [];
+      const t = b.createElement(e) as HTMLScriptElement;
+      t.async = true;
+      t.src = v;
+      const s = b.getElementsByTagName(e)[0];
+      s.parentNode!.insertBefore(t, s);
+    })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
+    window.fbq?.("init", META_ID);
+    window.fbq?.("track", "PageView");
+  }
+
+  // TikTok Pixel
+  if (TIKTOK_ID) {
+    (function (w: any, d: Document, t: string) {
+      w.TiktokAnalyticsObject = t;
+      const ttq: any = (w[t] = w[t] || []);
+      ttq.methods = [
+        "page",
+        "track",
+        "identify",
+        "instances",
+        "debug",
+        "on",
+        "off",
+        "once",
+        "ready",
+        "alias",
+        "group",
+        "enableCookie",
+        "disableCookie",
+      ];
+      ttq.setAndDefer = function (n: any, e: string) {
+        n[e] = function () {
+          n.push([e].concat(Array.prototype.slice.call(arguments, 0)));
+        };
+      };
+      for (let i = 0; i < ttq.methods.length; i++) ttq.setAndDefer(ttq, ttq.methods[i]);
+      ttq.instance = function (t: string) {
+        const e = ttq._i[t] || [];
+        for (let n = 0; n < ttq.methods.length; n++) ttq.setAndDefer(e, ttq.methods[n]);
+        return e;
+      };
+      ttq.load = function (e: string) {
+        const n = "https://analytics.tiktok.com/i18n/pixel/events.js";
+        ttq._i = ttq._i || {};
+        ttq._i[e] = [];
+        ttq._i[e]._u = n;
+        ttq._t = ttq._t || {};
+        ttq._t[e] = +new Date();
+        const s = d.createElement("script") as HTMLScriptElement;
+        s.type = "text/javascript";
+        s.async = true;
+        s.src = `${n}?sdkid=${e}&lib=${t}`;
+        const a = d.getElementsByTagName("script")[0];
+        a.parentNode!.insertBefore(s, a);
+      };
+      ttq.load(TIKTOK_ID);
+      ttq.page();
+    })(window, document, "ttq");
+  }
+
+  // GA4
+  if (GA4_ID) {
+    loadScript(`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`, "ga4-gtag");
+    window.dataLayer = window.dataLayer || [];
+    const gtag: any = function () {
+      window.dataLayer!.push(arguments);
+    };
+    window.gtag = gtag;
+    gtag("js", new Date());
+    gtag("config", GA4_ID, { send_page_view: true });
+  }
+}
+
+export function pixelPageView(path?: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.fbq?.("track", "PageView");
+    window.ttq?.page();
+    if (GA4_ID) window.gtag?.("event", "page_view", { page_path: path ?? window.location.pathname });
+  } catch {
+    /* noop */
+  }
+}
+
+interface PixelEventPayload {
+  value?: number;
+  currency?: string;
+  content_ids?: string[];
+  content_name?: string;
+  content_type?: string;
+  contents?: Array<{ id: string; quantity: number; item_price?: number }>;
+  num_items?: number;
+}
+
+const META_MAP: Record<string, string> = {
+  product_view: "ViewContent",
+  add_to_cart: "AddToCart",
+  checkout_start: "InitiateCheckout",
+  purchase_success: "Purchase",
+  identity_created: "Lead",
+};
+
+const TIKTOK_MAP: Record<string, string> = {
+  product_view: "ViewContent",
+  add_to_cart: "AddToCart",
+  checkout_start: "InitiateCheckout",
+  purchase_success: "CompletePayment",
+  identity_created: "SubmitForm",
+};
+
+const GA4_MAP: Record<string, string> = {
+  product_view: "view_item",
+  add_to_cart: "add_to_cart",
+  checkout_start: "begin_checkout",
+  purchase_success: "purchase",
+  identity_created: "generate_lead",
+};
+
+export function pixelEvent(event: string, payload: PixelEventPayload = {}) {
+  if (typeof window === "undefined") return;
+  try {
+    const meta = META_MAP[event];
+    if (meta) window.fbq?.("track", meta, payload);
+    const tt = TIKTOK_MAP[event];
+    if (tt) window.ttq?.track(tt, payload as Record<string, unknown>);
+    const ga = GA4_MAP[event];
+    if (ga && window.gtag) {
+      window.gtag("event", ga, {
+        value: payload.value,
+        currency: payload.currency ?? "NGN",
+        items: payload.contents?.map((c) => ({
+          item_id: c.id,
+          quantity: c.quantity,
+          price: c.item_price,
+        })),
+      });
+    }
+  } catch {
+    /* noop */
+  }
+}

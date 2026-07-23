@@ -13,6 +13,7 @@ import { WhatsAppFloat } from "@/components/WhatsAppFloat";
 import { useEffect } from "react";
 import { captureAttributionFromUrl } from "@/lib/attribution";
 import { auditCatalog } from "@/lib/productIntelligence";
+import { initPixels, pixelPageView } from "@/lib/pixels";
 
 import appCss from "../styles.css?url";
 
@@ -130,9 +131,10 @@ function RootComponent() {
 
 function AppInner() {
   useCartSync();
+  const router = useRouter();
   useEffect(() => {
     captureAttributionFromUrl();
-    // Run product intelligence audit against any SKUs we've seen engagement on.
+    initPixels();
     try {
       const raw = localStorage.getItem("resofit:imgPriority:v1");
       if (raw) {
@@ -144,6 +146,13 @@ function AppInner() {
       /* noop */
     }
   }, []);
+  useEffect(() => {
+    // Fire PageView on every client-side navigation.
+    const unsub = router.subscribe("onResolved", () => {
+      pixelPageView(window.location.pathname);
+    });
+    return () => unsub();
+  }, [router]);
   return (
     <>
       <Outlet />
