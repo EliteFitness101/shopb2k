@@ -324,6 +324,9 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
           </ul>
         </div>
       </div>
+
+      <RecommendedProducts currentHandle={product.handle} productType={product.productType} />
+      <RecentlyViewed excludeHandle={product.handle} />
     </article>
   );
 }
