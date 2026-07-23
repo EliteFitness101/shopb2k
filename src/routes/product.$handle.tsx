@@ -2,11 +2,14 @@ import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-rout
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { preloadOnIdle, recordEngagement } from "@/lib/imagePriority";
+import { getCachedPerf } from "@/lib/productIntelligence";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Truck, ShieldCheck, Package } from "lucide-react";
+import { ArrowLeft, Loader2, Truck, ShieldCheck, Package, Sparkles } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ProductImage } from "@/components/ProductImage";
+import { RecommendedProducts } from "@/components/RecommendedProducts";
+import { RecentlyViewed, recordRecentlyViewed } from "@/components/RecentlyViewed";
 import {
   PRODUCT_BY_HANDLE_QUERY,
   approxUSD,
@@ -113,11 +116,21 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
   const addItem = useCartStore((s) => s.addItem);
   const isLoading = useCartStore((s) => s.isLoading);
 
-  // Engagement signals: record PDP view depth + idle-preload other gallery images.
+  // Engagement signals + recently viewed.
   useEffect(() => {
     recordEngagement(product.id, "pdp_depth");
     preloadOnIdle(images.slice(1, 4).map((i) => i.url));
-  }, [product.id, images]);
+    recordRecentlyViewed({
+      handle: product.handle,
+      title: product.title,
+      image: images[0]?.url,
+      price: formatMoney(variants[0]?.price ?? { amount: "0", currencyCode: "NGN" }),
+    });
+  }, [product.id, product.handle, product.title, images, variants]);
+
+  const perf = getCachedPerf(product.id);
+  const confident = perf && perf.pps >= 60;
+
 
   const handleAdd = async () => {
     if (!selectedVariant) return;
@@ -188,12 +201,19 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
           )}
           <h1 className="mt-3 font-display text-5xl leading-tight md:text-6xl">{product.title}</h1>
 
+          {confident && (
+            <div className="mt-4 inline-flex items-center gap-2 rounded-sm border border-gold/40 bg-gold/10 px-3 py-1 text-[10px] uppercase tracking-widest text-gold">
+              <Sparkles className="h-3 w-3" /> Community pick · high engagement
+            </div>
+          )}
+
           <div className="mt-6 flex items-baseline gap-4">
             <p className="font-display text-4xl text-gold">{formatMoney(selectedVariant.price)}</p>
             <p className="text-sm uppercase tracking-widest text-muted-foreground">
               ≈ {approxUSD(selectedVariant.price)}
             </p>
           </div>
+
 
           {product.descriptionHtml ? (
             <div
