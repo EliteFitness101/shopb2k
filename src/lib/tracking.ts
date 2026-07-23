@@ -1,7 +1,8 @@
-// Lightweight event tracker → Make.com webhook.
+// Lightweight event tracker → Make.com webhook + ad pixels.
 // Fire-and-forget; never block UI; never throw.
 
 import { getAttribution } from "./attribution";
+import { pixelEvent } from "./pixels";
 
 const WEBHOOK_URL = "https://hook.eu1.make.com/p0c26asklninfrxhp2sw6nkdjjb19a89";
 const ANON_KEY = "resofit:anon_id";
@@ -102,6 +103,23 @@ export function track(event: TrackEvent, payload: Record<string, unknown> = {}) 
       keepalive: true,
       mode: "no-cors",
     }).catch(() => {});
+  } catch {
+    /* noop */
+  }
+  // Mirror commerce/lead events to ad pixels (inert unless env IDs set).
+  try {
+    pixelEvent(event, {
+      value: typeof payload.value === "number" ? payload.value : undefined,
+      currency: typeof payload.currency === "string" ? payload.currency : "NGN",
+      content_ids: Array.isArray(payload.content_ids)
+        ? (payload.content_ids as string[])
+        : typeof payload.product_id === "string"
+          ? [payload.product_id]
+          : undefined,
+      content_name: typeof payload.product_title === "string" ? payload.product_title : undefined,
+      content_type: "product",
+      num_items: typeof payload.quantity === "number" ? payload.quantity : undefined,
+    });
   } catch {
     /* noop */
   }
