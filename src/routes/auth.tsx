@@ -5,6 +5,9 @@ import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sign in — ResoFit Play" },
@@ -18,22 +21,36 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
 
+  function goAfterAuth() {
+    if (next) {
+      window.location.href = next;
+      return;
+    }
+    navigate({ to: "/community/play" });
+  }
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/community/play" });
+      if (!data.session) return;
+      if (next) window.location.href = next;
+      else navigate({ to: "/community/play" });
     });
-  }, [navigate]);
+  }, [navigate, next]);
 
   async function handleGoogle() {
     setBusy(true);
+    const returnTo = next
+      ? `${window.location.origin}/auth?next=${encodeURIComponent(next)}`
+      : `${window.location.origin}/auth`;
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin + "/auth",
+      redirect_uri: returnTo,
     });
     if (result.error) {
       toast.error(result.error.message ?? "Google sign in failed");
@@ -41,8 +58,9 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/community/play" });
+    goAfterAuth();
   }
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -53,7 +71,9 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin + "/auth",
+            emailRedirectTo: next
+              ? `${window.location.origin}/auth?next=${encodeURIComponent(next)}`
+              : `${window.location.origin}/auth`,
             data: { full_name: name },
           },
         });
@@ -62,7 +82,8 @@ function AuthPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/community/play" });
+        goAfterAuth();
+
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Auth failed");
