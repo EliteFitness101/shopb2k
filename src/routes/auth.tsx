@@ -71,7 +71,9 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin + "/auth",
+            emailRedirectTo: next
+              ? `${window.location.origin}/auth?next=${encodeURIComponent(next)}`
+              : `${window.location.origin}/auth`,
             data: { full_name: name },
           },
         });
@@ -80,7 +82,8 @@ function AuthPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/community/play" });
+        goAfterAuth();
+
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Auth failed");
