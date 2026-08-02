@@ -28,28 +28,18 @@ export function SiteHeader() {
             RESO<span className="text-gold">FIT</span>
           </span>
         </Link>
-        <nav aria-label="Primary" className="hidden items-center gap-6 text-[13px] lg:flex">
-          {NAV.map((n) => (
-            <Link
-              key={n.to}
-              to={n.to as any}
-              activeOptions={n.exact ? { exact: true } : undefined}
-              className="text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-gold"
-              activeProps={{ className: "text-foreground" }}
-            >
-              {n.label}
-            </Link>
-          ))}
-        </nav>
+        <PlatformMegaMenu />
         <div className="flex items-center gap-3">
           <Link
-            to="/personalize"
+            to={PlatformRoutes.personalize as any}
             className="hidden h-10 items-center rounded-sm bg-gold px-4 text-[11px] font-semibold uppercase tracking-widest text-gold-foreground transition-transform hover:-translate-y-0.5 md:inline-flex focus-visible:outline-2 focus-visible:outline-gold"
           >
             {CTA.primary}
           </Link>
           <CartDrawer />
+          <PlatformMobileNav />
         </div>
+
       </div>
     </header>
   );
