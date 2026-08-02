@@ -14,6 +14,11 @@ import { useEffect } from "react";
 import { captureAttributionFromUrl } from "@/lib/attribution";
 import { auditCatalog } from "@/lib/productIntelligence";
 import { initPixels, pixelPageView } from "@/lib/pixels";
+import { captureRsidFromUrl } from "@/platform/identity";
+import { captureLanding } from "@/platform/attribution";
+import { reportEnvironment } from "@/platform/env";
+import { organizationJsonLd, websiteJsonLd } from "@/platform/seo";
+
 
 import appCss from "../styles.css?url";
 
@@ -98,7 +103,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify(organizationJsonLd()),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify(websiteJsonLd()),
+      },
+    ],
   }),
+
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -134,7 +150,11 @@ function AppInner() {
   const router = useRouter();
   useEffect(() => {
     captureAttributionFromUrl();
+    captureRsidFromUrl();
+    captureLanding();
+    reportEnvironment();
     initPixels();
+
     try {
       const raw = localStorage.getItem("resofit:imgPriority:v1");
       if (raw) {
