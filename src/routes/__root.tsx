@@ -150,7 +150,11 @@ function AppInner() {
   const router = useRouter();
   useEffect(() => {
     captureAttributionFromUrl();
+    captureRsidFromUrl();
+    captureLanding();
+    reportEnvironment();
     initPixels();
+
     try {
       const raw = localStorage.getItem("resofit:imgPriority:v1");
       if (raw) {
