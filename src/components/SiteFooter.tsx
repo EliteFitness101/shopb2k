@@ -1,39 +1,53 @@
 import { Link } from "@tanstack/react-router";
 import { CTA } from "@/lib/ctas";
+import { PlatformRoutes, isExternal } from "@/platform/routes";
 
-const COLUMNS: Array<{ heading: string; links: Array<{ to: string; label: string; external?: boolean }> }> = [
+const COLUMNS: Array<{ heading: string; links: Array<{ to: string; label: string }> }> = [
   {
     heading: "Wellness",
     links: [
-      { to: "/programs", label: "Programs" },
-      { to: "/personalize", label: "ChatB2K™ Assessment" },
-      { to: "/knowledge", label: "Knowledge Hub" },
-      { to: "/success-stories", label: "Success Stories" },
+      { to: PlatformRoutes.programs, label: "Programs" },
+      { to: PlatformRoutes.personalize, label: "ChatB2K™ Assessment" },
+      { to: PlatformRoutes.knowledge, label: "Knowledge Hub" },
+      { to: PlatformRoutes.successStories, label: "Success Stories" },
     ],
   },
   {
-    heading: "Shop",
+    heading: "Platform",
     links: [
-      { to: "/shop", label: "All Equipment" },
-      { to: "/blog", label: "Journal" },
+      { to: PlatformRoutes.shopPage, label: "Equipment" },
+      { to: PlatformRoutes.shop, label: "Shop" },
+      { to: PlatformRoutes.catalog, label: "Catalog" },
+      { to: PlatformRoutes.dashboard, label: "Dashboard" },
+    ],
+  },
+  {
+    heading: "Network",
+    links: [
+      { to: PlatformRoutes.elite, label: "Elite" },
+      { to: PlatformRoutes.candera, label: "Candera" },
+      { to: PlatformRoutes.commander, label: "Commander" },
+      { to: PlatformRoutes.blog, label: "Journal" },
     ],
   },
   {
     heading: "Company",
     links: [
-      { to: "/about", label: "About" },
-      { to: "/contact", label: "Contact" },
-      { to: "/privacy", label: "Privacy" },
-      { to: "/terms", label: "Terms" },
+      { to: PlatformRoutes.about, label: "About" },
+      { to: PlatformRoutes.contact, label: "Support" },
+      { to: PlatformRoutes.privacy, label: "Privacy" },
+      { to: PlatformRoutes.terms, label: "Terms" },
     ],
   },
 ];
+
+const linkClass = "hover:text-foreground focus-visible:outline-2 focus-visible:outline-gold";
 
 export function SiteFooter() {
   return (
     <footer className="border-t border-border/60 bg-black/40">
       <div className="mx-auto max-w-7xl px-6 py-16">
-        <div className="grid gap-12 md:grid-cols-4">
+        <div className="grid gap-12 md:grid-cols-5">
           <div>
             <div className="font-display text-2xl tracking-wider">
               RESO<span className="text-gold">FIT</span>
@@ -69,13 +83,16 @@ export function SiteFooter() {
               <p className="text-xs uppercase tracking-[0.25em] text-gold">{c.heading}</p>
               <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
                 {c.links.map((l) => (
-                  <li key={l.to}>
-                    <Link
-                      to={l.to as any}
-                      className="hover:text-foreground focus-visible:outline-2 focus-visible:outline-gold"
-                    >
-                      {l.label}
-                    </Link>
+                  <li key={`${c.heading}-${l.label}`}>
+                    {isExternal(l.to) ? (
+                      <a href={l.to} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                        {l.label}
+                      </a>
+                    ) : (
+                      <Link to={l.to as any} className={linkClass}>
+                        {l.label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
