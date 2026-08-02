@@ -21,8 +21,11 @@ export const InternalRoutes = {
 
 /** Cross-application platform routes, resolved from the manifest. */
 export const PlatformRoutes = {
+  ...InternalRoutes,
   main: appUrl("main"),
+  /** Dedicated commerce app (shop.resofit.fit). Internal grid stays at `shopPage`. */
   shop: appUrl("shop"),
+  shopPage: InternalRoutes.shop,
   catalog: appUrl("catalog"),
   dashboard: appUrl("dashboard"),
   joyFunnel: appUrl("joyFunnel"),
@@ -32,7 +35,6 @@ export const PlatformRoutes = {
   candera: appUrl("candera"),
   commander: appUrl("commander"),
   academy: appUrl("academy"),
-  ...InternalRoutes,
 } as const;
 
 export type PlatformRouteKey = keyof typeof PlatformRoutes;
