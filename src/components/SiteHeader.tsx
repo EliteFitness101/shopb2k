@@ -1,19 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { CartDrawer } from "@/components/CartDrawer";
+import { PlatformMegaMenu, PlatformMobileNav } from "@/components/PlatformNav";
 import { ShieldCheck, Sparkles } from "lucide-react";
 import { CTA } from "@/lib/ctas";
+import { PlatformRoutes } from "@/platform/routes";
 
-const NAV: Array<{ to: string; label: string; exact?: boolean }> = [
-  { to: "/", label: "Home", exact: true },
-  { to: "/programs", label: "Programs" },
-  { to: "/personalize", label: "Assessment" },
-  { to: "/shop", label: "Shop" },
-  { to: "/blog", label: "Blog" },
-  { to: "/community/play", label: "Play ⭐" },
-  { to: "/success-stories", label: "Success Stories" },
-  { to: "/about", label: "About" },
-  { to: "/contact", label: "Contact" },
-];
 
 export function SiteHeader() {
   return (
