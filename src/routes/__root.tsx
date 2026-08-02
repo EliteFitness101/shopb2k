@@ -14,6 +14,11 @@ import { useEffect } from "react";
 import { captureAttributionFromUrl } from "@/lib/attribution";
 import { auditCatalog } from "@/lib/productIntelligence";
 import { initPixels, pixelPageView } from "@/lib/pixels";
+import { captureRsidFromUrl } from "@/platform/identity";
+import { captureLanding } from "@/platform/attribution";
+import { reportEnvironment } from "@/platform/env";
+import { organizationJsonLd, websiteJsonLd } from "@/platform/seo";
+
 
 import appCss from "../styles.css?url";
 
