@@ -26,6 +26,7 @@ import { Route as ProgramsSlugRouteImport } from './routes/programs.$slug'
 import { Route as ProductHandleRouteImport } from './routes/product.$handle'
 import { Route as CommunityPlayRouteImport } from './routes/community.play'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as AdminEnterpriseRouteImport } from './routes/admin.enterprise'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as CommunityPlayGameRouteImport } from './routes/community.play.$game'
@@ -117,6 +118,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => BlogRoute,
 } as any)
+const AdminEnterpriseRoute = AdminEnterpriseRouteImport.update({
+  id: '/enterprise',
+  path: '/enterprise',
+  getParentRoute: () => AdminRoute,
+} as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
   Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
     id: '/.well-known/oauth-protected-resource',
@@ -149,7 +155,7 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
   '/contact': typeof ContactRoute
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/success-stories': typeof SuccessStoriesRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/enterprise': typeof AdminEnterpriseRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/community/play': typeof CommunityPlayRouteWithChildren
   '/product/$handle': typeof ProductHandleRoute
@@ -173,7 +180,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
   '/contact': typeof ContactRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/success-stories': typeof SuccessStoriesRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/enterprise': typeof AdminEnterpriseRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/community/play': typeof CommunityPlayRouteWithChildren
   '/product/$handle': typeof ProductHandleRoute
@@ -198,7 +206,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
   '/contact': typeof ContactRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/success-stories': typeof SuccessStoriesRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/enterprise': typeof AdminEnterpriseRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/community/play': typeof CommunityPlayRouteWithChildren
   '/product/$handle': typeof ProductHandleRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/success-stories'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/enterprise'
     | '/blog/$slug'
     | '/community/play'
     | '/product/$handle'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/success-stories'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/enterprise'
     | '/blog/$slug'
     | '/community/play'
     | '/product/$handle'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/success-stories'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/enterprise'
     | '/blog/$slug'
     | '/community/play'
     | '/product/$handle'
@@ -297,7 +309,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   BlogRoute: typeof BlogRouteWithChildren
   ContactRoute: typeof ContactRoute
@@ -437,6 +449,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof BlogRoute
     }
+    '/admin/enterprise': {
+      id: '/admin/enterprise'
+      path: '/enterprise'
+      fullPath: '/admin/enterprise'
+      preLoaderRoute: typeof AdminEnterpriseRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/.well-known/oauth-protected-resource': {
       id: '/.well-known/oauth-protected-resource'
       path: '/.well-known/oauth-protected-resource'
@@ -475,6 +494,16 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminEnterpriseRoute: typeof AdminEnterpriseRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminEnterpriseRoute: AdminEnterpriseRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface BlogRouteChildren {
   BlogSlugRoute: typeof BlogSlugRoute
 }
@@ -512,7 +541,7 @@ const CommunityPlayRouteWithChildren = CommunityPlayRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   BlogRoute: BlogRouteWithChildren,
   ContactRoute: ContactRoute,
