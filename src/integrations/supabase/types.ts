@@ -1627,7 +1627,6 @@ export type Database = {
         Args: {
           _org_id: string
           _roles: Database["public"]["Enums"]["org_role"][]
-          _user_id: string
         }
         Returns: boolean
       }
@@ -1638,14 +1637,8 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_org_member: {
-        Args: { _org_id: string; _user_id: string }
-        Returns: boolean
-      }
-      owns_order: {
-        Args: { _order_id: string; _user_id: string }
-        Returns: boolean
-      }
+      is_org_member: { Args: { _org_id: string }; Returns: boolean }
+      owns_order: { Args: { _order_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "player"
