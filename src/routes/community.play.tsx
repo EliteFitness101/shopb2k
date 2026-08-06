@@ -1,3 +1,4 @@
+import { absoluteUrl } from "@/platform/routes";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -18,7 +19,9 @@ export const Route = createFileRoute("/community/play")({
       { property: "og:description", content: "Wellness-powered games with XP, ResoCoins, tournaments, and leaderboards." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: absoluteUrl("/community/play") },
     ],
+    links: [{ rel: "canonical", href: absoluteUrl("/community/play") }],
   }),
   component: PlayHome,
 });
