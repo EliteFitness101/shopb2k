@@ -13,10 +13,10 @@ export const Route = createFileRoute("/about")({
       { property: "og:title", content: "About ResoFit" },
       { property: "og:description", content: "Africa's personalized wellness platform." },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://shopb2k.lovable.app/about" },
+      { property: "og:url", content: "https://www.resofit.fit/about" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "https://shopb2k.lovable.app/about" }],
+    links: [{ rel: "canonical", href: "https://www.resofit.fit/about" }],
   }),
   component: About,
 });

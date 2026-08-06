@@ -14,10 +14,10 @@ export const Route = createFileRoute("/programs")({
       { property: "og:title", content: "Wellness Programs — ResoFit" },
       { property: "og:description", content: "Signature programs personalized by ChatB2K™." },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://shopb2k.lovable.app/programs" },
+      { property: "og:url", content: "https://www.resofit.fit/programs" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "https://shopb2k.lovable.app/programs" }],
+    links: [{ rel: "canonical", href: "https://www.resofit.fit/programs" }],
   }),
   component: ProgramsIndex,
 });

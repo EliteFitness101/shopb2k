@@ -14,10 +14,10 @@ export const Route = createFileRoute("/blog")({
       { property: "og:title", content: "The ResoFit Journal" },
       { property: "og:description", content: "Field notes on personalized wellness for Africa." },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://shopb2k.lovable.app/blog" },
+      { property: "og:url", content: "https://www.resofit.fit/blog" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "https://shopb2k.lovable.app/blog" }],
+    links: [{ rel: "canonical", href: "https://www.resofit.fit/blog" }],
   }),
   component: BlogIndex,
 });

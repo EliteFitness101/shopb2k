@@ -14,10 +14,10 @@ export const Route = createFileRoute("/success-stories")({
       { property: "og:title", content: "Success Stories — ResoFit" },
       { property: "og:description", content: "Verified member transformations from across Africa." },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://shopb2k.lovable.app/success-stories" },
+      { property: "og:url", content: "https://www.resofit.fit/success-stories" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "https://shopb2k.lovable.app/success-stories" }],
+    links: [{ rel: "canonical", href: "https://www.resofit.fit/success-stories" }],
   }),
   component: Stories,
 });
