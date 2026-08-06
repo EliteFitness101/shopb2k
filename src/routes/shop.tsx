@@ -38,7 +38,7 @@ export const Route = createFileRoute("/shop")({
   validateSearch: (s: Record<string, unknown>) => ({
     type: typeof s.type === "string" ? (s.type as string) : undefined,
     vendor: typeof s.vendor === "string" ? (s.vendor as string) : undefined,
-    sort: (typeof s.sort === "string" ? s.sort : "featured") as SortKey,
+    sort: (typeof s.sort === "string" ? (s.sort as SortKey) : undefined) as SortKey | undefined,
   }),
   component: Shop,
 });
@@ -104,7 +104,7 @@ function ShopGrid() {
     if (search.type) list = list.filter((p) => p.node.productType === search.type);
     if (search.vendor) list = list.filter((p) => p.node.vendor === search.vendor);
     const sorted = [...list];
-    switch (search.sort) {
+    switch (search.sort ?? "featured") {
       case "price_asc":
         sorted.sort(
           (a, b) =>
@@ -177,7 +177,7 @@ function ShopGrid() {
             <label className="flex flex-col gap-1 text-[11px] uppercase tracking-widest text-muted-foreground">
               Sort
               <select
-                value={search.sort}
+                value={search.sort ?? "featured"}
                 onChange={(e) => updateSearch({ sort: e.target.value as SortKey })}
                 aria-label="Sort products"
                 className="min-w-40 rounded-sm border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-gold focus-visible:outline-2 focus-visible:outline-gold"
