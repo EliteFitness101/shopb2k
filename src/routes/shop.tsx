@@ -33,8 +33,13 @@ export const Route = createFileRoute("/shop")({
         content:
           "Competition-grade barbells, bumper plates, dumbbells, and power racks. Ships from Lagos.",
       },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: absoluteUrl("/shop") },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: absoluteUrl("/shop") }],
   }),
+
   validateSearch: (s: Record<string, unknown>): Partial<{
     type: string;
     vendor: string;
