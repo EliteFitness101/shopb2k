@@ -15,6 +15,10 @@ export const InternalRoutes = {
   contact: "/contact",
   privacy: "/privacy",
   terms: "/terms",
+  cookies: "/cookies",
+  refundPolicy: "/refund-policy",
+  shippingPolicy: "/shipping-policy",
+  accessibility: "/accessibility",
   play: "/community/play",
   admin: "/admin",
 } as const;

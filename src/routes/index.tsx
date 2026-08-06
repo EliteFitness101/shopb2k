@@ -34,11 +34,11 @@ export const Route = createFileRoute("/")({
         content: "Discover premium Services, Custom Equipment  Offers & Proprietary ChatB2K™ Ancestral Intelligence deployment for clarity strength, longevity & healthy living.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://shopb2k.lovable.app/" },
+      { property: "og:url", content: "https://www.resofit.fit/" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
-      { rel: "canonical", href: "https://shopb2k.lovable.app/" },
+      { rel: "canonical", href: "https://www.resofit.fit/" },
       { rel: "preload", as: "image", href: heroImg, fetchpriority: "high" },
     ],
   }),

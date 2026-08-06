@@ -21,7 +21,7 @@ export const Route = createFileRoute("/programs/$slug")({
         ],
       };
     }
-    const url = `https://shopb2k.lovable.app/programs/${params.slug}`;
+    const url = `https://www.resofit.fit/programs/${params.slug}`;
     return {
       meta: [
         { title: `${loaderData.title} — ResoFit Programs` },
