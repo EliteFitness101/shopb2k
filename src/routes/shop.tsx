@@ -35,11 +35,16 @@ export const Route = createFileRoute("/shop")({
       },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>) => ({
-    type: typeof s.type === "string" ? (s.type as string) : undefined,
-    vendor: typeof s.vendor === "string" ? (s.vendor as string) : undefined,
-    sort: (typeof s.sort === "string" ? (s.sort as SortKey) : undefined) as SortKey | undefined,
+  validateSearch: (s: Record<string, unknown>): Partial<{
+    type: string;
+    vendor: string;
+    sort: SortKey;
+  }> => ({
+    ...(typeof s.type === "string" ? { type: s.type } : {}),
+    ...(typeof s.vendor === "string" ? { vendor: s.vendor } : {}),
+    ...(typeof s.sort === "string" ? { sort: s.sort as SortKey } : {}),
   }),
+
   component: Shop,
 });
 
