@@ -74,6 +74,12 @@ export const SITEMAP_REGISTRY: SitemapEntry[] = [
   { path: InternalRoutes.successStories, changefreq: "monthly", priority: "0.6" },
   { path: InternalRoutes.about, changefreq: "monthly", priority: "0.5" },
   { path: InternalRoutes.contact, changefreq: "monthly", priority: "0.5" },
+  { path: InternalRoutes.privacy, changefreq: "yearly", priority: "0.3" },
+  { path: InternalRoutes.terms, changefreq: "yearly", priority: "0.3" },
+  { path: InternalRoutes.cookies, changefreq: "yearly", priority: "0.3" },
+  { path: InternalRoutes.refundPolicy, changefreq: "yearly", priority: "0.3" },
+  { path: InternalRoutes.shippingPolicy, changefreq: "yearly", priority: "0.3" },
+  { path: InternalRoutes.accessibility, changefreq: "yearly", priority: "0.3" },
 ];
 
 export function registerSitemapEntries(entries: SitemapEntry[]): SitemapEntry[] {

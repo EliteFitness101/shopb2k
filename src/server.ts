@@ -66,15 +66,39 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   return brandedErrorResponse();
 }
 
+const SECURITY_HEADERS: Record<string, string> = {
+  "strict-transport-security": "max-age=31536000; includeSubDomains",
+  "x-content-type-options": "nosniff",
+  "x-frame-options": "SAMEORIGIN",
+  "referrer-policy": "strict-origin-when-cross-origin",
+  "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(self)",
+  // Report-Only: observe violations without breaking Shopify/Paystack/analytics.
+  "content-security-policy-report-only":
+    "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https: wss:; frame-src https:; object-src 'none'; base-uri 'self'",
+};
+
+/** Attach production security headers without disturbing the original body/status. */
+function withSecurityHeaders(response: Response): Response {
+  const headers = new Headers(response.headers);
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    if (!headers.has(key)) headers.set(key, value);
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      return withSecurityHeaders(await normalizeCatastrophicSsrResponse(response));
     } catch (error) {
       console.error(error);
-      return brandedErrorResponse();
+      return withSecurityHeaders(brandedErrorResponse());
     }
   },
 };

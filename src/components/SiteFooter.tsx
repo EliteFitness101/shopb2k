@@ -37,6 +37,10 @@ const COLUMNS: Array<{ heading: string; links: Array<{ to: string; label: string
       { to: PlatformRoutes.contact, label: "Support" },
       { to: PlatformRoutes.privacy, label: "Privacy" },
       { to: PlatformRoutes.terms, label: "Terms" },
+      { to: PlatformRoutes.cookies, label: "Cookies" },
+      { to: PlatformRoutes.refundPolicy, label: "Refunds" },
+      { to: PlatformRoutes.shippingPolicy, label: "Shipping" },
+      { to: PlatformRoutes.accessibility, label: "Accessibility" },
     ],
   },
 ];
