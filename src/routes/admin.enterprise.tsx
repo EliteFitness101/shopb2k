@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { EnterpriseAdminNav } from "@/components/admin/EnterpriseAdminNav";
+import { EnterpriseHealth } from "@/components/admin/EnterpriseHealth";
 import { DOMAIN_LIST, domainProgress, getDomain } from "@/domains/kernel/registry";
 import type { DomainId } from "@/domains/kernel/types";
 import { useAllOrders, useOrderStatusCounts } from "@/domains/orders";
@@ -249,6 +250,13 @@ function EnterpriseConsole() {
           ) : null}
         </section>
       </div>
+
+      <section aria-label="Platform health" className="mt-10">
+        <h2 className="mb-4 font-display text-2xl uppercase tracking-tight text-foreground">
+          Production Health
+        </h2>
+        <EnterpriseHealth />
+      </section>
     </main>
   );
 }
