@@ -818,6 +818,54 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_webhook_events: {
+        Row: {
+          created_at: string
+          dedupe_key: string
+          duration_ms: number | null
+          event: string
+          failure_reason: string | null
+          id: string
+          payload: Json | null
+          processing_status: string
+          provider: string
+          reference: string | null
+          retry_count: number
+          signature_status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dedupe_key: string
+          duration_ms?: number | null
+          event: string
+          failure_reason?: string | null
+          id?: string
+          payload?: Json | null
+          processing_status?: string
+          provider?: string
+          reference?: string | null
+          retry_count?: number
+          signature_status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dedupe_key?: string
+          duration_ms?: number | null
+          event?: string
+          failure_reason?: string | null
+          id?: string
+          payload?: Json | null
+          processing_status?: string
+          provider?: string
+          reference?: string | null
+          retry_count?: number
+          signature_status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payouts: {
         Row: {
           amount: number
