@@ -36,6 +36,7 @@ import { Route as AdminEnterpriseRouteImport } from './routes/admin.enterprise'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as CommunityPlayGameRouteImport } from './routes/community.play.$game'
+import { Route as ApiAdminHealthRouteImport } from './routes/api/admin/health'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
@@ -176,6 +177,11 @@ const CommunityPlayGameRoute = CommunityPlayGameRouteImport.update({
   path: '/$game',
   getParentRoute: () => CommunityPlayRoute,
 } as any)
+const ApiAdminHealthRoute = ApiAdminHealthRouteImport.update({
+  id: '/api/admin/health',
+  path: '/api/admin/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -217,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/programs/$slug': typeof ProgramsSlugRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/api/admin/health': typeof ApiAdminHealthRoute
   '/community/play/$game': typeof CommunityPlayGameRoute
 }
 export interface FileRoutesByTo {
@@ -248,6 +255,7 @@ export interface FileRoutesByTo {
   '/programs/$slug': typeof ProgramsSlugRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/api/admin/health': typeof ApiAdminHealthRoute
   '/community/play/$game': typeof CommunityPlayGameRoute
 }
 export interface FileRoutesById {
@@ -280,6 +288,7 @@ export interface FileRoutesById {
   '/programs/$slug': typeof ProgramsSlugRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/api/admin/health': typeof ApiAdminHealthRoute
   '/community/play/$game': typeof CommunityPlayGameRoute
 }
 export interface FileRouteTypes {
@@ -313,6 +322,7 @@ export interface FileRouteTypes {
     | '/programs/$slug'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/api/admin/health'
     | '/community/play/$game'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -344,6 +354,7 @@ export interface FileRouteTypes {
     | '/programs/$slug'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/api/admin/health'
     | '/community/play/$game'
   id:
     | '__root__'
@@ -375,6 +386,7 @@ export interface FileRouteTypes {
     | '/programs/$slug'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/api/admin/health'
     | '/community/play/$game'
   fileRoutesById: FileRoutesById
 }
@@ -404,6 +416,7 @@ export interface RootRouteChildren {
   ProductHandleRoute: typeof ProductHandleRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiAdminHealthRoute: typeof ApiAdminHealthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -597,6 +610,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommunityPlayGameRouteImport
       parentRoute: typeof CommunityPlayRoute
     }
+    '/api/admin/health': {
+      id: '/api/admin/health'
+      path: '/api/admin/health'
+      fullPath: '/api/admin/health'
+      preLoaderRoute: typeof ApiAdminHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -685,6 +705,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProductHandleRoute: ProductHandleRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiAdminHealthRoute: ApiAdminHealthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
