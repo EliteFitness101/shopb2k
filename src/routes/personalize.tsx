@@ -1,4 +1,3 @@
-import { absoluteUrl } from "@/platform/routes";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -40,11 +39,7 @@ export const Route = createFileRoute("/personalize")({
         property: "og:description",
         content: "A premium, personalized wellness recommendation in under a minute.",
       },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: absoluteUrl("/personalize") },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: absoluteUrl("/personalize") }],
   }),
 });
 

@@ -1,4 +1,3 @@
-import { absoluteUrl } from "@/platform/routes";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -34,23 +33,13 @@ export const Route = createFileRoute("/shop")({
         content:
           "Competition-grade barbells, bumper plates, dumbbells, and power racks. Ships from Lagos.",
       },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: absoluteUrl("/shop") },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: absoluteUrl("/shop") }],
   }),
-
-  validateSearch: (s: Record<string, unknown>): Partial<{
-    type: string;
-    vendor: string;
-    sort: SortKey;
-  }> => ({
-    ...(typeof s.type === "string" ? { type: s.type } : {}),
-    ...(typeof s.vendor === "string" ? { vendor: s.vendor } : {}),
-    ...(typeof s.sort === "string" ? { sort: s.sort as SortKey } : {}),
+  validateSearch: (s: Record<string, unknown>) => ({
+    type: typeof s.type === "string" ? (s.type as string) : undefined,
+    vendor: typeof s.vendor === "string" ? (s.vendor as string) : undefined,
+    sort: (typeof s.sort === "string" ? s.sort : "featured") as SortKey,
   }),
-
   component: Shop,
 });
 
@@ -115,7 +104,7 @@ function ShopGrid() {
     if (search.type) list = list.filter((p) => p.node.productType === search.type);
     if (search.vendor) list = list.filter((p) => p.node.vendor === search.vendor);
     const sorted = [...list];
-    switch (search.sort ?? "featured") {
+    switch (search.sort) {
       case "price_asc":
         sorted.sort(
           (a, b) =>
@@ -188,7 +177,7 @@ function ShopGrid() {
             <label className="flex flex-col gap-1 text-[11px] uppercase tracking-widest text-muted-foreground">
               Sort
               <select
-                value={search.sort ?? "featured"}
+                value={search.sort}
                 onChange={(e) => updateSearch({ sort: e.target.value as SortKey })}
                 aria-label="Sort products"
                 className="min-w-40 rounded-sm border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-gold focus-visible:outline-2 focus-visible:outline-gold"

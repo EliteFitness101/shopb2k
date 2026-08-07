@@ -1,4 +1,3 @@
-import { absoluteUrl } from "@/platform/routes";
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -22,14 +21,6 @@ import { useCartStore } from "@/stores/cartStore";
 
 export const Route = createFileRoute("/product/$handle")({
   component: ProductPage,
-  head: ({ params }) => ({
-    meta: [
-      { property: "og:type", content: "product" },
-      { property: "og:url", content: absoluteUrl(`/product/${params.handle}`) },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-    links: [{ rel: "canonical", href: absoluteUrl(`/product/${params.handle}`) }],
-  }),
   errorComponent: ({ error, reset }) => {
     const router = useRouter();
     return (

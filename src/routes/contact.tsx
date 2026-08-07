@@ -13,10 +13,10 @@ export const Route = createFileRoute("/contact")({
       { property: "og:title", content: "Contact ResoFit" },
       { property: "og:description", content: "Talk to CoachB2K™ on WhatsApp or reach the ResoFit team." },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://www.resofit.fit/contact" },
+      { property: "og:url", content: "https://shopb2k.lovable.app/contact" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "https://www.resofit.fit/contact" }],
+    links: [{ rel: "canonical", href: "https://shopb2k.lovable.app/contact" }],
   }),
   component: Contact,
 });

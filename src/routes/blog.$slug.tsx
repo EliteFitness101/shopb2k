@@ -16,7 +16,7 @@ export const Route = createFileRoute("/blog/$slug")({
     if (!loaderData) {
       return { meta: [{ title: "Article not found — ResoFit" }, { name: "robots", content: "noindex" }] };
     }
-    const url = `https://www.resofit.fit/blog/${params.slug}`;
+    const url = `https://shopb2k.lovable.app/blog/${params.slug}`;
     return {
       meta: [
         { title: `${loaderData.title} — ResoFit Journal` },

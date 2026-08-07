@@ -9,43 +9,29 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SuccessStoriesRouteImport } from './routes/success-stories'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ShopRouteImport } from './routes/shop'
-import { Route as ShippingPolicyRouteImport } from './routes/shipping-policy'
-import { Route as RefundPolicyRouteImport } from './routes/refund-policy'
 import { Route as ProgramsRouteImport } from './routes/programs'
-import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PersonalizeRouteImport } from './routes/personalize'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as KnowledgeRouteImport } from './routes/knowledge'
-import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AccessibilityRouteImport } from './routes/accessibility'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProgramsSlugRouteImport } from './routes/programs.$slug'
 import { Route as ProductHandleRouteImport } from './routes/product.$handle'
 import { Route as CommunityPlayRouteImport } from './routes/community.play'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
-import { Route as AdminEnterpriseRouteImport } from './routes/admin.enterprise'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as CommunityPlayGameRouteImport } from './routes/community.play.$game'
-import { Route as ApiAdminHealthRouteImport } from './routes/api/admin/health'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
-import { Route as ApiPublicWebhooksPaystackRouteImport } from './routes/api/public/webhooks/paystack'
 
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SuccessStoriesRoute = SuccessStoriesRouteImport.update({
   id: '/success-stories',
   path: '/success-stories',
@@ -61,24 +47,9 @@ const ShopRoute = ShopRouteImport.update({
   path: '/shop',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ShippingPolicyRoute = ShippingPolicyRouteImport.update({
-  id: '/shipping-policy',
-  path: '/shipping-policy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RefundPolicyRoute = RefundPolicyRouteImport.update({
-  id: '/refund-policy',
-  path: '/refund-policy',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ProgramsRoute = ProgramsRouteImport.update({
   id: '/programs',
   path: '/programs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PersonalizeRoute = PersonalizeRouteImport.update({
@@ -94,11 +65,6 @@ const McpRoute = McpRouteImport.update({
 const KnowledgeRoute = KnowledgeRouteImport.update({
   id: '/knowledge',
   path: '/knowledge',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CookiesRoute = CookiesRouteImport.update({
-  id: '/cookies',
-  path: '/cookies',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -119,11 +85,6 @@ const AuthRoute = AuthRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AccessibilityRoute = AccessibilityRouteImport.update({
-  id: '/accessibility',
-  path: '/accessibility',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -156,11 +117,6 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => BlogRoute,
 } as any)
-const AdminEnterpriseRoute = AdminEnterpriseRouteImport.update({
-  id: '/enterprise',
-  path: '/enterprise',
-  getParentRoute: () => AdminRoute,
-} as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
   Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
     id: '/.well-known/oauth-protected-resource',
@@ -178,11 +134,6 @@ const CommunityPlayGameRoute = CommunityPlayGameRouteImport.update({
   path: '/$game',
   getParentRoute: () => CommunityPlayRoute,
 } as any)
-const ApiAdminHealthRoute = ApiAdminHealthRouteImport.update({
-  id: '/api/admin/health',
-  path: '/api/admin/health',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -194,254 +145,179 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicWebhooksPaystackRoute =
-  ApiPublicWebhooksPaystackRouteImport.update({
-    id: '/api/public/webhooks/paystack',
-    path: '/api/public/webhooks/paystack',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/accessibility': typeof AccessibilityRoute
-  '/admin': typeof AdminRouteWithChildren
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
   '/contact': typeof ContactRoute
-  '/cookies': typeof CookiesRoute
   '/knowledge': typeof KnowledgeRoute
   '/mcp': typeof McpRoute
   '/personalize': typeof PersonalizeRoute
-  '/privacy': typeof PrivacyRoute
   '/programs': typeof ProgramsRouteWithChildren
-  '/refund-policy': typeof RefundPolicyRoute
-  '/shipping-policy': typeof ShippingPolicyRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/success-stories': typeof SuccessStoriesRoute
-  '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
-  '/admin/enterprise': typeof AdminEnterpriseRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/community/play': typeof CommunityPlayRouteWithChildren
   '/product/$handle': typeof ProductHandleRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
-  '/api/admin/health': typeof ApiAdminHealthRoute
   '/community/play/$game': typeof CommunityPlayGameRoute
-  '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/accessibility': typeof AccessibilityRoute
-  '/admin': typeof AdminRouteWithChildren
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
   '/contact': typeof ContactRoute
-  '/cookies': typeof CookiesRoute
   '/knowledge': typeof KnowledgeRoute
   '/mcp': typeof McpRoute
   '/personalize': typeof PersonalizeRoute
-  '/privacy': typeof PrivacyRoute
   '/programs': typeof ProgramsRouteWithChildren
-  '/refund-policy': typeof RefundPolicyRoute
-  '/shipping-policy': typeof ShippingPolicyRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/success-stories': typeof SuccessStoriesRoute
-  '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
-  '/admin/enterprise': typeof AdminEnterpriseRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/community/play': typeof CommunityPlayRouteWithChildren
   '/product/$handle': typeof ProductHandleRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
-  '/api/admin/health': typeof ApiAdminHealthRoute
   '/community/play/$game': typeof CommunityPlayGameRoute
-  '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/accessibility': typeof AccessibilityRoute
-  '/admin': typeof AdminRouteWithChildren
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
   '/contact': typeof ContactRoute
-  '/cookies': typeof CookiesRoute
   '/knowledge': typeof KnowledgeRoute
   '/mcp': typeof McpRoute
   '/personalize': typeof PersonalizeRoute
-  '/privacy': typeof PrivacyRoute
   '/programs': typeof ProgramsRouteWithChildren
-  '/refund-policy': typeof RefundPolicyRoute
-  '/shipping-policy': typeof ShippingPolicyRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/success-stories': typeof SuccessStoriesRoute
-  '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
-  '/admin/enterprise': typeof AdminEnterpriseRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/community/play': typeof CommunityPlayRouteWithChildren
   '/product/$handle': typeof ProductHandleRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
-  '/api/admin/health': typeof ApiAdminHealthRoute
   '/community/play/$game': typeof CommunityPlayGameRoute
-  '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/about'
-    | '/accessibility'
     | '/admin'
     | '/auth'
     | '/blog'
     | '/contact'
-    | '/cookies'
     | '/knowledge'
     | '/mcp'
     | '/personalize'
-    | '/privacy'
     | '/programs'
-    | '/refund-policy'
-    | '/shipping-policy'
     | '/shop'
     | '/sitemap.xml'
     | '/success-stories'
-    | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
-    | '/admin/enterprise'
     | '/blog/$slug'
     | '/community/play'
     | '/product/$handle'
     | '/programs/$slug'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
-    | '/api/admin/health'
     | '/community/play/$game'
-    | '/api/public/webhooks/paystack'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
-    | '/accessibility'
     | '/admin'
     | '/auth'
     | '/blog'
     | '/contact'
-    | '/cookies'
     | '/knowledge'
     | '/mcp'
     | '/personalize'
-    | '/privacy'
     | '/programs'
-    | '/refund-policy'
-    | '/shipping-policy'
     | '/shop'
     | '/sitemap.xml'
     | '/success-stories'
-    | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
-    | '/admin/enterprise'
     | '/blog/$slug'
     | '/community/play'
     | '/product/$handle'
     | '/programs/$slug'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
-    | '/api/admin/health'
     | '/community/play/$game'
-    | '/api/public/webhooks/paystack'
   id:
     | '__root__'
     | '/'
     | '/about'
-    | '/accessibility'
     | '/admin'
     | '/auth'
     | '/blog'
     | '/contact'
-    | '/cookies'
     | '/knowledge'
     | '/mcp'
     | '/personalize'
-    | '/privacy'
     | '/programs'
-    | '/refund-policy'
-    | '/shipping-policy'
     | '/shop'
     | '/sitemap.xml'
     | '/success-stories'
-    | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
-    | '/admin/enterprise'
     | '/blog/$slug'
     | '/community/play'
     | '/product/$handle'
     | '/programs/$slug'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
-    | '/api/admin/health'
     | '/community/play/$game'
-    | '/api/public/webhooks/paystack'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  AccessibilityRoute: typeof AccessibilityRoute
-  AdminRoute: typeof AdminRouteWithChildren
+  AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   BlogRoute: typeof BlogRouteWithChildren
   ContactRoute: typeof ContactRoute
-  CookiesRoute: typeof CookiesRoute
   KnowledgeRoute: typeof KnowledgeRoute
   McpRoute: typeof McpRoute
   PersonalizeRoute: typeof PersonalizeRoute
-  PrivacyRoute: typeof PrivacyRoute
   ProgramsRoute: typeof ProgramsRouteWithChildren
-  RefundPolicyRoute: typeof RefundPolicyRoute
-  ShippingPolicyRoute: typeof ShippingPolicyRoute
   ShopRoute: typeof ShopRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SuccessStoriesRoute: typeof SuccessStoriesRoute
-  TermsRoute: typeof TermsRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   CommunityPlayRoute: typeof CommunityPlayRouteWithChildren
   ProductHandleRoute: typeof ProductHandleRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
-  ApiAdminHealthRoute: typeof ApiAdminHealthRoute
-  ApiPublicWebhooksPaystackRoute: typeof ApiPublicWebhooksPaystackRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/success-stories': {
       id: '/success-stories'
       path: '/success-stories'
@@ -463,32 +339,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/shipping-policy': {
-      id: '/shipping-policy'
-      path: '/shipping-policy'
-      fullPath: '/shipping-policy'
-      preLoaderRoute: typeof ShippingPolicyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/refund-policy': {
-      id: '/refund-policy'
-      path: '/refund-policy'
-      fullPath: '/refund-policy'
-      preLoaderRoute: typeof RefundPolicyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/programs': {
       id: '/programs'
       path: '/programs'
       fullPath: '/programs'
       preLoaderRoute: typeof ProgramsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/personalize': {
@@ -510,13 +365,6 @@ declare module '@tanstack/react-router' {
       path: '/knowledge'
       fullPath: '/knowledge'
       preLoaderRoute: typeof KnowledgeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cookies': {
-      id: '/cookies'
-      path: '/cookies'
-      fullPath: '/cookies'
-      preLoaderRoute: typeof CookiesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -545,13 +393,6 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/accessibility': {
-      id: '/accessibility'
-      path: '/accessibility'
-      fullPath: '/accessibility'
-      preLoaderRoute: typeof AccessibilityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -596,13 +437,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof BlogRoute
     }
-    '/admin/enterprise': {
-      id: '/admin/enterprise'
-      path: '/enterprise'
-      fullPath: '/admin/enterprise'
-      preLoaderRoute: typeof AdminEnterpriseRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/.well-known/oauth-protected-resource': {
       id: '/.well-known/oauth-protected-resource'
       path: '/.well-known/oauth-protected-resource'
@@ -624,13 +458,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommunityPlayGameRouteImport
       parentRoute: typeof CommunityPlayRoute
     }
-    '/api/admin/health': {
-      id: '/api/admin/health'
-      path: '/api/admin/health'
-      fullPath: '/api/admin/health'
-      preLoaderRoute: typeof ApiAdminHealthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -645,25 +472,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/webhooks/paystack': {
-      id: '/api/public/webhooks/paystack'
-      path: '/api/public/webhooks/paystack'
-      fullPath: '/api/public/webhooks/paystack'
-      preLoaderRoute: typeof ApiPublicWebhooksPaystackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
-
-interface AdminRouteChildren {
-  AdminEnterpriseRoute: typeof AdminEnterpriseRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminEnterpriseRoute: AdminEnterpriseRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface BlogRouteChildren {
   BlogSlugRoute: typeof BlogSlugRoute
@@ -702,23 +512,17 @@ const CommunityPlayRouteWithChildren = CommunityPlayRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  AccessibilityRoute: AccessibilityRoute,
-  AdminRoute: AdminRouteWithChildren,
+  AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   BlogRoute: BlogRouteWithChildren,
   ContactRoute: ContactRoute,
-  CookiesRoute: CookiesRoute,
   KnowledgeRoute: KnowledgeRoute,
   McpRoute: McpRoute,
   PersonalizeRoute: PersonalizeRoute,
-  PrivacyRoute: PrivacyRoute,
   ProgramsRoute: ProgramsRouteWithChildren,
-  RefundPolicyRoute: RefundPolicyRoute,
-  ShippingPolicyRoute: ShippingPolicyRoute,
   ShopRoute: ShopRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SuccessStoriesRoute: SuccessStoriesRoute,
-  TermsRoute: TermsRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
@@ -726,8 +530,6 @@ const rootRouteChildren: RootRouteChildren = {
   ProductHandleRoute: ProductHandleRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
-  ApiAdminHealthRoute: ApiAdminHealthRoute,
-  ApiPublicWebhooksPaystackRoute: ApiPublicWebhooksPaystackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
