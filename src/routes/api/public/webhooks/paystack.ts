@@ -49,7 +49,7 @@ export const Route = createFileRoute("/api/public/webhooks/paystack")({
             dedupe_key: dedupeKey,
             signature_status: "verified",
             processing_status: "processing",
-            payload: payload as unknown as Record<string, unknown>,
+            payload: payload as never,
           })
           .select("id")
           .maybeSingle();
@@ -57,10 +57,6 @@ export const Route = createFileRoute("/api/public/webhooks/paystack")({
         if (error) {
           // Duplicate delivery — acknowledge without reprocessing.
           if (error.code === "23505" || error.code === "23_505" || /duplicate key/i.test(error.message)) {
-            await supabaseAdmin.rpc("has_role", { _user_id: "00000000-0000-0000-0000-000000000000", _role: "admin" }).then(
-              () => undefined,
-              () => undefined,
-            );
             return Response.json({ ok: true, duplicate: true });
           }
           console.error("paystack webhook audit insert failed", error.message);
@@ -77,7 +73,7 @@ export const Route = createFileRoute("/api/public/webhooks/paystack")({
               .from("settlement_ledger")
               .update({ reconciled: true })
               .eq("provider", "paystack")
-              .eq("provider_reference", reference);
+              .eq("settlement_reference", reference);
             if (ledgerError) throw new Error(ledgerError.message);
           }
         } catch (e) {
