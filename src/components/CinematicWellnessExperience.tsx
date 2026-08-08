@@ -190,10 +190,10 @@ function IdentityGate({ open, onClose, onComplete }: IdentityGateProps) {
 
 interface Props {
   /** Optional video enhancement URL (mp4/webm). Loaded on idle only. */
-  videoSrc?: string;
-  posterSrc?: string;
+  videoSrc?: string | null;
+  posterSrc?: string | null;
   /** Optional captions track (WebVTT). If absent, a caption fallback message is provided for AT. */
-  captionsSrc?: string;
+  captionsSrc?: string | null;
 }
 
 export function CinematicWellnessExperience({
