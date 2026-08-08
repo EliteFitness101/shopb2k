@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { track } from "@/lib/tracking";
 import type { Game, Profile } from "@/lib/play";
+import { cn } from "@/lib/utils";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Coins, Flame, Sparkles, Trophy, Users, Zap } from "lucide-react";
