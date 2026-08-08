@@ -63,11 +63,11 @@ function PlayHome() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, display_name, xp, level")
+        .select("id, display_name, avatar_url, xp, level")
         .order("xp", { ascending: false })
         .limit(5);
       if (error) throw error;
-      return data as Pick<Profile, "id" | "display_name" | "xp" | "level">[];
+      return data as Pick<Profile, "id" | "display_name" | "avatar_url" | "xp" | "level">[];
     },
   });
 
