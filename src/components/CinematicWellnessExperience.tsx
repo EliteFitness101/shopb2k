@@ -6,9 +6,11 @@ import { createIdentity, handoffToChatB2K, type IdentityChannel } from "@/lib/id
 import { CTA } from "@/lib/ctas";
 import heroImg from "@/assets/hero-barbell.jpg";
 
-const DEFAULT_POSTER = "/assets/resofit-community-poster.webp";
-const DEFAULT_VIDEO = "/assets/resofit-community-intro.mp4";
-const DEFAULT_CAPTIONS = "/assets/resofit-community-intro.vtt";
+import { MEDIA, mediaExists } from "@/lib/media";
+
+const DEFAULT_POSTER = MEDIA.communityPoster;
+const DEFAULT_VIDEO = MEDIA.communityVideo;
+const DEFAULT_CAPTIONS = MEDIA.communityCaptions;
 
 // Four cinematic phases — 0–2 / 2–4 / 4–6 / 6–8 seconds.
 // Poster-first (no LCP hit); optional muted video enhancement on idle.

@@ -112,12 +112,14 @@ export function ProductImage({
     >
       <img
         src={resolvedSrc}
+        srcSet={resolvedSrcSet}
         alt={resolvedAlt}
         loading={isHigh ? "eager" : "lazy"}
         decoding="async"
         fetchPriority={isHigh ? "high" : isMedium ? "auto" : "low"}
-        sizes={sizes}
+        sizes={resolvedSrcSet ? sizes : undefined}
         data-priority-tier={tier}
+        data-responsive={resolvedSrcSet ? "shopify" : "static"}
         onError={() => setErrored(true)}
         onClick={() => {
           if (!productId) return;
