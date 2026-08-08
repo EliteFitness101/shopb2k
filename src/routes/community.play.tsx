@@ -111,12 +111,19 @@ function PlayHome() {
         {/* Season banner */}
         <section className="mb-6 overflow-hidden rounded-lg border border-gold/40 bg-gradient-to-r from-black via-black/80 to-gold/10 p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-gold">Season 1 · Wellness Rising</p>
-              <h1 className="mt-2 font-display text-3xl sm:text-4xl">
-                Welcome back, <span className="text-gold">{displayName}</span>
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground">Play, move, and earn — every session counts.</p>
+            <div className="flex items-center gap-4">
+              <Avatar
+                url={profile.data?.avatar_url}
+                name={displayName}
+                className="h-14 w-14 text-base"
+              />
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-gold">Season 1 · Wellness Rising</p>
+                <h1 className="mt-2 font-display text-3xl sm:text-4xl">
+                  Welcome back, <span className="text-gold">{displayName}</span>
+                </h1>
+                <p className="mt-1 text-sm text-muted-foreground">Play, move, and earn — every session counts.</p>
+              </div>
             </div>
             <button
               onClick={signOut}
@@ -191,6 +198,7 @@ function PlayHome() {
                   <li key={p.id} className="flex items-center justify-between border-b border-border/50 pb-2 last:border-0">
                     <span className="flex items-center gap-2">
                       <span className="w-5 text-xs text-muted-foreground">{i + 1}</span>
+                      <Avatar url={p.avatar_url} name={p.display_name ?? "Anonymous"} />
                       <span>{p.display_name ?? "Anonymous"}</span>
                     </span>
                     <span className="text-xs text-gold">{p.xp} XP</span>
