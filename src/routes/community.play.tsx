@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { track } from "@/lib/tracking";
 import type { Game, Profile } from "@/lib/play";
+import { cn } from "@/lib/utils";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Coins, Flame, Sparkles, Trophy, Users, Zap } from "lucide-react";
@@ -63,11 +64,11 @@ function PlayHome() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, display_name, xp, level")
+        .select("id, display_name, avatar_url, xp, level")
         .order("xp", { ascending: false })
         .limit(5);
       if (error) throw error;
-      return data as Pick<Profile, "id" | "display_name" | "xp" | "level">[];
+      return data as Pick<Profile, "id" | "display_name" | "avatar_url" | "xp" | "level">[];
     },
   });
 
@@ -111,12 +112,19 @@ function PlayHome() {
         {/* Season banner */}
         <section className="mb-6 overflow-hidden rounded-lg border border-gold/40 bg-gradient-to-r from-black via-black/80 to-gold/10 p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-gold">Season 1 · Wellness Rising</p>
-              <h1 className="mt-2 font-display text-3xl sm:text-4xl">
-                Welcome back, <span className="text-gold">{displayName}</span>
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground">Play, move, and earn — every session counts.</p>
+            <div className="flex items-center gap-4">
+              <Avatar
+                url={profile.data?.avatar_url}
+                name={displayName}
+                className="h-14 w-14 text-base"
+              />
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-gold">Season 1 · Wellness Rising</p>
+                <h1 className="mt-2 font-display text-3xl sm:text-4xl">
+                  Welcome back, <span className="text-gold">{displayName}</span>
+                </h1>
+                <p className="mt-1 text-sm text-muted-foreground">Play, move, and earn — every session counts.</p>
+              </div>
             </div>
             <button
               onClick={signOut}
@@ -171,7 +179,8 @@ function PlayHome() {
               <h3 className="mt-2 font-display text-xl">Answer 5 trivia questions today</h3>
               <p className="mt-1 text-sm text-muted-foreground">Complete for 2× XP and a mystery ResoCoin bonus.</p>
               <Link
-                to="/community/play/trivia"
+                to="/community/play/$game"
+                params={{ game: "trivia" }}
                 className="mt-4 inline-flex items-center rounded-sm bg-gold px-4 py-2 text-xs font-semibold uppercase tracking-widest text-gold-foreground"
               >
                 Start challenge
@@ -190,6 +199,7 @@ function PlayHome() {
                   <li key={p.id} className="flex items-center justify-between border-b border-border/50 pb-2 last:border-0">
                     <span className="flex items-center gap-2">
                       <span className="w-5 text-xs text-muted-foreground">{i + 1}</span>
+                      <Avatar url={p.avatar_url} name={p.display_name ?? "Anonymous"} />
                       <span>{p.display_name ?? "Anonymous"}</span>
                     </span>
                     <span className="text-xs text-gold">{p.xp} XP</span>
@@ -220,6 +230,41 @@ function PlayHome() {
       </main>
       <SiteFooter />
     </div>
+  );
+}
+
+function initials(name: string) {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("") || "R";
+}
+
+/** Profile avatar with accessible alt text and initials fallback (no new deps). */
+function Avatar({ url, name, className }: { url?: string | null; name: string; className?: string }) {
+  const [broken, setBroken] = useState(false);
+  const base = cn(
+    "flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-gold/40 bg-muted text-[10px] font-semibold uppercase tracking-widest text-gold",
+    className ?? "h-7 w-7",
+  );
+  if (url && !broken) {
+    return (
+      <img
+        src={url}
+        alt={`${name}'s profile photo`}
+        loading="lazy"
+        decoding="async"
+        onError={() => setBroken(true)}
+        className={cn(base, "object-cover")}
+      />
+    );
+  }
+  return (
+    <span className={base} role="img" aria-label={`${name}'s profile initials`}>
+      {initials(name)}
+    </span>
   );
 }
 

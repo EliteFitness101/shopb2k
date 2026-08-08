@@ -35,7 +35,7 @@ export const Route = createFileRoute("/shop")({
       },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: { type?: string; vendor?: string; sort?: string }) => ({
     type: typeof s.type === "string" ? (s.type as string) : undefined,
     vendor: typeof s.vendor === "string" ? (s.vendor as string) : undefined,
     sort: (typeof s.sort === "string" ? s.sort : "featured") as SortKey,

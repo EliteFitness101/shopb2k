@@ -6,9 +6,11 @@ import { createIdentity, handoffToChatB2K, type IdentityChannel } from "@/lib/id
 import { CTA } from "@/lib/ctas";
 import heroImg from "@/assets/hero-barbell.jpg";
 
-const DEFAULT_POSTER = "/assets/resofit-community-poster.webp";
-const DEFAULT_VIDEO = "/assets/resofit-community-intro.mp4";
-const DEFAULT_CAPTIONS = "/assets/resofit-community-intro.vtt";
+import { MEDIA, mediaExists } from "@/lib/media";
+
+const DEFAULT_POSTER = MEDIA.communityPoster;
+const DEFAULT_VIDEO = MEDIA.communityVideo;
+const DEFAULT_CAPTIONS = MEDIA.communityCaptions;
 
 // Four cinematic phases — 0–2 / 2–4 / 4–6 / 6–8 seconds.
 // Poster-first (no LCP hit); optional muted video enhancement on idle.
@@ -188,10 +190,10 @@ function IdentityGate({ open, onClose, onComplete }: IdentityGateProps) {
 
 interface Props {
   /** Optional video enhancement URL (mp4/webm). Loaded on idle only. */
-  videoSrc?: string;
-  posterSrc?: string;
+  videoSrc?: string | null;
+  posterSrc?: string | null;
   /** Optional captions track (WebVTT). If absent, a caption fallback message is provided for AT. */
-  captionsSrc?: string;
+  captionsSrc?: string | null;
 }
 
 export function CinematicWellnessExperience({
@@ -207,6 +209,8 @@ export function CinematicWellnessExperience({
   const [muted, setMuted] = useState(true);
   const [playing, setPlaying] = useState(false);
   const [captionsAvailable, setCaptionsAvailable] = useState(false);
+  const [posterAvailable, setPosterAvailable] = useState(false);
+  const [videoAvailable, setVideoAvailable] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
   const viewFiredRef = useRef(false);
@@ -247,9 +251,27 @@ export function CinematicWellnessExperience({
     return () => window.clearInterval(id);
   }, [reducedMotion]);
 
-  // Idle-load video enhancement — never blocks LCP.
+  // Probe media availability (HEAD) so we never render a broken <video>/poster.
   useEffect(() => {
-    if (!videoSrc || reducedMotion) return;
+    let cancelled = false;
+    void (async () => {
+      const [poster, video] = await Promise.all([
+        mediaExists(posterSrc),
+        mediaExists(videoSrc),
+      ]);
+      if (cancelled) return;
+      setPosterAvailable(poster);
+      setVideoAvailable(video);
+      if (video) setCaptionsAvailable(await mediaExists(captionsSrc));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [posterSrc, videoSrc, captionsSrc]);
+
+  // Idle-load video enhancement — never blocks LCP, and only when the file exists.
+  useEffect(() => {
+    if (!videoSrc || !videoAvailable || reducedMotion) return;
     const idle: any =
       (window as any).requestIdleCallback ??
       ((cb: () => void) => window.setTimeout(cb, 1200));
@@ -259,7 +281,7 @@ export function CinematicWellnessExperience({
         (window as any).cancelIdleCallback ?? window.clearTimeout;
       cancel(handle);
     };
-  }, [videoSrc, reducedMotion]);
+  }, [videoSrc, videoAvailable, reducedMotion]);
 
   useEffect(() => {
     if (videoReady && videoRef.current) {
@@ -272,22 +294,6 @@ export function CinematicWellnessExperience({
         .catch(() => {});
     }
   }, [videoReady]);
-
-  // Probe captions availability (HEAD) so we can hide the toggle when unavailable.
-  useEffect(() => {
-    if (!captionsSrc) return;
-    let cancelled = false;
-    fetch(captionsSrc, { method: "HEAD" })
-      .then((r) => {
-        if (!cancelled) setCaptionsAvailable(r.ok);
-      })
-      .catch(() => {
-        if (!cancelled) setCaptionsAvailable(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [captionsSrc]);
 
   const toggleMute = () => {
     const v = videoRef.current;
@@ -325,10 +331,11 @@ export function CinematicWellnessExperience({
       aria-label="ResoFit cinematic wellness introduction"
       className="relative isolate overflow-hidden border-b border-border/60 bg-background"
     >
-      {/* Background layer: poster image (LCP-safe) + optional idle video */}
+      {/* Background layer: bundled hero poster (LCP-safe). A production poster
+          asset is used only once verified to exist; otherwise we never point at it. */}
       <div className="absolute inset-0">
         <img
-          src={posterSrc ?? heroImg}
+          src={posterAvailable && posterSrc ? posterSrc : heroImg}
           alt=""
           aria-hidden="true"
           width={1536}
@@ -337,11 +344,11 @@ export function CinematicWellnessExperience({
           decoding="async"
           className="h-full w-full object-cover opacity-60"
         />
-        {videoReady && videoSrc && (
+        {videoReady && videoAvailable && videoSrc && (
           <video
             ref={videoRef}
             src={videoSrc}
-            poster={posterSrc}
+            poster={posterAvailable && posterSrc ? posterSrc : undefined}
             muted={muted}
             playsInline
             loop
@@ -354,11 +361,11 @@ export function CinematicWellnessExperience({
             onPause={() => setPlaying(false)}
           >
             {captionsAvailable && (
-              <track kind="captions" src={captionsSrc} srcLang="en" label="English" default />
+              <track kind="captions" src={captionsSrc ?? undefined} srcLang="en" label="English" default />
             )}
           </video>
         )}
-        {!captionsAvailable && videoReady && videoSrc && (
+        {!captionsAvailable && videoReady && videoAvailable && videoSrc && (
           <p className="sr-only" aria-live="polite">
             Captions unavailable for this intro video. Full transcript available on request.
           </p>
@@ -368,7 +375,7 @@ export function CinematicWellnessExperience({
       </div>
 
       {/* Accessible video controls (visible only when video is loaded) */}
-      {videoReady && videoSrc && (
+      {videoReady && videoAvailable && videoSrc && (
         <div className="absolute right-4 top-4 z-10 flex gap-2">
           <button
             type="button"
