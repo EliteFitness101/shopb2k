@@ -209,6 +209,8 @@ export function CinematicWellnessExperience({
   const [muted, setMuted] = useState(true);
   const [playing, setPlaying] = useState(false);
   const [captionsAvailable, setCaptionsAvailable] = useState(false);
+  const [posterAvailable, setPosterAvailable] = useState(false);
+  const [videoAvailable, setVideoAvailable] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
   const viewFiredRef = useRef(false);
