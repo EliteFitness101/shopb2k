@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { recordEngagement, resolveTier, type PriorityTier } from "@/lib/imagePriority";
+import { shopifySrcSet } from "@/lib/media";
 import { track } from "@/lib/tracking";
 
 const FALLBACK_SVG =
