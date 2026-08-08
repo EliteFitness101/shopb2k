@@ -331,10 +331,11 @@ export function CinematicWellnessExperience({
       aria-label="ResoFit cinematic wellness introduction"
       className="relative isolate overflow-hidden border-b border-border/60 bg-background"
     >
-      {/* Background layer: poster image (LCP-safe) + optional idle video */}
+      {/* Background layer: bundled hero poster (LCP-safe). A production poster
+          asset is used only once verified to exist; otherwise we never point at it. */}
       <div className="absolute inset-0">
         <img
-          src={posterSrc ?? heroImg}
+          src={posterAvailable && posterSrc ? posterSrc : heroImg}
           alt=""
           aria-hidden="true"
           width={1536}
@@ -343,11 +344,11 @@ export function CinematicWellnessExperience({
           decoding="async"
           className="h-full w-full object-cover opacity-60"
         />
-        {videoReady && videoSrc && (
+        {videoReady && videoAvailable && videoSrc && (
           <video
             ref={videoRef}
             src={videoSrc}
-            poster={posterSrc}
+            poster={posterAvailable ? posterSrc : undefined}
             muted={muted}
             playsInline
             loop
@@ -364,7 +365,7 @@ export function CinematicWellnessExperience({
             )}
           </video>
         )}
-        {!captionsAvailable && videoReady && videoSrc && (
+        {!captionsAvailable && videoReady && videoAvailable && videoSrc && (
           <p className="sr-only" aria-live="polite">
             Captions unavailable for this intro video. Full transcript available on request.
           </p>
@@ -374,7 +375,7 @@ export function CinematicWellnessExperience({
       </div>
 
       {/* Accessible video controls (visible only when video is loaded) */}
-      {videoReady && videoSrc && (
+      {videoReady && videoAvailable && videoSrc && (
         <div className="absolute right-4 top-4 z-10 flex gap-2">
           <button
             type="button"
