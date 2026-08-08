@@ -1,9 +1,25 @@
 // Central media registry — single source of truth for media paths and CDN transforms.
 // No path literals should be duplicated in components.
 
-/** Community cinematic assets. These live in /public/assets and are OPTIONAL:
- *  the UI must degrade gracefully (poster fallback, no video) when absent. */
-export const MEDIA = {
+/** Community cinematic assets.
+ *  These are OPTIONAL enhancements. Keep them `null` until the real production
+ *  files are uploaded to /public/assets — a null entry means the UI never
+ *  references (or requests) a missing file, so there are zero 404s.
+ *  To enable, set the value to the served path, e.g.
+ *    communityVideo: PATHS.communityVideo
+ */
+export const MEDIA: {
+  communityPoster: string | null;
+  communityVideo: string | null;
+  communityCaptions: string | null;
+} = {
+  communityPoster: null,
+  communityVideo: null,
+  communityCaptions: null,
+};
+
+/** Canonical paths for the community media, for when assets are uploaded. */
+export const MEDIA_PATHS = {
   communityPoster: "/assets/resofit-community-poster.webp",
   communityVideo: "/assets/resofit-community-intro.mp4",
   communityCaptions: "/assets/resofit-community-intro.vtt",
