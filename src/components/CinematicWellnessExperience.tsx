@@ -348,7 +348,7 @@ export function CinematicWellnessExperience({
           <video
             ref={videoRef}
             src={videoSrc}
-            poster={posterAvailable ? posterSrc : undefined}
+            poster={posterAvailable && posterSrc ? posterSrc : undefined}
             muted={muted}
             playsInline
             loop
@@ -361,7 +361,7 @@ export function CinematicWellnessExperience({
             onPause={() => setPlaying(false)}
           >
             {captionsAvailable && (
-              <track kind="captions" src={captionsSrc} srcLang="en" label="English" default />
+              <track kind="captions" src={captionsSrc ?? undefined} srcLang="en" label="English" default />
             )}
           </video>
         )}
