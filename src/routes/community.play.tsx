@@ -171,7 +171,8 @@ function PlayHome() {
               <h3 className="mt-2 font-display text-xl">Answer 5 trivia questions today</h3>
               <p className="mt-1 text-sm text-muted-foreground">Complete for 2× XP and a mystery ResoCoin bonus.</p>
               <Link
-                to="/community/play/trivia"
+                to="/community/play/$game"
+                params={{ game: "trivia" }}
                 className="mt-4 inline-flex items-center rounded-sm bg-gold px-4 py-2 text-xs font-semibold uppercase tracking-widest text-gold-foreground"
               >
                 Start challenge
