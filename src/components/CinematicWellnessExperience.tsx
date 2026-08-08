@@ -249,9 +249,27 @@ export function CinematicWellnessExperience({
     return () => window.clearInterval(id);
   }, [reducedMotion]);
 
-  // Idle-load video enhancement — never blocks LCP.
+  // Probe media availability (HEAD) so we never render a broken <video>/poster.
   useEffect(() => {
-    if (!videoSrc || reducedMotion) return;
+    let cancelled = false;
+    void (async () => {
+      const [poster, video] = await Promise.all([
+        mediaExists(posterSrc),
+        mediaExists(videoSrc),
+      ]);
+      if (cancelled) return;
+      setPosterAvailable(poster);
+      setVideoAvailable(video);
+      if (video) setCaptionsAvailable(await mediaExists(captionsSrc));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [posterSrc, videoSrc, captionsSrc]);
+
+  // Idle-load video enhancement — never blocks LCP, and only when the file exists.
+  useEffect(() => {
+    if (!videoSrc || !videoAvailable || reducedMotion) return;
     const idle: any =
       (window as any).requestIdleCallback ??
       ((cb: () => void) => window.setTimeout(cb, 1200));
@@ -261,7 +279,7 @@ export function CinematicWellnessExperience({
         (window as any).cancelIdleCallback ?? window.clearTimeout;
       cancel(handle);
     };
-  }, [videoSrc, reducedMotion]);
+  }, [videoSrc, videoAvailable, reducedMotion]);
 
   useEffect(() => {
     if (videoReady && videoRef.current) {
@@ -274,22 +292,6 @@ export function CinematicWellnessExperience({
         .catch(() => {});
     }
   }, [videoReady]);
-
-  // Probe captions availability (HEAD) so we can hide the toggle when unavailable.
-  useEffect(() => {
-    if (!captionsSrc) return;
-    let cancelled = false;
-    fetch(captionsSrc, { method: "HEAD" })
-      .then((r) => {
-        if (!cancelled) setCaptionsAvailable(r.ok);
-      })
-      .catch(() => {
-        if (!cancelled) setCaptionsAvailable(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [captionsSrc]);
 
   const toggleMute = () => {
     const v = videoRef.current;
