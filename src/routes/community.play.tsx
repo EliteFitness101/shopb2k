@@ -232,6 +232,41 @@ function PlayHome() {
   );
 }
 
+function initials(name: string) {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("") || "R";
+}
+
+/** Profile avatar with accessible alt text and initials fallback (no new deps). */
+function Avatar({ url, name, className }: { url?: string | null; name: string; className?: string }) {
+  const [broken, setBroken] = useState(false);
+  const base = cn(
+    "flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-gold/40 bg-muted text-[10px] font-semibold uppercase tracking-widest text-gold",
+    className ?? "h-7 w-7",
+  );
+  if (url && !broken) {
+    return (
+      <img
+        src={url}
+        alt={`${name}'s profile photo`}
+        loading="lazy"
+        decoding="async"
+        onError={() => setBroken(true)}
+        className={cn(base, "object-cover")}
+      />
+    );
+  }
+  return (
+    <span className={base} role="img" aria-label={`${name}'s profile initials`}>
+      {initials(name)}
+    </span>
+  );
+}
+
 function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub?: string }) {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
