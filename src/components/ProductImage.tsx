@@ -82,6 +82,10 @@ export function ProductImage({
   const [errored, setErrored] = useState(false);
   const resolvedSrc = !src || errored ? FALLBACK_SVG : src;
   const resolvedAlt = buildAlt(title, category, alt);
+  // Responsive srcSet only for approved Shopify CDN URLs; local assets,
+  // data URIs and arbitrary hosts pass through untouched.
+  const resolvedSrcSet = errored ? undefined : shopifySrcSet(src);
+
 
   // Smart-priority tier: explicit override > priority flag > computed from signals.
   const tier: PriorityTier =
