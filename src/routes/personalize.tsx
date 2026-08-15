@@ -30,10 +30,10 @@ const DIETS = [
 
 function getRecommendation(answers: Answers): Recommendation {
   const routes: Record<string, Recommendation> = {
-    fat_loss: { title: "ResoFit Fat-Loss Pathway", summary: "A focused ResoFit pathway built around sustainable fat loss, movement and nutrition consistency.", href: `${SHOP_URL}/collections/reset`, cta: "View My Fat-Loss Recommendation" },
-    muscle: { title: "ResoFit Strength & Muscle", summary: "A strength-focused pathway designed to support lean muscle, training consistency and recovery.", href: `${SHOP_URL}/collections/strength`, cta: "View My Strength Recommendation" },
-    energy: { title: "ResoFit Energy & Performance", summary: "A practical pathway focused on daily energy, movement, nutrition and performance habits.", href: `${SHOP_URL}/collections/wellness`, cta: "View My Energy Recommendation" },
-    reset: { title: "ResoFit 7-Day Reset", summary: "A simple entry pathway to reset routines, nutrition and movement before building your longer-term plan.", href: `${SHOP_URL}/collections/reset`, cta: "Start My Reset" },
+    fat_loss: { title: "ResoFit Fat-Loss Pathway", summary: "A focused ResoFit pathway built around sustainable fat loss, movement and nutrition consistency.", href: `${SHOP_URL}?goal=fat_loss`, cta: "View My Fat-Loss Recommendation" },
+    muscle: { title: "ResoFit Strength & Muscle", summary: "A strength-focused pathway designed to support lean muscle, training consistency and recovery.", href: `${SHOP_URL}?goal=muscle`, cta: "View My Strength Recommendation" },
+    energy: { title: "ResoFit Energy & Performance", summary: "A practical pathway focused on daily energy, movement, nutrition and performance habits.", href: `${SHOP_URL}?goal=energy`, cta: "View My Energy Recommendation" },
+    reset: { title: "ResoFit 7-Day Reset", summary: "A simple entry pathway to reset routines, nutrition and movement before building your longer-term plan.", href: `${SHOP_URL}?goal=reset`, cta: "Start My Reset" },
   };
   return routes[answers.goal] ?? { title: "Your ResoFit Personalized Pathway", summary: "Your assessment is complete. Explore ResoFit options and choose the pathway that best fits your current goal.", href: SHOP_URL, cta: "Explore My ResoFit Options" };
 }
