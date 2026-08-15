@@ -1,5 +1,5 @@
 const PRODUCTION_PAYSTACK_INITIALIZE_URL =
-  "https://vbqjvmnhdtdhmeeudqnn.supabase.co/functions/v1/paystack-initialize";
+  "https://vbqjvmnhdtdhmeeudqnn.supabase.co/functions/v1/paystack-init";
 
 export const RESET_OFFER = "₦1,000 Reset";
 export const RESET_PRODUCT_ID = "reset";
