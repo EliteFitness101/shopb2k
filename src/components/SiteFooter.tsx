@@ -25,6 +25,10 @@ const COLUMNS: Array<{ heading: string; links: Array<{ to: string; label: string
       { to: "/contact", label: "Contact" },
       { to: "/privacy", label: "Privacy" },
       { to: "/terms", label: "Terms" },
+      { to: "/cookies", label: "Cookies" },
+      { to: "/refund-policy", label: "Refunds" },
+      { to: "/shipping-policy", label: "Shipping" },
+      { to: "/accessibility", label: "Accessibility" },
     ],
   },
 ];

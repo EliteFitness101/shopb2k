@@ -9,109 +9,60 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SuccessStoriesRouteImport } from './routes/success-stories'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as ShopRouteImport } from './routes/shop'
-import { Route as ProgramsRouteImport } from './routes/programs'
-import { Route as PersonalizeRouteImport } from './routes/personalize'
-import { Route as KnowledgeRouteImport } from './routes/knowledge'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as BlogRouteImport } from './routes/blog'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BlogRouteImport } from './routes/blog'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as KnowledgeRouteImport } from './routes/knowledge'
+import { Route as PersonalizeRouteImport } from './routes/personalize'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ProgramsRouteImport } from './routes/programs'
+import { Route as RefundPolicyRouteImport } from './routes/refund-policy'
+import { Route as ShippingPolicyRouteImport } from './routes/shipping-policy'
+import { Route as ShopRouteImport } from './routes/shop'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SuccessStoriesRouteImport } from './routes/success-stories'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AccessibilityRouteImport } from './routes/accessibility'
 import { Route as ProgramsSlugRouteImport } from './routes/programs.$slug'
 import { Route as ProductHandleRouteImport } from './routes/product.$handle'
 import { Route as CommunityPlayRouteImport } from './routes/community.play'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as CommunityPlayGameRouteImport } from './routes/community.play.$game'
 
-const SuccessStoriesRoute = SuccessStoriesRouteImport.update({
-  id: '/success-stories',
-  path: '/success-stories',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ShopRoute = ShopRouteImport.update({
-  id: '/shop',
-  path: '/shop',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProgramsRoute = ProgramsRouteImport.update({
-  id: '/programs',
-  path: '/programs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PersonalizeRoute = PersonalizeRouteImport.update({
-  id: '/personalize',
-  path: '/personalize',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const KnowledgeRoute = KnowledgeRouteImport.update({
-  id: '/knowledge',
-  path: '/knowledge',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogRoute = BlogRouteImport.update({
-  id: '/blog',
-  path: '/blog',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProgramsSlugRoute = ProgramsSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => ProgramsRoute,
-} as any)
-const ProductHandleRoute = ProductHandleRouteImport.update({
-  id: '/product/$handle',
-  path: '/product/$handle',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CommunityPlayRoute = CommunityPlayRouteImport.update({
-  id: '/community/play',
-  path: '/community/play',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogSlugRoute = BlogSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => BlogRoute,
-} as any)
-const CommunityPlayGameRoute = CommunityPlayGameRouteImport.update({
-  id: '/$game',
-  path: '/$game',
-  getParentRoute: () => CommunityPlayRoute,
-} as any)
+const IndexRoute = IndexRouteImport.update({ id: '/', path: '/', getParentRoute: () => rootRouteImport } as any)
+const AboutRoute = AboutRouteImport.update({ id: '/about', path: '/about', getParentRoute: () => rootRouteImport } as any)
+const AdminRoute = AdminRouteImport.update({ id: '/admin', path: '/admin', getParentRoute: () => rootRouteImport } as any)
+const AuthRoute = AuthRouteImport.update({ id: '/auth', path: '/auth', getParentRoute: () => rootRouteImport } as any)
+const BlogRoute = BlogRouteImport.update({ id: '/blog', path: '/blog', getParentRoute: () => rootRouteImport } as any)
+const ContactRoute = ContactRouteImport.update({ id: '/contact', path: '/contact', getParentRoute: () => rootRouteImport } as any)
+const CookiesRoute = CookiesRouteImport.update({ id: '/cookies', path: '/cookies', getParentRoute: () => rootRouteImport } as any)
+const KnowledgeRoute = KnowledgeRouteImport.update({ id: '/knowledge', path: '/knowledge', getParentRoute: () => rootRouteImport } as any)
+const PersonalizeRoute = PersonalizeRouteImport.update({ id: '/personalize', path: '/personalize', getParentRoute: () => rootRouteImport } as any)
+const PrivacyRoute = PrivacyRouteImport.update({ id: '/privacy', path: '/privacy', getParentRoute: () => rootRouteImport } as any)
+const ProgramsRoute = ProgramsRouteImport.update({ id: '/programs', path: '/programs', getParentRoute: () => rootRouteImport } as any)
+const RefundPolicyRoute = RefundPolicyRouteImport.update({ id: '/refund-policy', path: '/refund-policy', getParentRoute: () => rootRouteImport } as any)
+const ShippingPolicyRoute = ShippingPolicyRouteImport.update({ id: '/shipping-policy', path: '/shipping-policy', getParentRoute: () => rootRouteImport } as any)
+const ShopRoute = ShopRouteImport.update({ id: '/shop', path: '/shop', getParentRoute: () => rootRouteImport } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({ id: '/sitemap.xml', path: '/sitemap.xml', getParentRoute: () => rootRouteImport } as any)
+const SuccessStoriesRoute = SuccessStoriesRouteImport.update({ id: '/success-stories', path: '/success-stories', getParentRoute: () => rootRouteImport } as any)
+const TermsRoute = TermsRouteImport.update({ id: '/terms', path: '/terms', getParentRoute: () => rootRouteImport } as any)
+const AccessibilityRoute = AccessibilityRouteImport.update({ id: '/accessibility', path: '/accessibility', getParentRoute: () => rootRouteImport } as any)
+const ProgramsSlugRoute = ProgramsSlugRouteImport.update({ id: '/$slug', path: '/$slug', getParentRoute: () => ProgramsRoute } as any)
+const ProductHandleRoute = ProductHandleRouteImport.update({ id: '/product/$handle', path: '/product/$handle', getParentRoute: () => rootRouteImport } as any)
+const CommunityPlayRoute = CommunityPlayRouteImport.update({ id: '/community/play', path: '/community/play', getParentRoute: () => rootRouteImport } as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({ id: '/$slug', path: '/$slug', getParentRoute: () => BlogRoute } as any)
+const CommunityPlayGameRoute = CommunityPlayGameRouteImport.update({ id: '/$game', path: '/$game', getParentRoute: () => CommunityPlayRoute } as any)
+
+interface BlogRouteChildren { BlogSlugRoute: typeof BlogSlugRoute }
+const BlogRouteWithChildren = BlogRoute._addFileChildren({ BlogSlugRoute })
+interface ProgramsRouteChildren { ProgramsSlugRoute: typeof ProgramsSlugRoute }
+const ProgramsRouteWithChildren = ProgramsRoute._addFileChildren({ ProgramsSlugRoute })
+interface CommunityPlayRouteChildren { CommunityPlayGameRoute: typeof CommunityPlayGameRoute }
+const CommunityPlayRouteWithChildren = CommunityPlayRoute._addFileChildren({ CommunityPlayGameRoute })
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -120,37 +71,25 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
   '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
   '/knowledge': typeof KnowledgeRoute
   '/personalize': typeof PersonalizeRoute
+  '/privacy': typeof PrivacyRoute
   '/programs': typeof ProgramsRouteWithChildren
+  '/refund-policy': typeof RefundPolicyRoute
+  '/shipping-policy': typeof ShippingPolicyRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/success-stories': typeof SuccessStoriesRoute
+  '/terms': typeof TermsRoute
+  '/accessibility': typeof AccessibilityRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/community/play': typeof CommunityPlayRouteWithChildren
   '/product/$handle': typeof ProductHandleRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/community/play/$game': typeof CommunityPlayGameRoute
 }
-export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
-  '/auth': typeof AuthRoute
-  '/blog': typeof BlogRouteWithChildren
-  '/contact': typeof ContactRoute
-  '/knowledge': typeof KnowledgeRoute
-  '/personalize': typeof PersonalizeRoute
-  '/programs': typeof ProgramsRouteWithChildren
-  '/shop': typeof ShopRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/success-stories': typeof SuccessStoriesRoute
-  '/blog/$slug': typeof BlogSlugRoute
-  '/community/play': typeof CommunityPlayRouteWithChildren
-  '/product/$handle': typeof ProductHandleRoute
-  '/programs/$slug': typeof ProgramsSlugRoute
-  '/community/play/$game': typeof CommunityPlayGameRoute
-}
+export interface FileRoutesByTo extends FileRoutesByFullPath {}
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
@@ -159,12 +98,18 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
   '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
   '/knowledge': typeof KnowledgeRoute
   '/personalize': typeof PersonalizeRoute
+  '/privacy': typeof PrivacyRoute
   '/programs': typeof ProgramsRouteWithChildren
+  '/refund-policy': typeof RefundPolicyRoute
+  '/shipping-policy': typeof ShippingPolicyRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/success-stories': typeof SuccessStoriesRoute
+  '/terms': typeof TermsRoute
+  '/accessibility': typeof AccessibilityRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/community/play': typeof CommunityPlayRouteWithChildren
   '/product/$handle': typeof ProductHandleRoute
@@ -173,64 +118,13 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/about'
-    | '/admin'
-    | '/auth'
-    | '/blog'
-    | '/contact'
-    | '/knowledge'
-    | '/personalize'
-    | '/programs'
-    | '/shop'
-    | '/sitemap.xml'
-    | '/success-stories'
-    | '/blog/$slug'
-    | '/community/play'
-    | '/product/$handle'
-    | '/programs/$slug'
-    | '/community/play/$game'
+  fullPaths: keyof FileRoutesByFullPath
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/about'
-    | '/admin'
-    | '/auth'
-    | '/blog'
-    | '/contact'
-    | '/knowledge'
-    | '/personalize'
-    | '/programs'
-    | '/shop'
-    | '/sitemap.xml'
-    | '/success-stories'
-    | '/blog/$slug'
-    | '/community/play'
-    | '/product/$handle'
-    | '/programs/$slug'
-    | '/community/play/$game'
-  id:
-    | '__root__'
-    | '/'
-    | '/about'
-    | '/admin'
-    | '/auth'
-    | '/blog'
-    | '/contact'
-    | '/knowledge'
-    | '/personalize'
-    | '/programs'
-    | '/shop'
-    | '/sitemap.xml'
-    | '/success-stories'
-    | '/blog/$slug'
-    | '/community/play'
-    | '/product/$handle'
-    | '/programs/$slug'
-    | '/community/play/$game'
+  to: keyof FileRoutesByTo
+  id: keyof FileRoutesById
   fileRoutesById: FileRoutesById
 }
+
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
@@ -238,190 +132,30 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BlogRoute: typeof BlogRouteWithChildren
   ContactRoute: typeof ContactRoute
+  CookiesRoute: typeof CookiesRoute
   KnowledgeRoute: typeof KnowledgeRoute
   PersonalizeRoute: typeof PersonalizeRoute
+  PrivacyRoute: typeof PrivacyRoute
   ProgramsRoute: typeof ProgramsRouteWithChildren
+  RefundPolicyRoute: typeof RefundPolicyRoute
+  ShippingPolicyRoute: typeof ShippingPolicyRoute
   ShopRoute: typeof ShopRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SuccessStoriesRoute: typeof SuccessStoriesRoute
+  TermsRoute: typeof TermsRoute
+  AccessibilityRoute: typeof AccessibilityRoute
   CommunityPlayRoute: typeof CommunityPlayRouteWithChildren
   ProductHandleRoute: typeof ProductHandleRoute
 }
 
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {
-    '/success-stories': {
-      id: '/success-stories'
-      path: '/success-stories'
-      fullPath: '/success-stories'
-      preLoaderRoute: typeof SuccessStoriesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/shop': {
-      id: '/shop'
-      path: '/shop'
-      fullPath: '/shop'
-      preLoaderRoute: typeof ShopRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/programs': {
-      id: '/programs'
-      path: '/programs'
-      fullPath: '/programs'
-      preLoaderRoute: typeof ProgramsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/personalize': {
-      id: '/personalize'
-      path: '/personalize'
-      fullPath: '/personalize'
-      preLoaderRoute: typeof PersonalizeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/knowledge': {
-      id: '/knowledge'
-      path: '/knowledge'
-      fullPath: '/knowledge'
-      preLoaderRoute: typeof KnowledgeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog': {
-      id: '/blog'
-      path: '/blog'
-      fullPath: '/blog'
-      preLoaderRoute: typeof BlogRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/programs/$slug': {
-      id: '/programs/$slug'
-      path: '/$slug'
-      fullPath: '/programs/$slug'
-      preLoaderRoute: typeof ProgramsSlugRouteImport
-      parentRoute: typeof ProgramsRoute
-    }
-    '/product/$handle': {
-      id: '/product/$handle'
-      path: '/product/$handle'
-      fullPath: '/product/$handle'
-      preLoaderRoute: typeof ProductHandleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/community/play': {
-      id: '/community/play'
-      path: '/community/play'
-      fullPath: '/community/play'
-      preLoaderRoute: typeof CommunityPlayRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog/$slug': {
-      id: '/blog/$slug'
-      path: '/$slug'
-      fullPath: '/blog/$slug'
-      preLoaderRoute: typeof BlogSlugRouteImport
-      parentRoute: typeof BlogRoute
-    }
-    '/community/play/$game': {
-      id: '/community/play/$game'
-      path: '/$game'
-      fullPath: '/community/play/$game'
-      preLoaderRoute: typeof CommunityPlayGameRouteImport
-      parentRoute: typeof CommunityPlayRoute
-    }
-  }
-}
-
-interface BlogRouteChildren {
-  BlogSlugRoute: typeof BlogSlugRoute
-}
-
-const BlogRouteChildren: BlogRouteChildren = {
-  BlogSlugRoute: BlogSlugRoute,
-}
-
-const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
-
-interface ProgramsRouteChildren {
-  ProgramsSlugRoute: typeof ProgramsSlugRoute
-}
-
-const ProgramsRouteChildren: ProgramsRouteChildren = {
-  ProgramsSlugRoute: ProgramsSlugRoute,
-}
-
-const ProgramsRouteWithChildren = ProgramsRoute._addFileChildren(
-  ProgramsRouteChildren,
-)
-
-interface CommunityPlayRouteChildren {
-  CommunityPlayGameRoute: typeof CommunityPlayGameRoute
-}
-
-const CommunityPlayRouteChildren: CommunityPlayRouteChildren = {
-  CommunityPlayGameRoute: CommunityPlayGameRoute,
-}
-
-const CommunityPlayRouteWithChildren = CommunityPlayRoute._addFileChildren(
-  CommunityPlayRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
-  AdminRoute: AdminRoute,
-  AuthRoute: AuthRoute,
-  BlogRoute: BlogRouteWithChildren,
-  ContactRoute: ContactRoute,
-  KnowledgeRoute: KnowledgeRoute,
-  PersonalizeRoute: PersonalizeRoute,
-  ProgramsRoute: ProgramsRouteWithChildren,
-  ShopRoute: ShopRoute,
-  SitemapDotxmlRoute: SitemapDotxmlRoute,
-  SuccessStoriesRoute: SuccessStoriesRoute,
-  CommunityPlayRoute: CommunityPlayRouteWithChildren,
-  ProductHandleRoute: ProductHandleRoute,
+  IndexRoute, AboutRoute, AdminRoute, AuthRoute, BlogRoute: BlogRouteWithChildren,
+  ContactRoute, CookiesRoute, KnowledgeRoute, PersonalizeRoute, PrivacyRoute,
+  ProgramsRoute: ProgramsRouteWithChildren, RefundPolicyRoute, ShippingPolicyRoute,
+  ShopRoute, SitemapDotxmlRoute, SuccessStoriesRoute, TermsRoute, AccessibilityRoute,
+  CommunityPlayRoute: CommunityPlayRouteWithChildren, ProductHandleRoute,
 }
+
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
