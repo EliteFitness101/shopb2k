@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { trackEvent } from "@/lib/revenueOS";
@@ -9,7 +9,7 @@ export function ResetCheckoutButton({
   children = "Start ₦1,000 Reset",
 }: {
   className?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
 }) {
   const [loading, setLoading] = useState(false);
 
