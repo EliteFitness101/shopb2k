@@ -1,6 +1,7 @@
-// Ultra-light conversion engine v2
-// Tracks events + simple CTA A/B test in localStorage. No backend.
+import { supabase } from "@/integrations/supabase/client";
 
+// ResoFit Revenue OS: local UI counters remain lightweight, while canonical
+// funnel events are persisted through the ResoFit-owned event boundary.
 export type RevenueEvent =
   | "landing_view"
   | "cta_click"
@@ -67,8 +68,6 @@ function conversionRate(s: VariantStats): number {
   return s.conversions / s.impressions;
 }
 
-/** Pick variant: promote winning variant once any variant has ≥1 conversion;
- *  otherwise round-robin by lowest impressions. */
 function pickVariant(state: RevenueState): CtaVariant {
   const variants: CtaVariant[] = ["A", "B", "C"];
   const hasConversions = variants.some((v) => state.stats[v].conversions > 0);
@@ -92,6 +91,50 @@ export function getActiveVariant(): { variant: CtaVariant; label: string } {
   return { variant, label: CTA_VARIANTS[variant] };
 }
 
+const CANONICAL_EVENT: Record<RevenueEvent, string> = {
+  landing_view: "funnel.page_viewed",
+  cta_click: "funnel.cta_clicked",
+  assessment_click: "assessment.started",
+  whatsapp_click: "conversation.whatsapp_clicked",
+  checkout_start: "checkout.started",
+  payment_success: "payment.succeeded",
+};
+
+async function emitCanonicalEvent(event: RevenueEvent) {
+  const eventName = CANONICAL_EVENT[event];
+  const anonymousId = typeof window !== "undefined"
+    ? window.localStorage.getItem("resofit:anon_id") ?? crypto.randomUUID()
+    : undefined;
+
+  if (typeof window !== "undefined" && anonymousId) {
+    window.localStorage.setItem("resofit:anon_id", anonymousId);
+  }
+
+  const payload: Record<string, unknown> = {
+    event_type: event,
+    page_path: typeof window !== "undefined" ? window.location.pathname : undefined,
+  };
+
+  // Best-effort delivery: local UX analytics must never be blocked by an
+  // unavailable network/vendor. The canonical boundary handles persistence.
+  try {
+    await supabase.functions.invoke("resofit-event-ingest", {
+      body: {
+        event_name: eventName,
+        contract_version: "1.0",
+        idempotency_key: `${anonymousId ?? "server"}:${event}:${Date.now()}:${crypto.randomUUID()}`,
+        anonymous_id: anonymousId,
+        rsid: typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("rsid") : null,
+        funnel_origin: typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("funnel_origin") : null,
+        utm: typeof window !== "undefined" ? Object.fromEntries(new URLSearchParams(window.location.search).entries()) : {},
+        payload,
+      },
+    });
+  } catch {
+    // Never fail the customer's funnel because analytics infrastructure is down.
+  }
+}
+
 export function trackEvent(event: RevenueEvent) {
   const state = read();
   state.events[event] = (state.events[event] ?? 0) + 1;
@@ -102,6 +145,7 @@ export function trackEvent(event: RevenueEvent) {
   if (event === "payment_success") state.stats[v].conversions += 1;
 
   write(state);
+  void emitCanonicalEvent(event);
 }
 
 export function getStats(): RevenueState {

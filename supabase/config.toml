@@ -1,1 +1,4 @@
-project_id = "itxggddhwflbdpmvtzml"
+project_id = "vbqjvmnhdtdhmeeudqnn"
+
+[functions.resofit-event-ingest]
+verify_jwt = false
