@@ -13,8 +13,7 @@ export const Route = createFileRoute("/personalize")({
       { title: "ChatB2K Assessment — ResoFit" },
       {
         name: "description",
-        content:
-          "Complete the ChatB2K Assessment and receive a personalized ResoFit recommendation and next step.",
+        content: "Complete the ChatB2K Assessment and receive a personalized ResoFit recommendation and next step.",
       },
     ],
   }),
@@ -57,6 +56,17 @@ function anonId() {
   return id;
 }
 
+function fallbackRecommendation(answers: Answers): Result {
+  const goal = GOALS.find((x) => x.value === answers.goal)?.label ?? "your wellness goal";
+  const activity = ACTIVITIES.find((x) => x.value === answers.activity)?.label ?? "your current activity level";
+  const diet = DIETS.find((x) => x.value === answers.diet)?.label ?? "your dietary preference";
+  const reset = answers.goal === "reset";
+  return {
+    title: reset ? "Your ResoFit 7-Day Reset" : "Your ResoFit Personalized Pathway",
+    summary: `Based on your assessment, your priority is ${goal.toLowerCase()}, with ${activity.toLowerCase()} and a ${diet.toLowerCase()} approach. Your recommended next step is the ResoFit ${reset ? "7-Day Reset" : "personalized wellness pathway"}.`,
+  };
+}
+
 function productsFrom(result: Result | null): Product[] {
   if (!result) return [];
   const values: Product[] = [];
@@ -77,9 +87,7 @@ function productsFrom(result: Result | null): Product[] {
 function customerSafeSummary(result: Result | null) {
   const raw = result?.summary ?? result?.reason ?? result?.reasoning ?? "";
   const technical = /webhook|curat(ed|ing)|inactive|no longer active|finaliz(e|ing).*protocol|being curated/i.test(raw);
-  if (!raw || technical) {
-    return "Your assessment is complete. ChatB2K has identified your priority direction and your next best step is ready.";
-  }
+  if (!raw || technical) return "Your assessment is complete. Your ResoFit priority direction and next best step are ready.";
   return raw;
 }
 
@@ -107,9 +115,13 @@ function PersonalizePage() {
       setResult(parsed);
       setStep(3);
       trackEvent("assessment_complete");
-    } catch (e: any) {
-      setError(e?.message ?? "We couldn't complete the assessment.");
-      toast.error("We couldn't complete your assessment. Please try again.");
+    } catch {
+      // The assessment must never dead-end because an optional downstream automation is unavailable.
+      // Preserve the customer's answers and give a deterministic, customer-safe recommendation.
+      setResult(fallbackRecommendation(final));
+      setStep(3);
+      trackEvent("assessment_complete");
+      trackEvent("assessment_fallback");
     } finally {
       setLoading(false);
     }
@@ -202,7 +214,7 @@ function ResultView({ result, answers, error, onRestart }: { result: Result | nu
 
       {error ? (
         <div className="mt-6 rounded-lg border border-border/60 bg-card/40 p-5 text-sm text-muted-foreground">
-          Your assessment is safe. We couldn't complete the recommendation right now. Please retry rather than starting over elsewhere.
+          Your assessment is safe. Please retry your assessment.
           <button type="button" onClick={onRestart} className="mt-4 block text-xs uppercase tracking-widest text-gold underline">Retry assessment</button>
         </div>
       ) : (
