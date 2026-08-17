@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { trackEvent } from "@/lib/revenueOS";
+import { canonicalDestination, getRuntimeRecommendation, type RuntimeRecommendation } from "@/lib/runtimeRecommendation";
 
 export const Route = createFileRoute("/personalize")({
   component: PersonalizePage,
@@ -21,12 +22,11 @@ export const Route = createFileRoute("/personalize")({
 
 const WEBHOOK_URL = "https://hook.eu1.make.com/p0c26asklninfrxhp2sw6nkdjjb19a89";
 const WHATSAPP_NUMBER = "2348132255842";
-const SHOP_URL = "https://shop.resofit.fit";
 
 type Step = 0 | 1 | 2 | 3;
 interface Answers { goal: string; activity: string; diet: string }
-interface Product { handle?: string; variant_id?: string; variantId?: string; title?: string; image?: string; price?: string; reason?: string }
-interface Result { title?: string; summary?: string; reason?: string; reasoning?: string; product?: Product; bundle?: Product[]; products?: Product[]; recommendation?: Product | Product[] }
+interface Product { handle?: string; variant_id?: string; variantId?: string; title?: string; image?: string; price?: string; reason?: string; destination?: string }
+interface Result extends RuntimeRecommendation { title?: string; product?: Product; bundle?: Product[]; products?: Product[]; recommendation?: Product | Product[] }
 
 const GOALS = [
   { value: "fat_loss", label: "Lose body fat" },
@@ -60,10 +60,10 @@ function fallbackRecommendation(answers: Answers): Result {
   const goal = GOALS.find((x) => x.value === answers.goal)?.label ?? "your wellness goal";
   const activity = ACTIVITIES.find((x) => x.value === answers.activity)?.label ?? "your current activity level";
   const diet = DIETS.find((x) => x.value === answers.diet)?.label ?? "your dietary preference";
-  const reset = answers.goal === "reset";
   return {
-    title: reset ? "Your ResoFit 7-Day Reset" : "Your ResoFit Personalized Pathway",
-    summary: `Based on your assessment, your priority is ${goal.toLowerCase()}, with ${activity.toLowerCase()} and a ${diet.toLowerCase()} approach. Your recommended next step is the ResoFit ${reset ? "7-Day Reset" : "personalized wellness pathway"}.`,
+    title: "Your ResoFit Personalized Pathway",
+    summary: `Your assessment is complete. Your priority is ${goal.toLowerCase()}, with ${activity.toLowerCase()} and a ${diet.toLowerCase()} approach. Your next best action is being selected from the current ResoFit offering layer.`,
+    nextAction: "Continue with ResoFit guidance",
   };
 }
 
@@ -75,9 +75,13 @@ function productsFrom(result: Result | null): Product[] {
   if (Array.isArray(result.recommendation)) values.push(...result.recommendation);
   if (result.product) values.push(result.product);
   if (result.recommendation && !Array.isArray(result.recommendation)) values.push(result.recommendation);
+  if (result.offer) values.push(result.offer);
+  if (Array.isArray(result.relatedOffers)) values.push(...result.relatedOffers);
+  if (Array.isArray(result.upsell)) values.push(...result.upsell);
+  if (Array.isArray(result.crossSell)) values.push(...result.crossSell);
   const seen = new Set<string>();
   return values.filter((p) => {
-    const key = p.handle ?? p.variant_id ?? p.variantId ?? p.title ?? "";
+    const key = p.handle ?? p.variant_id ?? p.variantId ?? p.id ?? p.title ?? "";
     if (!key || seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -85,10 +89,24 @@ function productsFrom(result: Result | null): Product[] {
 }
 
 function customerSafeSummary(result: Result | null) {
-  const raw = result?.summary ?? result?.reason ?? result?.reasoning ?? "";
+  const raw = result?.summary ?? "";
   const technical = /webhook|curat(ed|ing)|inactive|no longer active|finaliz(e|ing).*protocol|being curated/i.test(raw);
   if (!raw || technical) return "Your assessment is complete. Your ResoFit priority direction and next best step are ready.";
   return raw;
+}
+
+function normalizeRecommendation(payload: Result | null): Result | null {
+  if (!payload) return null;
+  const offer = payload.offer;
+  if (offer) {
+    return {
+      ...payload,
+      product: offer,
+      title: payload.title ?? offer.title ?? "Your ResoFit Recommendation",
+      summary: payload.summary ?? offer.reason,
+    };
+  }
+  return payload;
 }
 
 function PersonalizePage() {
@@ -102,6 +120,7 @@ function PersonalizePage() {
     setLoading(true);
     setError(null);
     trackEvent("assessment_click");
+    let automationResult: Result | null = null;
     try {
       const response = await fetch(WEBHOOK_URL, {
         method: "POST",
@@ -109,22 +128,26 @@ function PersonalizePage() {
         body: JSON.stringify({ anon_id: anonId(), source: "resofit.fit/personalize", submittedAt: new Date().toISOString(), ...final }),
       });
       const text = await response.text();
-      let parsed: Result = {};
-      try { parsed = text ? (JSON.parse(text) as Result) : {}; } catch { parsed = { summary: text }; }
-      if (!response.ok) throw new Error("Assessment service unavailable");
-      setResult(parsed);
-      setStep(3);
-      trackEvent("assessment_complete");
+      if (response.ok && text) {
+        try { automationResult = JSON.parse(text) as Result; } catch { automationResult = null; }
+      }
     } catch {
-      // The assessment must never dead-end because an optional downstream automation is unavailable.
-      // Preserve the customer's answers and give a deterministic, customer-safe recommendation.
-      setResult(fallbackRecommendation(final));
-      setStep(3);
-      trackEvent("assessment_complete");
-      trackEvent("assessment_fallback");
-    } finally {
-      setLoading(false);
+      // Make.com is an optional downstream adapter; it must not block the customer journey.
     }
+
+    const runtime = await getRuntimeRecommendation({
+      answers: final,
+      anonId: anonId(),
+      source: "resofit.fit/personalize",
+      pagePath: "/personalize",
+    });
+
+    const selected = normalizeRecommendation(runtime) ?? normalizeRecommendation(automationResult) ?? fallbackRecommendation(final);
+    setResult(selected);
+    setStep(3);
+    trackEvent("assessment_complete");
+    if (!runtime) trackEvent("recommendation_runtime_fallback");
+    setLoading(false);
   };
 
   const restart = () => {
@@ -184,6 +207,8 @@ function ResultView({ result, answers, error, onRestart }: { result: Result | nu
   const products = useMemo(() => productsFrom(result), [result]);
   const summary = customerSafeSummary(result);
   const title = result?.title ?? "Your ResoFit Protocol";
+  const destination = canonicalDestination(result?.offer) ?? result?.product?.destination ?? null;
+  const primaryLabel = result?.nextAction ?? (result?.offer?.title ? `Continue with ${result.offer.title}` : "Continue with your next best step");
   const insights = [
     ["Primary goal", GOALS.find((x) => x.value === answers.goal)?.label ?? answers.goal],
     ["Current activity", ACTIVITIES.find((x) => x.value === answers.activity)?.label ?? answers.activity],
@@ -197,16 +222,16 @@ function ResultView({ result, answers, error, onRestart }: { result: Result | nu
     } catch { toast.error("Couldn't copy the result"); }
   };
 
-  const startReset = () => {
+  const continueJourney = () => {
     trackEvent("assessment_result_cta");
-    window.location.assign(SHOP_URL);
+    if (destination) window.location.assign(destination);
   };
 
   return (
     <article className="overflow-hidden rounded-xl border border-gold/40 bg-black p-6 text-foreground shadow-2xl shadow-gold/10 md:p-10">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-gold">CoachB2K Result</p>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-gold">ChatB2K Result</p>
           <h2 className="mt-2 font-display text-3xl text-gold md:text-4xl">{title}</h2>
         </div>
         <button type="button" onClick={copy} aria-label="Copy result" className="rounded-md border border-gold/40 p-2 text-gold hover:bg-gold/10"><Copy className="h-4 w-4" /></button>
@@ -237,22 +262,24 @@ function ResultView({ result, answers, error, onRestart }: { result: Result | nu
           {products.length > 0 && (
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               {products.slice(0, 4).map((product, index) => (
-                <div key={product.handle ?? product.variant_id ?? product.variantId ?? product.title ?? index} className="rounded-lg border border-border/60 bg-card/30 p-5">
+                <div key={product.handle ?? product.variant_id ?? product.variantId ?? product.id ?? product.title ?? index} className="rounded-lg border border-border/60 bg-card/30 p-5">
                   <p className="text-sm font-semibold">{product.title ?? "Recommended ResoFit option"}</p>
                   {product.reason && <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{product.reason}</p>}
-                  {product.price && <p className="mt-3 text-sm font-semibold text-gold">{product.price}</p>}
+                  {product.price !== undefined && <p className="mt-3 text-sm font-semibold text-gold">{product.price}{product.currency ? ` ${product.currency}` : ""}</p>}
                 </div>
               ))}
             </div>
           )}
 
-          <div className="mt-8 rounded-xl border border-gold/50 bg-gradient-to-b from-gold/10 to-transparent p-6 text-center">
-            <p className="text-xs uppercase tracking-[0.25em] text-gold">Start your ResoFit journey</p>
-            <h3 className="mt-2 font-display text-2xl md:text-3xl">Unlock the next step for ₦1,000</h3>
-            <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">Continue to the secure ResoFit shop to complete the ₦1,000 starter checkout and unlock your personalized value.</p>
-            <button type="button" onClick={startReset} className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-gold px-6 py-3 text-xs font-bold uppercase tracking-widest text-gold-foreground shadow-lg shadow-gold/20 transition-transform hover:scale-[1.01] md:w-auto">Start My ₦1,000 Reset <ArrowRight className="h-4 w-4" /></button>
-            <p className="mt-3 text-[11px] uppercase tracking-widest text-muted-foreground">Secure Paystack checkout · value delivered after payment</p>
-          </div>
+          {destination && (
+            <div className="mt-8 rounded-xl border border-gold/50 bg-gradient-to-b from-gold/10 to-transparent p-6 text-center">
+              <p className="text-xs uppercase tracking-[0.25em] text-gold">Your recommended next action</p>
+              <h3 className="mt-2 font-display text-2xl md:text-3xl">{primaryLabel}</h3>
+              <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">Continue to the current ResoFit destination selected for your journey.</p>
+              <button type="button" onClick={continueJourney} className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-gold px-6 py-3 text-xs font-bold uppercase tracking-widest text-gold-foreground shadow-lg shadow-gold/20 transition-transform hover:scale-[1.01] md:w-auto">{primaryLabel} <ArrowRight className="h-4 w-4" /></button>
+              <p className="mt-3 text-[11px] uppercase tracking-widest text-muted-foreground">Secure payment and fulfilment follow the selected current offer.</p>
+            </div>
+          )}
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3 border-t border-border/40 pt-6">
             <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi CoachB2K, I completed my ResoFit assessment. My goal is ${answers.goal}. Please help me with my next step.`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-3 text-xs uppercase tracking-widest hover:border-gold/60"><MessageCircle className="h-4 w-4" /> Ask an Expert</a>
