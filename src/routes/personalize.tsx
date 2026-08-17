@@ -22,6 +22,8 @@ export const Route = createFileRoute("/personalize")({
 const WEBHOOK_URL = "https://hook.eu1.make.com/p0c26asklninfrxhp2sw6nkdjjb19a89";
 const WHATSAPP_NUMBER = "2348132255842";
 const SHOP_URL = "https://shop.resofit.fit";
+const RESET_URL = "https://reset.resofit.fit";
+const CORE_OFFER_HANDLE = "rf-personalized-meal-workout-reset";
 
 type Step = 0 | 1 | 2 | 3;
 interface Answers { goal: string; activity: string; diet: string }
@@ -91,6 +93,33 @@ function customerSafeSummary(result: Result | null) {
   return raw;
 }
 
+function intentOffer(answers: Answers, products: Product[]) {
+  const recommended = products.find((p) => p.handle);
+  if (recommended?.handle) {
+    return {
+      url: `${SHOP_URL}/product/${encodeURIComponent(recommended.handle)}?source=chatb2k&intent=${encodeURIComponent(answers.goal)}`,
+      label: recommended.title ?? "View my recommended offer",
+      price: recommended.price,
+    };
+  }
+
+  if (answers.goal === "reset") {
+    return { url: RESET_URL, label: "Start My ₦1,000 Reset" };
+  }
+
+  const handleByGoal: Record<string, string> = {
+    fat_loss: CORE_OFFER_HANDLE,
+    muscle: "buttgrowthb2k-core",
+    energy: "rf-elite-coaching-30day",
+    reset: CORE_OFFER_HANDLE,
+  };
+  const handle = handleByGoal[answers.goal] ?? CORE_OFFER_HANDLE;
+  return {
+    url: `${SHOP_URL}/product/${encodeURIComponent(handle)}?source=chatb2k&intent=${encodeURIComponent(answers.goal)}`,
+    label: answers.goal === "fat_loss" ? "View My ₦12,500 Meal + Workout Plan" : "View My Recommended Offer",
+  };
+}
+
 function PersonalizePage() {
   const [step, setStep] = useState<Step>(0);
   const [answers, setAnswers] = useState<Answers>({ goal: "", activity: "", diet: "" });
@@ -116,8 +145,6 @@ function PersonalizePage() {
       setStep(3);
       trackEvent("assessment_complete");
     } catch {
-      // The assessment must never dead-end because an optional downstream automation is unavailable.
-      // Preserve the customer's answers and give a deterministic, customer-safe recommendation.
       setResult(fallbackRecommendation(final));
       setStep(3);
       trackEvent("assessment_complete");
@@ -184,6 +211,7 @@ function ResultView({ result, answers, error, onRestart }: { result: Result | nu
   const products = useMemo(() => productsFrom(result), [result]);
   const summary = customerSafeSummary(result);
   const title = result?.title ?? "Your ResoFit Protocol";
+  const offer = intentOffer(answers, products);
   const insights = [
     ["Primary goal", GOALS.find((x) => x.value === answers.goal)?.label ?? answers.goal],
     ["Current activity", ACTIVITIES.find((x) => x.value === answers.activity)?.label ?? answers.activity],
@@ -197,9 +225,9 @@ function ResultView({ result, answers, error, onRestart }: { result: Result | nu
     } catch { toast.error("Couldn't copy the result"); }
   };
 
-  const startReset = () => {
+  const startOffer = () => {
     trackEvent("assessment_result_cta");
-    window.location.assign(SHOP_URL);
+    window.location.assign(offer.url);
   };
 
   return (
@@ -247,11 +275,15 @@ function ResultView({ result, answers, error, onRestart }: { result: Result | nu
           )}
 
           <div className="mt-8 rounded-xl border border-gold/50 bg-gradient-to-b from-gold/10 to-transparent p-6 text-center">
-            <p className="text-xs uppercase tracking-[0.25em] text-gold">Start your ResoFit journey</p>
-            <h3 className="mt-2 font-display text-2xl md:text-3xl">Unlock the next step for ₦1,000</h3>
-            <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">Continue to the secure ResoFit shop to complete the ₦1,000 starter checkout and unlock your personalized value.</p>
-            <button type="button" onClick={startReset} className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-gold px-6 py-3 text-xs font-bold uppercase tracking-widest text-gold-foreground shadow-lg shadow-gold/20 transition-transform hover:scale-[1.01] md:w-auto">Start My ₦1,000 Reset <ArrowRight className="h-4 w-4" /></button>
-            <p className="mt-3 text-[11px] uppercase tracking-widest text-muted-foreground">Secure Paystack checkout · value delivered after payment</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-gold">Your personalized offer</p>
+            <h3 className="mt-2 font-display text-2xl md:text-3xl">{offer.label}</h3>
+            <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
+              ChatB2K™ matched your intent to the most relevant ResoFit value path. Continue to the exact offer rather than browsing the entire shop.
+            </p>
+            <button type="button" onClick={startOffer} className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-gold px-6 py-3 text-xs font-bold uppercase tracking-widest text-gold-foreground shadow-lg shadow-gold/20 transition-transform hover:scale-[1.01] md:w-auto">
+              Continue to My Offer <ArrowRight className="h-4 w-4" />
+            </button>
+            <p className="mt-3 text-[11px] uppercase tracking-widest text-muted-foreground">Secure ResoFit commerce · personalized value path</p>
           </div>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3 border-t border-border/40 pt-6">
