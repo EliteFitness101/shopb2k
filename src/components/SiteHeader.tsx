@@ -7,7 +7,7 @@ import { CTA } from "@/lib/ctas";
 const NAV = [
   { label: "Wellness", items: [{ label: "Programs", to: "/programs" }, { label: "Assessment", to: "/me" }, { label: "Knowledge Hub", to: "/knowledge" }, { label: "Success Stories", to: "/success-stories" }] },
   { label: "Shop", items: [{ label: "ResoFit Shop", href: "https://shop.resofit.fit" }, { label: "ResoFlex Store", href: "https://store.resofit.fit" }, { label: "Catalog", href: "https://catalog.resofit.fit" }] },
-  { label: "ChatB2K™", items: [{ label: "Assessment", to: "/me" }, { label: "ChatB2K Platform", href: "https://chatb2k.resofit.fit" }, { label: "Ask an Expert", href: "https://wa.me/2348132255842" }] },
+  { label: "ChatB2K™", items: [{ label: "Assessment", to: "/me" }, { label: "Ask an Expert", href: "https://wa.me/2348132255842" }] },
   { label: "Community", items: [{ label: "Play", to: "/community/play" }, { label: "Learn", to: "/knowledge" }] },
   { label: "Company", items: [{ label: "About", to: "/about" }, { label: "Contact", to: "/contact" }, { label: "Member Login", to: "/auth" }, { label: "Privacy", to: "/privacy" }, { label: "Terms", to: "/terms" }] },
 ];
