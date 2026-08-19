@@ -12,11 +12,12 @@ const WHATSAPP_NUMBER = "2348132255842";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "https://vbqjvmnhdtdhmeeudqnn.supabase.co";
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const supabase = SUPABASE_ANON_KEY ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+const CANONICAL_HOSTS = new Set(["resofit.fit", "www.resofit.fit", "shop.resofit.fit", "dashboard.resofit.fit"]);
 
 type Answers = { goal: string; activity: string; diet: string };
 type Recommendation = { title: string; summary: string; reason: string; url: string; cta: string; image?: string; price?: number };
 type CanonicalRoute = { path: string; destination_type: string; action: string; metadata: Record<string, unknown> | null };
-type CanonicalEntity = { name: string; description: string | null; metadata: Record<string, unknown> | null };
+type CanonicalEntity = { id: string; name: string; description: string | null; metadata: Record<string, unknown> | null };
 
 const GOALS = [
   { value: "fat_loss", label: "Lose body fat", route: "/bellyfat", title: "ResoFit Body Reset Pathway", cta: "Start My Body Reset" },
@@ -54,6 +55,17 @@ function localRecommendation(a: Answers): Recommendation {
   };
 }
 
+function safeCanonicalUrl(path: string): string | null {
+  try {
+    const url = new URL(path, "https://resofit.fit");
+    if (url.protocol !== "https:") return null;
+    if (!CANONICAL_HOSTS.has(url.hostname)) return null;
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
 async function canonicalRecommendation(a: Answers): Promise<Recommendation> {
   const local = localRecommendation(a);
   if (!supabase) return local;
@@ -64,7 +76,7 @@ async function canonicalRecommendation(a: Answers): Promise<Recommendation> {
   try {
     const { data: entity, error: entityError } = await supabase
       .from("resofit_canonical_entities")
-      .select("name,description,metadata")
+      .select("id,name,description,metadata")
       .eq("canonical_key", canonicalKey)
       .eq("status", "active")
       .maybeSingle<CanonicalEntity>();
@@ -74,20 +86,20 @@ async function canonicalRecommendation(a: Answers): Promise<Recommendation> {
     const { data: route, error: routeError } = await supabase
       .from("resofit_canonical_routes")
       .select("path,destination_type,action,metadata")
-      .eq("entity_id", (await supabase.from("resofit_canonical_entities").select("id").eq("canonical_key", canonicalKey).single()).data?.id)
+      .eq("entity_id", entity.id)
       .eq("is_primary", true)
       .eq("status", "active")
       .limit(1)
       .maybeSingle<CanonicalRoute>();
 
-    if (routeError || !route?.path) return local;
+    const canonicalUrl = route?.path ? safeCanonicalUrl(route.path) : null;
+    if (routeError || !canonicalUrl) return local;
 
-    const url = route.path.startsWith("http") ? route.path : `${SUPABASE_URL.replace("supabase.co", "resofit.fit")}${route.path}`;
     return {
       ...local,
       title: entity.name || local.title,
       summary: entity.description || local.summary,
-      url,
+      url: canonicalUrl,
     };
   } catch {
     return local;
