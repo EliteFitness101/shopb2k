@@ -12,10 +12,11 @@
     "format": "prettier --write .",
     "content:intelligence": "node scripts/content-intelligence.mjs",
     "revenue:intelligence": "node scripts/revenue-intelligence.mjs",
+    "content:prioritize": "node scripts/apply-winning-graph.mjs",
     "buffer:dry-run": "node scripts/buffer-autopost.mjs",
     "products:smoke": "node scripts/smoke-product-pages.mjs",
     "products:seo-smoke": "node scripts/generate-sitemap.mjs --strict",
-    "production:gate": "npm run lint && npm run content:intelligence && npm run revenue:intelligence && npm run buffer:dry-run && npm run products:seo-smoke && npm run build && npm run products:smoke"
+    "production:gate": "npm run lint && npm run content:intelligence && npm run revenue:intelligence && npm run content:prioritize && npm run buffer:dry-run && npm run products:seo-smoke && npm run build && npm run products:smoke"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
