@@ -3,7 +3,7 @@ import type {} from "@tanstack/react-start";
 import { PROGRAMS } from "@/content/programs";
 import { ARTICLES } from "@/content/blog";
 
-const BASE_URL = "https://shopb2k.lovable.app";
+const BASE_URL = "https://resofit.fit";
 
 interface SitemapEntry {
   path: string;
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         const entries: SitemapEntry[] = [
           { path: "/", changefreq: "weekly", priority: "1.0" },
           { path: "/programs", changefreq: "weekly", priority: "0.8" },
-          { path: "/personalize", changefreq: "monthly", priority: "0.9" },
+          { path: "/me", changefreq: "monthly", priority: "0.9" },
           { path: "/shop", changefreq: "daily", priority: "0.9" },
           { path: "/blog", changefreq: "weekly", priority: "0.7" },
           { path: "/knowledge", changefreq: "weekly", priority: "0.7" },
@@ -29,17 +29,13 @@ export const Route = createFileRoute("/sitemap.xml")({
           ...ARTICLES.map((a) => ({ path: `/blog/${a.slug}`, changefreq: "monthly" as const, priority: "0.6" })),
         ];
 
-        const urls = entries.map((e) =>
-          [
-            `  <url>`,
-            `    <loc>${BASE_URL}${e.path}</loc>`,
-            e.changefreq ? `    <changefreq>${e.changefreq}</changefreq>` : null,
-            e.priority ? `    <priority>${e.priority}</priority>` : null,
-            `  </url>`,
-          ]
-            .filter(Boolean)
-            .join("\n"),
-        );
+        const urls = entries.map((e) => [
+          `  <url>`,
+          `    <loc>${BASE_URL}${e.path}</loc>`,
+          e.changefreq ? `    <changefreq>${e.changefreq}</changefreq>` : null,
+          e.priority ? `    <priority>${e.priority}</priority>` : null,
+          `  </url>`,
+        ].filter(Boolean).join("\n"));
 
         const xml = [
           `<?xml version="1.0" encoding="UTF-8"?>`,
@@ -48,12 +44,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           `</urlset>`,
         ].join("\n");
 
-        return new Response(xml, {
-          headers: {
-            "Content-Type": "application/xml",
-            "Cache-Control": "public, max-age=3600",
-          },
-        });
+        return new Response(xml, { headers: { "Content-Type": "application/xml", "Cache-Control": "public, max-age=3600" } });
       },
     },
   },
