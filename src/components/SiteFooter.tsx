@@ -3,8 +3,8 @@ import { CTA } from "@/lib/ctas";
 import { CookiePreferencesLink } from "@/components/CookieConsent";
 
 const COLUMNS = [
-  { heading: "Wellness", links: [{ to: "/programs", label: "Programs" }, { to: "/personalize", label: "ChatB2K™ Assessment" }, { to: "/knowledge", label: "Knowledge Hub" }, { to: "/success-stories", label: "Success Stories" }] },
-  { heading: "Ecosystem", links: [{ to: "/shop", label: "Shop" }, { to: "/community/play", label: "Community" }, { to: "/auth", label: "Member Login" }, { href: "https://chatb2k.resofit.fit", label: "ChatB2K™" }, { href: "https://forge.resofit.fit", label: "ResoForge" }] },
+  { heading: "Wellness", links: [{ to: "/programs", label: "Programs" }, { to: "/me", label: "ChatB2K™ Assessment" }, { to: "/knowledge", label: "Knowledge Hub" }, { to: "/success-stories", label: "Success Stories" }] },
+  { heading: "Ecosystem", links: [{ to: "/shop", label: "Shop" }, { to: "/community/play", label: "Community" }, { to: "/auth", label: "Member Login" }, { to: "/me", label: "ChatB2K™" }, { href: "https://forge.resofit.fit", label: "ResoForge" }] },
   { heading: "Company", links: [{ to: "/about", label: "About" }, { to: "/contact", label: "Contact" }, { to: "/privacy", label: "Privacy" }, { to: "/terms", label: "Terms" }, { to: "/cookies", label: "Cookies" }, { to: "/compliance", label: "Compliance & Data Practices" }] },
 ];
 
