@@ -1,10 +1,7 @@
-// Shopify Storefront API client + cart mutations
-import { toast } from "sonner";
+// ResoFit storefront data client. Shopify is no longer the source of truth.
 
-export const SHOPIFY_API_VERSION = "2025-07";
-export const SHOPIFY_STORE_PERMANENT_DOMAIN = "81ikw4-eg.myshopify.com";
-export const SHOPIFY_STOREFRONT_URL = `https://${SHOPIFY_STORE_PERMANENT_DOMAIN}/api/${SHOPIFY_API_VERSION}/graphql.json`;
-export const SHOPIFY_STOREFRONT_TOKEN = "9860aac2f091191b6b688e56257bceb5";
+export const RESOFIT_SUPABASE_URL = "https://vbqjvmnhdtdhmeeudqnn.supabase.co";
+export const RESOFIT_STOREFRONT_URL = `${RESOFIT_SUPABASE_URL}/functions/v1/storefront-products`;
 
 export interface MoneyV2 {
   amount: string;
@@ -43,177 +40,107 @@ export interface ShopifyProduct {
   node: ShopifyProductNode;
 }
 
+type StorefrontProduct = {
+  id: string;
+  handle: string;
+  title: string;
+  body_html: string | null;
+  vendor: string | null;
+  product_type: string;
+  tags: string[] | null;
+  published: boolean;
+  variant_price: number;
+  variant_inventory_qty: number;
+  image_src: string | null;
+  sku: string | null;
+};
+
+function mapProduct(p: StorefrontProduct): ShopifyProductNode {
+  const price = { amount: String(p.variant_price ?? 0), currencyCode: "NGN" };
+  const variant: ShopifyVariant = {
+    id: p.id,
+    title: "Default Title",
+    price,
+    availableForSale: (p.variant_inventory_qty ?? 0) > 0,
+    selectedOptions: [],
+  };
+  return {
+    id: p.id,
+    title: p.title,
+    description: p.body_html?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ?? "",
+    descriptionHtml: p.body_html ?? undefined,
+    handle: p.handle,
+    productType: p.product_type,
+    vendor: p.vendor ?? "ResoFlex",
+    tags: p.tags ?? [],
+    priceRange: { minVariantPrice: price },
+    images: { edges: p.image_src ? [{ node: { url: p.image_src, altText: p.title } }] : [] },
+    variants: { edges: [{ node: variant }] },
+    options: [],
+  };
+}
+
 export async function storefrontApiRequest<T = any>(
   query: string,
   variables: Record<string, unknown> = {},
 ): Promise<{ data?: T; errors?: Array<{ message: string }> } | undefined> {
-  const response = await fetch(SHOPIFY_STOREFRONT_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Shopify-Storefront-Access-Token": SHOPIFY_STOREFRONT_TOKEN,
-    },
-    body: JSON.stringify({ query, variables }),
-  });
+  const handle = typeof variables.handle === "string" ? variables.handle : null;
+  const url = new URL(RESOFIT_STOREFRONT_URL);
+  if (handle) url.searchParams.set("handle", handle);
 
-  if (response.status === 402) {
-    toast.error("Shopify: Payment required", {
-      description: "Storefront API access requires an active Shopify billing plan.",
-    });
-    return;
+  const response = await fetch(url.toString(), { method: "GET" });
+  if (!response.ok) throw new Error(`ResoFit storefront HTTP ${response.status}`);
+  const payload = await response.json() as { products?: StorefrontProduct[]; error?: string };
+  if (payload.error) throw new Error(payload.error);
+
+  const nodes = (payload.products ?? []).map(mapProduct);
+  const isHandleQuery = /product\s*\(handle/i.test(query);
+  const products = isHandleQuery ? (nodes[0] ?? null) : { edges: nodes.map((node) => ({ node })) };
+
+  if (/product\s*\(handle/i.test(query)) {
+    return { data: { product: products } as T };
   }
-  if (!response.ok) throw new Error(`Shopify HTTP ${response.status}`);
-  const json = await response.json();
-  if (json.errors) throw new Error(`Shopify: ${json.errors.map((e: any) => e.message).join(", ")}`);
-  return json;
+  if (/products\s*\(/i.test(query)) {
+    return { data: { products } as T };
+  }
+  if (/query\s+cart/i.test(query)) {
+    return { data: { cart: null } as T };
+  }
+  throw new Error("Unsupported storefront operation");
 }
 
 export const PRODUCTS_QUERY = /* GraphQL */ `
-  query GetProducts($first: Int!, $query: String) {
-    products(first: $first, query: $query) {
-      edges {
-        node {
-          id
-          title
-          description
-          handle
-          productType
-          vendor
-          tags
-          priceRange { minVariantPrice { amount currencyCode } }
-          images(first: 5) { edges { node { url altText } } }
-          variants(first: 10) {
-            edges {
-              node {
-                id title availableForSale
-                price { amount currencyCode }
-                selectedOptions { name value }
-              }
-            }
-          }
-          options { name values }
-        }
-      }
-    }
-  }
+  query GetProducts($first: Int!, $query: String) { products(first: $first, query: $query) { edges { node { id title description handle productType vendor tags priceRange { minVariantPrice { amount currencyCode } } images(first: 5) { edges { node { url altText } } } variants(first: 10) { edges { node { id title availableForSale price { amount currencyCode } selectedOptions { name value } } } } options { name values } } } }
 `;
 
 export const PRODUCT_BY_HANDLE_QUERY = /* GraphQL */ `
-  query ProductByHandle($handle: String!) {
-    product(handle: $handle) {
-      id
-      title
-      description
-      descriptionHtml
-      handle
-      productType
-      vendor
-      tags
-      priceRange { minVariantPrice { amount currencyCode } }
-      images(first: 12) { edges { node { url altText } } }
-      variants(first: 50) {
-        edges {
-          node {
-            id title availableForSale
-            price { amount currencyCode }
-            selectedOptions { name value }
-          }
-        }
-      }
-      options { name values }
-    }
-  }
+  query ProductByHandle($handle: String!) { product(handle: $handle) { id title description descriptionHtml handle productType vendor tags priceRange { minVariantPrice { amount currencyCode } } images(first: 12) { edges { node { url altText } } } variants(first: 50) { edges { node { id title availableForSale price { amount currencyCode } selectedOptions { name value } } } } options { name values } } }
 `;
 
-export const CART_QUERY = /* GraphQL */ `
-  query cart($id: ID!) {
-    cart(id: $id) { id totalQuantity }
-  }
-`;
+export const CART_QUERY = `query cart($id: ID!) { cart(id: $id) { id totalQuantity } }`;
+export const CART_CREATE_MUTATION = "";
+export const CART_LINES_ADD_MUTATION = "";
+export const CART_LINES_UPDATE_MUTATION = "";
+export const CART_LINES_REMOVE_MUTATION = "";
 
-export const CART_CREATE_MUTATION = /* GraphQL */ `
-  mutation cartCreate($input: CartInput!) {
-    cartCreate(input: $input) {
-      cart {
-        id checkoutUrl
-        lines(first: 100) { edges { node { id merchandise { ... on ProductVariant { id } } } } }
-      }
-      userErrors { field message }
-    }
-  }
-`;
+export function formatCheckoutUrl(checkoutUrl: string): string { return checkoutUrl; }
 
-export const CART_LINES_ADD_MUTATION = /* GraphQL */ `
-  mutation cartLinesAdd($cartId: ID!, $lines: [CartLineInput!]!) {
-    cartLinesAdd(cartId: $cartId, lines: $lines) {
-      cart {
-        id
-        lines(first: 100) { edges { node { id merchandise { ... on ProductVariant { id } } } } }
-      }
-      userErrors { field message }
-    }
-  }
-`;
-
-export const CART_LINES_UPDATE_MUTATION = /* GraphQL */ `
-  mutation cartLinesUpdate($cartId: ID!, $lines: [CartLineUpdateInput!]!) {
-    cartLinesUpdate(cartId: $cartId, lines: $lines) {
-      cart { id }
-      userErrors { field message }
-    }
-  }
-`;
-
-export const CART_LINES_REMOVE_MUTATION = /* GraphQL */ `
-  mutation cartLinesRemove($cartId: ID!, $lineIds: [ID!]!) {
-    cartLinesRemove(cartId: $cartId, lineIds: $lineIds) {
-      cart { id }
-      userErrors { field message }
-    }
-  }
-`;
-
-export function formatCheckoutUrl(checkoutUrl: string): string {
-  try {
-    const url = new URL(checkoutUrl);
-    url.searchParams.set("channel", "online_store");
-    return url.toString();
-  } catch {
-    return checkoutUrl;
-  }
-}
-
-export function isCartNotFoundError(
-  userErrors: Array<{ field: string[] | null; message: string }>,
-): boolean {
-  return userErrors.some(
-    (e) =>
-      e.message.toLowerCase().includes("cart not found") ||
-      e.message.toLowerCase().includes("does not exist"),
-  );
+export function isCartNotFoundError(userErrors: Array<{ field: string[] | null; message: string }>): boolean {
+  return userErrors.some((e) => e.message.toLowerCase().includes("cart not found") || e.message.toLowerCase().includes("does not exist"));
 }
 
 export function formatMoney(money: MoneyV2): string {
   const amount = parseFloat(money.amount);
   try {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: money.currencyCode,
-      maximumFractionDigits: money.currencyCode === "NGN" ? 0 : 2,
-    }).format(amount);
+    return new Intl.NumberFormat("en-NG", { style: "currency", currency: money.currencyCode, maximumFractionDigits: money.currencyCode === "NGN" ? 0 : 2 }).format(amount);
   } catch {
     return `${money.currencyCode} ${amount.toFixed(2)}`;
   }
 }
 
-// Approximate USD equivalent for display alongside NGN
 const NGN_PER_USD = 1600;
 export function approxUSD(money: MoneyV2): string {
   const amount = parseFloat(money.amount);
   const usd = money.currencyCode === "NGN" ? amount / NGN_PER_USD : amount;
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: usd >= 100 ? 0 : 2,
-  }).format(usd);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: usd >= 100 ? 0 : 2 }).format(usd);
 }
