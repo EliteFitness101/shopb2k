@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, Check, Loader2, Sparkles } from "lucide-react";
+import { createClient } from "@supabase/supabase-js";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { trackEvent } from "@/lib/revenueOS";
@@ -8,14 +9,20 @@ import { trackEvent } from "@/lib/revenueOS";
 export const Route = createFileRoute("/personalize")({ component: PersonalizePage });
 
 const WHATSAPP_NUMBER = "2348132255842";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "https://vbqjvmnhdtdhmeeudqnn.supabase.co";
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const supabase = SUPABASE_ANON_KEY ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
 type Answers = { goal: string; activity: string; diet: string };
-type Recommendation = { title: string; summary: string; reason: string; url: string; cta: string };
+type Recommendation = { title: string; summary: string; reason: string; url: string; cta: string; image?: string; price?: number };
+type CanonicalRoute = { path: string; destination_type: string; action: string; metadata: Record<string, unknown> | null };
+type CanonicalEntity = { name: string; description: string | null; metadata: Record<string, unknown> | null };
 
 const GOALS = [
-  { value: "fat_loss", label: "Lose body fat" },
-  { value: "muscle", label: "Build lean muscle" },
-  { value: "energy", label: "More energy & focus" },
-  { value: "reset", label: "Full reset & wellness" },
+  { value: "fat_loss", label: "Lose body fat", route: "/bellyfat", title: "ResoFit Body Reset Pathway", cta: "Start My Body Reset" },
+  { value: "muscle", label: "Build lean muscle", route: "/muscle", title: "ResoFit Muscle Pathway", cta: "Start My Muscle Pathway" },
+  { value: "energy", label: "More energy & focus", route: "/longevity", title: "ResoFit Longevity & Energy Pathway", cta: "Start My Energy Pathway" },
+  { value: "reset", label: "Full reset & wellness", route: "/reset", title: "ResoFit 7-Day Reset", cta: "Start My ₦1,000 Reset" },
 ];
 const ACTIVITIES = [
   { value: "low", label: "Sedentary (desk work)" },
@@ -29,17 +36,61 @@ const DIETS = [
   { value: "vegan", label: "Vegan" },
 ];
 
-function recommendationFor(a: Answers): Recommendation {
+function localRecommendation(a: Answers): Recommendation {
+  const goal = GOALS.find((item) => item.value === a.goal) ?? GOALS[3];
   const base = "https://www.resofit.fit";
-  switch (a.goal) {
-    case "fat_loss":
-      return { title: "ResoFit Body Reset Pathway", summary: "A focused starting point for body-composition goals, built around sustainable nutrition, movement and accountability.", reason: "Your primary goal is body-fat reduction. We are taking you directly to the relevant ResoFit experience instead of a generic catalogue.", url: `${base}/bellyfat`, cta: "Start My Body Reset" };
-    case "muscle":
-      return { title: "ResoFit Muscle Pathway", summary: "A strength-focused pathway for building lean muscle with progressive training and supportive nutrition.", reason: "Your primary goal is lean muscle, so your next step is the dedicated ResoFit muscle pathway.", url: `${base}/muscle`, cta: "Start My Muscle Pathway" };
-    case "energy":
-      return { title: "ResoFit Longevity & Energy Pathway", summary: "A personalized starting point for energy, healthy ageing, recovery and sustainable wellness habits.", reason: "Your priority is energy and focus, so we are taking you directly to the relevant longevity pathway.", url: `${base}/longevity`, cta: "Start My Energy Pathway" };
-    default:
-      return { title: "ResoFit 7-Day Reset", summary: "A simple, guided starting point to reset your routine and begin your personalized wellness journey.", reason: "You selected a full reset, so we are taking you directly to the Reset experience.", url: `${base}/reset`, cta: "Start My ₦1,000 Reset" };
+  const summaries: Record<string, string> = {
+    fat_loss: "A focused starting point for body-composition goals, built around sustainable nutrition, movement and accountability.",
+    muscle: "A strength-focused pathway for building lean muscle with progressive training and supportive nutrition.",
+    energy: "A personalized starting point for energy, healthy ageing, recovery and sustainable wellness habits.",
+    reset: "A simple, guided starting point to reset your routine and begin your personalized wellness journey.",
+  };
+  return {
+    title: goal.title,
+    summary: summaries[a.goal] ?? summaries.reset,
+    reason: `Your primary goal is ${goal.label.toLowerCase()}. ResoFit is taking you directly to the relevant experience instead of sending you into a catalogue.`,
+    url: `${base}${goal.route}`,
+    cta: goal.cta,
+  };
+}
+
+async function canonicalRecommendation(a: Answers): Promise<Recommendation> {
+  const local = localRecommendation(a);
+  if (!supabase) return local;
+
+  const goal = GOALS.find((item) => item.value === a.goal) ?? GOALS[3];
+  const canonicalKey = `route:resofit.fit${goal.route}`;
+
+  try {
+    const { data: entity, error: entityError } = await supabase
+      .from("resofit_canonical_entities")
+      .select("name,description,metadata")
+      .eq("canonical_key", canonicalKey)
+      .eq("status", "active")
+      .maybeSingle<CanonicalEntity>();
+
+    if (entityError || !entity) return local;
+
+    const { data: route, error: routeError } = await supabase
+      .from("resofit_canonical_routes")
+      .select("path,destination_type,action,metadata")
+      .eq("entity_id", (await supabase.from("resofit_canonical_entities").select("id").eq("canonical_key", canonicalKey).single()).data?.id)
+      .eq("is_primary", true)
+      .eq("status", "active")
+      .limit(1)
+      .maybeSingle<CanonicalRoute>();
+
+    if (routeError || !route?.path) return local;
+
+    const url = route.path.startsWith("http") ? route.path : `${SUPABASE_URL.replace("supabase.co", "resofit.fit")}${route.path}`;
+    return {
+      ...local,
+      title: entity.name || local.title,
+      summary: entity.description || local.summary,
+      url,
+    };
+  } catch {
+    return local;
   }
 }
 
@@ -49,15 +100,16 @@ function PersonalizePage() {
   const [curating, setCurating] = useState(false);
   const [result, setResult] = useState<Recommendation | null>(null);
 
-  function submit(next: Answers) {
+  async function submit(next: Answers) {
     setCurating(true);
     trackEvent("assessment_click");
+    const recommendation = await canonicalRecommendation(next);
     window.setTimeout(() => {
-      setResult(recommendationFor(next));
+      setResult(recommendation);
       setStep(3);
       setCurating(false);
       trackEvent("assessment_complete");
-    }, 1100);
+    }, 900);
   }
 
   return <div className="min-h-screen bg-background"><SiteHeader /><main className="mx-auto max-w-3xl px-5 py-10 md:px-6 md:py-12">
