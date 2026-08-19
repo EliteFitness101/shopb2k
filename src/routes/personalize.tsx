@@ -21,12 +21,32 @@ export const Route = createFileRoute("/personalize")({
 
 const WEBHOOK_URL = "https://hook.eu1.make.com/p0c26asklninfrxhp2sw6nkdjjb19a89";
 const WHATSAPP_NUMBER = "2348132255842";
-const SHOP_URL = "https://shop.resofit.fit";
+const CANONICAL_SHOP_URL = "https://shop.resofit.fit";
 
 type Step = 0 | 1 | 2 | 3;
 interface Answers { goal: string; activity: string; diet: string }
-interface Product { handle?: string; variant_id?: string; variantId?: string; title?: string; image?: string; price?: string; reason?: string }
-interface Result { title?: string; summary?: string; reason?: string; reasoning?: string; product?: Product; bundle?: Product[]; products?: Product[]; recommendation?: Product | Product[] }
+interface Product {
+  handle?: string;
+  variant_id?: string;
+  variantId?: string;
+  title?: string;
+  image?: string;
+  price?: string;
+  reason?: string;
+  url?: string;
+  checkoutUrl?: string;
+  path?: string;
+}
+interface Result {
+  title?: string;
+  summary?: string;
+  reason?: string;
+  reasoning?: string;
+  product?: Product;
+  bundle?: Product[];
+  products?: Product[];
+  recommendation?: Product | Product[];
+}
 
 const GOALS = [
   { value: "fat_loss", label: "Lose body fat" },
@@ -77,7 +97,7 @@ function productsFrom(result: Result | null): Product[] {
   if (result.recommendation && !Array.isArray(result.recommendation)) values.push(result.recommendation);
   const seen = new Set<string>();
   return values.filter((p) => {
-    const key = p.handle ?? p.variant_id ?? p.variantId ?? p.title ?? "";
+    const key = p.handle ?? p.variant_id ?? p.variantId ?? p.url ?? p.title ?? "";
     if (!key || seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -87,8 +107,17 @@ function productsFrom(result: Result | null): Product[] {
 function customerSafeSummary(result: Result | null) {
   const raw = result?.summary ?? result?.reason ?? result?.reasoning ?? "";
   const technical = /webhook|curat(ed|ing)|inactive|no longer active|finaliz(e|ing).*protocol|being curated/i.test(raw);
-  if (!raw || technical) return "Your assessment is complete. Your ResoFit priority direction and next best step are ready.";
+  if (!raw || technical) return "Your assessment is complete. We found the next step that best matches your goal.";
   return raw;
+}
+
+function exactDestination(product?: Product) {
+  if (!product) return null;
+  if (product.checkoutUrl) return product.checkoutUrl;
+  if (product.url) return product.url;
+  if (product.path) return new URL(product.path, CANONICAL_SHOP_URL).toString();
+  if (product.handle) return `${CANONICAL_SHOP_URL}/product/${encodeURIComponent(product.handle)}`;
+  return null;
 }
 
 function PersonalizePage() {
@@ -116,8 +145,6 @@ function PersonalizePage() {
       setStep(3);
       trackEvent("assessment_complete");
     } catch {
-      // The assessment must never dead-end because an optional downstream automation is unavailable.
-      // Preserve the customer's answers and give a deterministic, customer-safe recommendation.
       setResult(fallbackRecommendation(final));
       setStep(3);
       trackEvent("assessment_complete");
@@ -162,11 +189,11 @@ function PersonalizePage() {
 
 function StepCard({ title, options, onSelect, onBack, loading = false }: { title: string; options: Array<{ value: string; label: string }>; onSelect: (value: string) => void; onBack?: () => void; loading?: boolean }) {
   return (
-    <section className="rounded-xl border border-border/60 bg-card/40 p-6 md:p-8">
+    <section className="rounded-2xl border border-gold/20 bg-white/[0.04] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-8">
       <h2 className="font-display text-2xl md:text-3xl">{title}</h2>
       <div className="mt-6 grid gap-3">
         {options.map((option) => (
-          <button key={option.value} type="button" disabled={loading} onClick={() => onSelect(option.value)} className="group flex items-center justify-between rounded-md border border-border px-5 py-4 text-left transition-colors hover:border-gold/60 hover:bg-card disabled:opacity-50">
+          <button key={option.value} type="button" disabled={loading} onClick={() => onSelect(option.value)} className="group flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-5 py-4 text-left transition-all hover:border-gold/50 hover:bg-gold/[0.06] disabled:opacity-50">
             <span className="text-sm md:text-base">{option.label}</span>
             <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-gold" />
           </button>
@@ -174,7 +201,7 @@ function StepCard({ title, options, onSelect, onBack, loading = false }: { title
       </div>
       <div className="mt-6 flex items-center justify-between">
         {onBack ? <button type="button" onClick={onBack} disabled={loading} className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground">← Back</button> : <span />}
-        {loading && <span className="flex items-center gap-2 text-xs uppercase tracking-widest text-gold"><Loader2 className="h-3 w-3 animate-spin" /> Preparing your recommendation…</span>}
+        {loading && <span className="flex items-center gap-2 text-xs uppercase tracking-widest text-gold"><Loader2 className="h-3 w-3 animate-spin" /> Curating your recommendation…</span>}
       </div>
     </section>
   );
@@ -182,6 +209,8 @@ function StepCard({ title, options, onSelect, onBack, loading = false }: { title
 
 function ResultView({ result, answers, error, onRestart }: { result: Result | null; answers: Answers; error: string | null; onRestart: () => void }) {
   const products = useMemo(() => productsFrom(result), [result]);
+  const primary = products[0];
+  const destination = exactDestination(primary);
   const summary = customerSafeSummary(result);
   const title = result?.title ?? "Your ResoFit Protocol";
   const insights = [
@@ -197,23 +226,30 @@ function ResultView({ result, answers, error, onRestart }: { result: Result | nu
     } catch { toast.error("Couldn't copy the result"); }
   };
 
-  const startReset = () => {
+  const continueToRecommendation = () => {
+    if (!destination) {
+      trackEvent("assessment_result_help");
+      return;
+    }
     trackEvent("assessment_result_cta");
-    window.location.assign(SHOP_URL);
+    window.location.assign(destination);
   };
 
+  const helpUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi ResoFit, I completed my 60-second assessment. My goal is ${GOALS.find((x) => x.value === answers.goal)?.label ?? answers.goal}. Please help me access my recommended next step.`)}`;
+
   return (
-    <article className="overflow-hidden rounded-xl border border-gold/40 bg-black p-6 text-foreground shadow-2xl shadow-gold/10 md:p-10">
+    <article className="overflow-hidden rounded-[2rem] border border-gold/30 bg-black/70 p-5 text-foreground shadow-2xl shadow-gold/10 backdrop-blur-2xl md:p-10">
+      <div className="absolute pointer-events-none" aria-hidden="true" />
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-gold">CoachB2K Result</p>
+          <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-gold"><Sparkles className="h-3 w-3" /> Your ResoFit match</p>
           <h2 className="mt-2 font-display text-3xl text-gold md:text-4xl">{title}</h2>
         </div>
-        <button type="button" onClick={copy} aria-label="Copy result" className="rounded-md border border-gold/40 p-2 text-gold hover:bg-gold/10"><Copy className="h-4 w-4" /></button>
+        <button type="button" onClick={copy} aria-label="Copy result" className="rounded-full border border-gold/40 p-2 text-gold hover:bg-gold/10"><Copy className="h-4 w-4" /></button>
       </div>
 
       {error ? (
-        <div className="mt-6 rounded-lg border border-border/60 bg-card/40 p-5 text-sm text-muted-foreground">
+        <div className="mt-6 rounded-2xl border border-border/60 bg-card/40 p-5 text-sm text-muted-foreground">
           Your assessment is safe. Please retry your assessment.
           <button type="button" onClick={onRestart} className="mt-4 block text-xs uppercase tracking-widest text-gold underline">Retry assessment</button>
         </div>
@@ -221,7 +257,7 @@ function ResultView({ result, answers, error, onRestart }: { result: Result | nu
         <>
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             {insights.map(([label, value]) => (
-              <div key={label} className="rounded-lg border border-border/60 bg-card/40 p-4">
+              <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
                 <Check className="h-4 w-4 text-gold" />
                 <p className="mt-3 text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
                 <p className="mt-1 text-sm font-medium">{value}</p>
@@ -229,33 +265,37 @@ function ResultView({ result, answers, error, onRestart }: { result: Result | nu
             ))}
           </div>
 
-          <div className="mt-6 rounded-lg border border-gold/30 bg-gold/5 p-5">
-            <div className="flex items-center gap-2 text-gold"><Sparkles className="h-4 w-4" /><span className="text-xs font-semibold uppercase tracking-widest">Your next best step</span></div>
+          <div className="mt-6 rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/10 via-white/[0.03] to-transparent p-6 backdrop-blur-xl">
+            <div className="flex items-center gap-2 text-gold"><Sparkles className="h-4 w-4" /><span className="text-xs font-semibold uppercase tracking-widest">Why this fits you</span></div>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground md:text-base">{summary}</p>
           </div>
 
-          {products.length > 0 && (
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              {products.slice(0, 4).map((product, index) => (
-                <div key={product.handle ?? product.variant_id ?? product.variantId ?? product.title ?? index} className="rounded-lg border border-border/60 bg-card/30 p-5">
-                  <p className="text-sm font-semibold">{product.title ?? "Recommended ResoFit option"}</p>
-                  {product.reason && <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{product.reason}</p>}
-                  {product.price && <p className="mt-3 text-sm font-semibold text-gold">{product.price}</p>}
-                </div>
-              ))}
+          {primary && (
+            <div className="mt-6 overflow-hidden rounded-2xl border border-gold/40 bg-white/[0.04] backdrop-blur-xl">
+              {primary.image && <img src={primary.image} alt={primary.title ?? "Your recommended ResoFit solution"} className="h-56 w-full object-cover md:h-72" />}
+              <div className="p-6">
+                <p className="text-[10px] uppercase tracking-[0.25em] text-gold">Recommended for you</p>
+                <h3 className="mt-2 font-display text-2xl md:text-3xl">{primary.title ?? "Your ResoFit recommendation"}</h3>
+                {primary.reason && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{primary.reason}</p>}
+                {primary.price && <p className="mt-4 text-xl font-semibold text-gold">{primary.price}</p>}
+              </div>
             </div>
           )}
 
-          <div className="mt-8 rounded-xl border border-gold/50 bg-gradient-to-b from-gold/10 to-transparent p-6 text-center">
-            <p className="text-xs uppercase tracking-[0.25em] text-gold">Start your ResoFit journey</p>
-            <h3 className="mt-2 font-display text-2xl md:text-3xl">Unlock the next step for ₦1,000</h3>
-            <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">Continue to the secure ResoFit shop to complete the ₦1,000 starter checkout and unlock your personalized value.</p>
-            <button type="button" onClick={startReset} className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-gold px-6 py-3 text-xs font-bold uppercase tracking-widest text-gold-foreground shadow-lg shadow-gold/20 transition-transform hover:scale-[1.01] md:w-auto">Start My ₦1,000 Reset <ArrowRight className="h-4 w-4" /></button>
-            <p className="mt-3 text-[11px] uppercase tracking-widest text-muted-foreground">Secure Paystack checkout · value delivered after payment</p>
+          <div className="mt-8 rounded-[1.5rem] border border-gold/60 bg-gradient-to-br from-gold/15 via-gold/5 to-transparent p-6 text-center shadow-xl shadow-gold/10 backdrop-blur-xl">
+            <p className="text-xs uppercase tracking-[0.25em] text-gold">Your next move</p>
+            <h3 className="mt-2 font-display text-2xl md:text-3xl">{destination ? "Your recommendation is ready" : "Your recommendation is ready to unlock"}</h3>
+            <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">{destination ? "We've selected the exact next step for you. Continue directly to it — no browsing required." : "We'll connect you with a ResoFit specialist so you receive the exact next step from your assessment."}</p>
+            {destination ? (
+              <button type="button" onClick={continueToRecommendation} className="mt-5 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-gold px-6 py-4 text-xs font-bold uppercase tracking-widest text-gold-foreground shadow-lg shadow-gold/20 transition-all hover:scale-[1.01] md:w-auto">Continue to my exact recommendation <ArrowRight className="h-4 w-4" /></button>
+            ) : (
+              <a href={helpUrl} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-gold px-6 py-4 text-xs font-bold uppercase tracking-widest text-gold-foreground shadow-lg shadow-gold/20 transition-all hover:scale-[1.01] md:w-auto">Connect me to my recommendation <MessageCircle className="h-4 w-4" /></a>
+            )}
+            <p className="mt-3 text-[11px] uppercase tracking-widest text-muted-foreground">Secure checkout or guided fulfilment · ResoFit value first</p>
           </div>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3 border-t border-border/40 pt-6">
-            <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi CoachB2K, I completed my ResoFit assessment. My goal is ${answers.goal}. Please help me with my next step.`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-3 text-xs uppercase tracking-widest hover:border-gold/60"><MessageCircle className="h-4 w-4" /> Ask an Expert</a>
+            <a href={helpUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-3 text-xs uppercase tracking-widest hover:border-gold/60"><MessageCircle className="h-4 w-4" /> Ask an Expert</a>
             <button type="button" onClick={onRestart} className="px-4 py-3 text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground">Retake assessment</button>
           </div>
         </>
