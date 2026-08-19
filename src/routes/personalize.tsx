@@ -20,10 +20,10 @@ type CanonicalRoute = { path: string; destination_type: string; action: string; 
 type CanonicalEntity = { id: string; name: string; description: string | null; metadata: Record<string, unknown> | null };
 
 const GOALS = [
-  { value: "fat_loss", label: "Lose body fat", route: "/bellyfat", title: "ResoFit Body Reset Pathway", cta: "Start My Body Reset" },
-  { value: "muscle", label: "Build lean muscle", route: "/muscle", title: "ResoFit Muscle Pathway", cta: "Start My Muscle Pathway" },
-  { value: "energy", label: "More energy & focus", route: "/longevity", title: "ResoFit Longevity & Energy Pathway", cta: "Start My Energy Pathway" },
-  { value: "reset", label: "Full reset & wellness", route: "/reset", title: "ResoFit 7-Day Reset", cta: "Start My ₦1,000 Reset" },
+  { value: "fat_loss", label: "Lose body fat", productName: "7-Day Nigerian Reset Protocol", title: "ResoFit 7-Day Nigerian Reset Protocol", cta: "Start My Reset" },
+  { value: "muscle", label: "Build lean muscle", productName: "ResoFlex Premium Coaching", title: "ResoFlex Premium Coaching", cta: "Start My Coaching" },
+  { value: "energy", label: "More energy & focus", productName: "Enhanced Meal & Move Protocol", title: "Enhanced Meal & Move Protocol", cta: "Start My Protocol" },
+  { value: "reset", label: "Full reset & wellness", productName: "7-Day Nigerian Reset Protocol", title: "ResoFit 7-Day Nigerian Reset Protocol", cta: "Start My ₦1,000 Reset" },
 ];
 const ACTIVITIES = [
   { value: "low", label: "Sedentary (desk work)" },
@@ -37,21 +37,28 @@ const DIETS = [
   { value: "vegan", label: "Vegan" },
 ];
 
+const FALLBACK_PRODUCTS: Record<string, { url: string; title: string; cta: string }> = {
+  fat_loss: { url: "https://shop.resofit.fit/product/7-day-nigerian-reset", title: "ResoFit 7-Day Nigerian Reset Protocol", cta: "Start My Reset" },
+  muscle: { url: "https://shop.resofit.fit/product/res-coach-01", title: "ResoFlex Premium Coaching", cta: "Start My Coaching" },
+  energy: { url: "https://shop.resofit.fit/product/enhanced-meal-move", title: "Enhanced Meal & Move Protocol", cta: "Start My Protocol" },
+  reset: { url: "https://shop.resofit.fit/product/7-day-nigerian-reset", title: "ResoFit 7-Day Nigerian Reset Protocol", cta: "Start My ₦1,000 Reset" },
+};
+
 function localRecommendation(a: Answers): Recommendation {
   const goal = GOALS.find((item) => item.value === a.goal) ?? GOALS[3];
-  const base = "https://www.resofit.fit";
+  const product = FALLBACK_PRODUCTS[a.goal] ?? FALLBACK_PRODUCTS.reset;
   const summaries: Record<string, string> = {
     fat_loss: "A focused starting point for body-composition goals, built around sustainable nutrition, movement and accountability.",
-    muscle: "A strength-focused pathway for building lean muscle with progressive training and supportive nutrition.",
-    energy: "A personalized starting point for energy, healthy ageing, recovery and sustainable wellness habits.",
+    muscle: "A strength-focused coaching pathway for building lean muscle with progressive training and supportive nutrition.",
+    energy: "A practical meal-and-movement protocol designed to support energy, recovery and sustainable wellness habits.",
     reset: "A simple, guided starting point to reset your routine and begin your personalized wellness journey.",
   };
   return {
-    title: goal.title,
+    title: product.title || goal.title,
     summary: summaries[a.goal] ?? summaries.reset,
-    reason: `Your primary goal is ${goal.label.toLowerCase()}. ResoFit is taking you directly to the relevant experience instead of sending you into a catalogue.`,
-    url: `${base}${goal.route}`,
-    cta: goal.cta,
+    reason: `Your primary goal is ${goal.label.toLowerCase()}. ResoFit is taking you directly to the exact recommended offer instead of sending you into a catalogue.`,
+    url: product.url,
+    cta: product.cta || goal.cta,
   };
 }
 
@@ -71,13 +78,14 @@ async function canonicalRecommendation(a: Answers): Promise<Recommendation> {
   if (!supabase) return local;
 
   const goal = GOALS.find((item) => item.value === a.goal) ?? GOALS[3];
-  const canonicalKey = `route:resofit.fit${goal.route}`;
 
   try {
+    // Resolve the exact product from the canonical ResoFit product registry.
     const { data: entity, error: entityError } = await supabase
       .from("resofit_canonical_entities")
       .select("id,name,description,metadata")
-      .eq("canonical_key", canonicalKey)
+      .eq("entity_type", "product")
+      .eq("name", goal.productName)
       .eq("status", "active")
       .maybeSingle<CanonicalEntity>();
 
@@ -93,7 +101,7 @@ async function canonicalRecommendation(a: Answers): Promise<Recommendation> {
       .maybeSingle<CanonicalRoute>();
 
     const canonicalUrl = route?.path ? safeCanonicalUrl(route.path) : null;
-    if (routeError || !canonicalUrl) return local;
+    if (routeError || !canonicalUrl || !canonicalUrl.includes("/product/")) return local;
 
     return {
       ...local,
@@ -136,7 +144,7 @@ function PersonalizePage() {
 }
 
 function CurationState() {
-  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6 backdrop-blur-xl"><div className="w-full max-w-md rounded-[2rem] border border-gold/30 bg-black/80 p-8 text-center shadow-2xl shadow-gold/10"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-gold/40 bg-gold/10"><Loader2 className="h-6 w-6 animate-spin text-gold" /></div><p className="mt-6 text-[10px] uppercase tracking-[0.3em] text-gold">ChatB2K™</p><h2 className="mt-2 font-display text-3xl">Curating your recommendation…</h2><p className="mt-3 text-sm leading-relaxed text-muted-foreground">Matching your goal, activity and lifestyle so you can go directly to the right ResoFit experience.</p><div className="mt-6 h-1 overflow-hidden rounded-full bg-white/10"><div className="h-full w-2/3 animate-pulse bg-gold" /></div></div></div>;
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6 backdrop-blur-xl"><div className="w-full max-w-md rounded-[2rem] border border-gold/30 bg-black/80 p-8 text-center shadow-2xl shadow-gold/10"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-gold/40 bg-gold/10"><Loader2 className="h-6 w-6 animate-spin text-gold" /></div><p className="mt-6 text-[10px] uppercase tracking-[0.3em] text-gold">ChatB2K™</p><h2 className="mt-2 font-display text-3xl">Curating your recommendation…</h2><p className="mt-3 text-sm leading-relaxed text-muted-foreground">Matching your goal, activity and lifestyle so you can go directly to the right ResoFit offer.</p><div className="mt-6 h-1 overflow-hidden rounded-full bg-white/10"><div className="h-full w-2/3 animate-pulse bg-gold" /></div></div></div>;
 }
 
 function StepCard({ title, options, onSelect, onBack, loading = false }: { title: string; options: Array<{value:string;label:string}>; onSelect:(v:string)=>void; onBack?:()=>void; loading?:boolean }) {
@@ -149,7 +157,7 @@ function ResultView({ result, answers, onRestart }: { result: Recommendation; an
   return <article className="overflow-hidden rounded-[2rem] border border-gold/30 bg-black/70 p-5 shadow-2xl shadow-gold/10 backdrop-blur-2xl md:p-10"><p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-gold"><Sparkles className="h-3 w-3" /> Your ResoFit match</p><h2 className="mt-2 font-display text-3xl text-gold md:text-4xl">{result.title}</h2>
     <div className="mt-6 grid gap-3 sm:grid-cols-3">{[["Primary goal",goal],["Current activity",ACTIVITIES.find(x=>x.value===answers.activity)?.label ?? answers.activity],["Lifestyle fit",DIETS.find(x=>x.value===answers.diet)?.label ?? answers.diet]].map(([k,v])=><div key={k} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"><Check className="h-4 w-4 text-gold"/><p className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground">{k}</p><p className="mt-1 text-sm">{v}</p></div>)}</div>
     <div className="mt-6 rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/10 to-transparent p-6"><div className="flex items-center gap-2 text-gold"><Sparkles className="h-4 w-4"/><span className="text-xs font-semibold uppercase tracking-widest">Why this fits you</span></div><p className="mt-3 text-sm leading-relaxed text-muted-foreground">{result.reason}</p><p className="mt-3 text-sm leading-relaxed text-foreground/90">{result.summary}</p></div>
-    <div className="mt-8 rounded-[1.5rem] border border-gold/60 bg-gradient-to-br from-gold/15 to-transparent p-6 text-center"><p className="text-xs uppercase tracking-[0.25em] text-gold">Your next move</p><h3 className="mt-2 font-display text-2xl">Your exact ResoFit experience is ready</h3><p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">No browsing. No guessing. Continue directly to the experience selected for your goal.</p><a href={result.url} onClick={() => trackEvent("assessment_result_cta")} className="mt-5 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-gold px-6 py-4 text-xs font-bold uppercase tracking-widest text-gold-foreground md:w-auto">{result.cta} <ArrowRight className="h-4 w-4"/></a><div><a href={helpUrl} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block text-xs uppercase tracking-widest text-muted-foreground underline underline-offset-4">Need a specialist?</a></div></div>
+    <div className="mt-8 rounded-[1.5rem] border border-gold/60 bg-gradient-to-br from-gold/15 to-transparent p-6 text-center"><p className="text-xs uppercase tracking-[0.25em] text-gold">Your next move</p><h3 className="mt-2 font-display text-2xl">Your exact ResoFit offer is ready</h3><p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">No browsing. No guessing. Continue directly to the exact offer selected for your goal.</p><a href={result.url} onClick={() => trackEvent("assessment_result_cta")} className="mt-5 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-gold px-6 py-4 text-xs font-bold uppercase tracking-widest text-gold-foreground md:w-auto">{result.cta} <ArrowRight className="h-4 w-4"/></a><div><a href={helpUrl} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block text-xs uppercase tracking-widest text-muted-foreground underline underline-offset-4">Need a specialist?</a></div></div>
     <button onClick={onRestart} className="mt-6 w-full text-xs uppercase tracking-widest text-muted-foreground">Retake assessment</button>
   </article>;
 }
