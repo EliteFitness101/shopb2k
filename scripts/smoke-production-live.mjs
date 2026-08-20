@@ -11,7 +11,15 @@ const results = [];
 
 async function check(product) {
   const url = `${baseUrl}${manifest.routePrefix}${encodeURIComponent(product.handle)}`;
-  const result = { ...product, url, status: null, ok: false, skuFound: false, notFound: false, error: null };
+  const result = {
+    ...product,
+    url,
+    status: null,
+    ok: false,
+    skuFound: false,
+    notFound: false,
+    error: null,
+  };
 
   try {
     const response = await fetch(url, {
@@ -33,7 +41,9 @@ async function check(product) {
 for (const product of manifest.products) {
   const result = await check(product);
   results.push(result);
-  console.log(`${result.ok ? "PASS" : "FAIL"} ${result.status ?? "ERR"} ${product.sku} ${result.url}`);
+  console.log(
+    `${result.ok ? "PASS" : "FAIL"} ${result.status ?? "ERR"} ${product.sku} ${result.url}`,
+  );
 }
 
 const failures = results.filter((result) => !result.ok);
