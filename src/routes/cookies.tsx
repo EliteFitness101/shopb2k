@@ -6,5 +6,62 @@ import { CookiePreferencesLink } from "@/components/CookieConsent";
 export const Route = createFileRoute("/cookies")({ component: CookiesPage });
 
 function CookiesPage() {
-  return <><SiteHeader /><main className="mx-auto max-w-4xl px-6 py-16"><p className="text-xs uppercase tracking-[0.3em] text-gold">Privacy controls</p><h1 className="mt-3 font-display text-4xl">Cookies & Analytics</h1><p className="mt-4 text-sm text-muted-foreground">ResoFit uses a small number of storage and measurement mechanisms to operate the site and, where permitted, understand traffic and improve experiences.</p><div className="mt-10 space-y-8 text-sm leading-7 text-muted-foreground"><section><h2 className="text-lg font-semibold text-foreground">Essential storage</h2><p className="mt-2">Some browser storage is used for operational functions such as anonymous session continuity, cart state, attribution and remembering privacy choices. These functions may be necessary for the service you request.</p></section><section><h2 className="text-lg font-semibold text-foreground">Analytics and advertising</h2><p className="mt-2">The current web application can load Meta, TikTok and Google Analytics measurement technologies when their configured identifiers are present. These non-essential technologies are initialized only after analytics consent is recorded.</p></section><section><h2 className="text-lg font-semibold text-foreground">Changing your choice</h2><p className="mt-2">Use the control below to reset your choice. The consent banner will then appear again.</p><div className="mt-4"><CookiePreferencesLink /></div></section><section><h2 className="text-lg font-semibold text-foreground">Third-party controls</h2><p className="mt-2">Third-party platforms can have their own cookies, tracking and privacy controls when you leave ResoFit or interact with their services. Review the relevant provider's terms and privacy documentation when needed.</p></section><section><h2 className="text-lg font-semibold text-foreground">Implementation note</h2><p className="mt-2">This page documents the current frontend consent mechanism. A full legal cookie schedule should be maintained against the exact production tags, domains, purposes, retention periods and jurisdictions before this page is treated as a definitive regulatory notice.</p></section></div></main><SiteFooter /></>;
+  return (
+    <>
+      <SiteHeader />
+      <main className="mx-auto max-w-4xl px-6 py-16">
+        <p className="text-xs uppercase tracking-[0.3em] text-gold">Privacy controls</p>
+        <h1 className="mt-3 font-display text-4xl">Cookies & Analytics</h1>
+        <p className="mt-4 text-sm text-muted-foreground">
+          ResoFit uses a small number of storage and measurement mechanisms to operate the site and,
+          where permitted, understand traffic and improve experiences.
+        </p>
+        <div className="mt-10 space-y-8 text-sm leading-7 text-muted-foreground">
+          <section>
+            <h2 className="text-lg font-semibold text-foreground">Essential storage</h2>
+            <p className="mt-2">
+              Some browser storage is used for operational functions such as anonymous session
+              continuity, cart state, attribution and remembering privacy choices. These functions
+              may be necessary for the service you request.
+            </p>
+          </section>
+          <section>
+            <h2 className="text-lg font-semibold text-foreground">Analytics and advertising</h2>
+            <p className="mt-2">
+              The current web application can load Meta, TikTok and Google Analytics measurement
+              technologies when their configured identifiers are present. These non-essential
+              technologies are initialized only after analytics consent is recorded.
+            </p>
+          </section>
+          <section>
+            <h2 className="text-lg font-semibold text-foreground">Changing your choice</h2>
+            <p className="mt-2">
+              Use the control below to reset your choice. The consent banner will then appear again.
+            </p>
+            <div className="mt-4">
+              <CookiePreferencesLink />
+            </div>
+          </section>
+          <section>
+            <h2 className="text-lg font-semibold text-foreground">Third-party controls</h2>
+            <p className="mt-2">
+              Third-party platforms can have their own cookies, tracking and privacy controls when
+              you leave ResoFit or interact with their services. Review the relevant provider's
+              terms and privacy documentation when needed.
+            </p>
+          </section>
+          <section>
+            <h2 className="text-lg font-semibold text-foreground">Implementation note</h2>
+            <p className="mt-2">
+              This page documents the current frontend consent mechanism. A full legal cookie
+              schedule should be maintained against the exact production tags, domains, purposes,
+              retention periods and jurisdictions before this page is treated as a definitive
+              regulatory notice.
+            </p>
+          </section>
+        </div>
+      </main>
+      <SiteFooter />
+    </>
+  );
 }

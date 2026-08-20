@@ -9,14 +9,18 @@ export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
       { title: "About — ResoFit, Africa's Personalized Wellness Platform" },
-      { name: "description", content: "ResoFit is Africa's personalized wellness platform, powered by ResoFlex™ hardware and the ChatB2K™ wellness intelligence." },
+      {
+        name: "description",
+        content:
+          "ResoFit is Africa's personalized wellness platform, powered by ResoFlex™ hardware and the ChatB2K™ wellness intelligence.",
+      },
       { property: "og:title", content: "About ResoFit" },
       { property: "og:description", content: "Africa's personalized wellness platform." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://shopb2k.lovable.app/about" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "https://shopb2k.lovable.app/about" }],
+    links: [{ rel: "canonical", href: "https://resofit.fit/about" }],
   }),
   component: About,
 });
@@ -53,7 +57,10 @@ function About() {
             {[
               { t: "Personalized", d: "Every plan is shaped by your goals, kitchen and schedule." },
               { t: "Practitioner-led", d: "Programs designed by coaches, not marketers." },
-              { t: "African by design", d: "Rooted in real African lifestyles, foods and communities." },
+              {
+                t: "African by design",
+                d: "Rooted in real African lifestyles, foods and communities.",
+              },
             ].map((v) => (
               <div key={v.t}>
                 <p className="text-xs uppercase tracking-[0.3em] text-gold">{v.t}</p>

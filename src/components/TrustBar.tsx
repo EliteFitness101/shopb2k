@@ -9,10 +9,7 @@ const items = [
 
 export function TrustBar() {
   return (
-    <section
-      aria-label="Trust signals"
-      className="border-y border-border/60 bg-card/40"
-    >
+    <section aria-label="Trust signals" className="border-y border-border/60 bg-card/40">
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px bg-border/40 md:grid-cols-4">
         {items.map(({ Icon, label, sub }) => (
           <div key={label} className="flex items-center gap-3 bg-background px-5 py-5">

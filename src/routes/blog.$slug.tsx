@@ -14,7 +14,9 @@ export const Route = createFileRoute("/blog/$slug")({
   },
   head: ({ loaderData, params }) => {
     if (!loaderData) {
-      return { meta: [{ title: "Article not found — ResoFit" }, { name: "robots", content: "noindex" }] };
+      return {
+        meta: [{ title: "Article not found — ResoFit" }, { name: "robots", content: "noindex" }],
+      };
     }
     const url = `https://shopb2k.lovable.app/blog/${params.slug}`;
     return {
@@ -60,18 +62,28 @@ export const Route = createFileRoute("/blog/$slug")({
 
 function ArticleView() {
   const a = Route.useLoaderData();
-  const related = ARTICLES.filter((x) => x.slug !== a.slug && x.category === a.category).slice(0, 3);
+  const related = ARTICLES.filter((x) => x.slug !== a.slug && x.category === a.category).slice(
+    0,
+    3,
+  );
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="mx-auto max-w-3xl px-6 py-20">
-        <Link to="/blog" className="text-xs uppercase tracking-widest text-muted-foreground hover:text-gold">
+        <Link
+          to="/blog"
+          className="text-xs uppercase tracking-widest text-muted-foreground hover:text-gold"
+        >
           ← Journal
         </Link>
         <p className="mt-6 text-xs uppercase tracking-[0.3em] text-gold">{a.category}</p>
         <h1 className="mt-3 font-display text-4xl leading-tight md:text-6xl">{a.title}</h1>
         <p className="mt-4 text-sm text-muted-foreground">
-          {new Date(a.publishedAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+          {new Date(a.publishedAt).toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
           {" · "}
           {a.readingMinutes} min read
         </p>

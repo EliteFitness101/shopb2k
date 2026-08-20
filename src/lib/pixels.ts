@@ -8,16 +8,31 @@ const GA4_ID = import.meta.env.VITE_GA4_ID as string | undefined;
 
 let initialized = false;
 
+type MetaPixel = ((...args: unknown[]) => void) & {
+  callMethod?: (...args: unknown[]) => void;
+  queue: unknown[];
+  push?: MetaPixel;
+  loaded?: boolean;
+  version?: string;
+};
+
+type TikTokQueue = {
+  push: (...items: unknown[]) => number;
+  methods: string[];
+  setAndDefer: (queue: TikTokQueue, method: string) => void;
+  _i: Record<string, TikTokQueue>;
+  _t: Record<string, number>;
+  load: (id: string) => void;
+  page: () => void;
+  [key: string]: unknown;
+};
+
 declare global {
   interface Window {
-    fbq?: (...args: unknown[]) => void;
-    ttq?: {
-      load: (id: string) => void;
-      page: () => void;
-      track: (event: string, params?: Record<string, unknown>) => void;
-      identify?: (params: Record<string, unknown>) => void;
-      instance?: (id: string) => unknown;
-    };
+    fbq?: MetaPixel;
+    _fbq?: MetaPixel;
+    ttq?: TikTokQueue;
+    TiktokAnalyticsObject?: string;
     dataLayer?: unknown[];
     gtag?: (...args: unknown[]) => void;
   }
@@ -38,11 +53,13 @@ export function initPixels() {
 
   // Meta Pixel
   if (META_ID) {
-    (function (f: any, b: any, e: string, v: string) {
+    (function (f: Window, b: Document, e: string, v: string) {
       if (f.fbq) return;
-      const n: any = (f.fbq = function () {
-        n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
-      });
+      const n = ((...args: unknown[]) => {
+        if (n.callMethod) n.callMethod(...args);
+        else n.queue.push(args);
+      }) as MetaPixel;
+      f.fbq = n;
       if (!f._fbq) f._fbq = n;
       n.push = n;
       n.loaded = true;
@@ -60,9 +77,12 @@ export function initPixels() {
 
   // TikTok Pixel
   if (TIKTOK_ID) {
-    (function (w: any, d: Document, t: string) {
+    (function (w: Window, d: Document, t: string) {
       w.TiktokAnalyticsObject = t;
-      const ttq: any = (w[t] = w[t] || []);
+      const ttq = (w.ttq ?? {
+        push: (..._items: unknown[]) => 0,
+      }) as TikTokQueue;
+      w.ttq = ttq;
       ttq.methods = [
         "page",
         "track",
@@ -78,9 +98,9 @@ export function initPixels() {
         "enableCookie",
         "disableCookie",
       ];
-      ttq.setAndDefer = function (n: any, e: string) {
-        n[e] = function () {
-          n.push([e].concat(Array.prototype.slice.call(arguments, 0)));
+      ttq.setAndDefer = function (n: TikTokQueue, e: string) {
+        n[e] = (...args: unknown[]) => {
+          n.push([e, ...args]);
         };
       };
       for (let i = 0; i < ttq.methods.length; i++) ttq.setAndDefer(ttq, ttq.methods[i]);
@@ -112,8 +132,8 @@ export function initPixels() {
   if (GA4_ID) {
     loadScript(`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`, "ga4-gtag");
     window.dataLayer = window.dataLayer || [];
-    const gtag: any = function () {
-      window.dataLayer!.push(arguments);
+    const gtag = (...args: unknown[]) => {
+      window.dataLayer!.push(args);
     };
     window.gtag = gtag;
     gtag("js", new Date());
@@ -126,7 +146,8 @@ export function pixelPageView(path?: string) {
   try {
     window.fbq?.("track", "PageView");
     window.ttq?.page();
-    if (GA4_ID) window.gtag?.("event", "page_view", { page_path: path ?? window.location.pathname });
+    if (GA4_ID)
+      window.gtag?.("event", "page_view", { page_path: path ?? window.location.pathname });
   } catch {
     /* noop */
   }

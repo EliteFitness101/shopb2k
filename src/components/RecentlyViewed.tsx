@@ -39,7 +39,9 @@ export function RecentlyViewed({ excludeHandle }: { excludeHandle?: string }) {
 
   return (
     <section className="mt-12 border-t border-border/60 pt-8">
-      <h2 className="mb-6 text-xs uppercase tracking-widest text-muted-foreground">Recently viewed</h2>
+      <h2 className="mb-6 text-xs uppercase tracking-widest text-muted-foreground">
+        Recently viewed
+      </h2>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {filtered.map((it) => (
           <Link
@@ -58,7 +60,9 @@ export function RecentlyViewed({ excludeHandle }: { excludeHandle?: string }) {
                 />
               </div>
             )}
-            <p className="mt-2 line-clamp-2 text-xs text-foreground group-hover:text-gold">{it.title}</p>
+            <p className="mt-2 line-clamp-2 text-xs text-foreground group-hover:text-gold">
+              {it.title}
+            </p>
             {it.price && <p className="mt-1 text-xs text-gold">{it.price}</p>}
           </Link>
         ))}

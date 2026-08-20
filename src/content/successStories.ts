@@ -21,7 +21,8 @@ export const SUCCESS_STORIES: SuccessStory[] = [
     name: "Kunle — Abuja",
     location: "Abuja, NG",
     program: "Longevity & Healthy Ageing",
-    quote: "At 52, I have more energy than I did at 40. My sleep is better. My knees stopped talking.",
+    quote:
+      "At 52, I have more energy than I did at 40. My sleep is better. My knees stopped talking.",
     outcome: "Resting heart rate down 11 bpm; sleep score up 22%.",
   },
   {

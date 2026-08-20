@@ -19,7 +19,8 @@ const CHANNELS = Object.freeze({
   googleBusiness: "6a7d4d1fb2d9d577436aa192",
 });
 
-const queueFile = process.env.RESOFIT_CONTENT_QUEUE || "content-intelligence/daily-opportunity-queue.json";
+const queueFile =
+  process.env.RESOFIT_CONTENT_QUEUE || "content-intelligence/daily-opportunity-queue.json";
 const publish = process.argv.includes("--publish");
 const channelArg = process.argv.find((arg) => arg.startsWith("--channel="));
 const channelName = channelArg?.split("=")[1] || "all";
@@ -59,7 +60,8 @@ function idempotencyKey(channel, item) {
 
 async function bufferRequest(query) {
   const key = process.env.BUFFER_API_KEY;
-  if (!key) throw new Error("BUFFER_API_KEY is required for --publish and must be provided at runtime.");
+  if (!key)
+    throw new Error("BUFFER_API_KEY is required for --publish and must be provided at runtime.");
   const response = await fetch(BUFFER_API, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
@@ -91,19 +93,25 @@ for (const [channel, channelId] of channelIds()) {
       }
     }`;
 
-    console.log(JSON.stringify({
-      mode: publish ? "publish" : "dry-run",
-      organizationId: ORG_ID,
-      channel,
-      channelId,
-      contentId: item.id,
-      idempotencyKey: key,
-      canonicalUrl: item.canonicalUrl,
-      text,
-    }));
+    console.log(
+      JSON.stringify({
+        mode: publish ? "publish" : "dry-run",
+        organizationId: ORG_ID,
+        channel,
+        channelId,
+        contentId: item.id,
+        idempotencyKey: key,
+        canonicalUrl: item.canonicalUrl,
+        text,
+      }),
+    );
 
     if (publish) await bufferRequest(query);
   }
 }
 
-console.log(publish ? "Buffer queue submission complete." : "Dry-run complete. Re-run with --publish after approval.");
+console.log(
+  publish
+    ? "Buffer queue submission complete."
+    : "Dry-run complete. Re-run with --publish after approval.",
+);

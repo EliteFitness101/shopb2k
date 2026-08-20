@@ -5,5 +5,70 @@ import { SiteFooter } from "@/components/SiteFooter";
 export const Route = createFileRoute("/privacy")({ component: PrivacyPage });
 
 function PrivacyPage() {
-  return <><SiteHeader /><main className="mx-auto max-w-4xl px-6 py-16"><p className="text-xs uppercase tracking-[0.3em] text-gold">Legal</p><h1 className="mt-3 font-display text-4xl">Privacy Notice</h1><p className="mt-4 text-sm text-muted-foreground">ResoFit explains here how information is used across assessment, member, commerce and support experiences.</p><div className="mt-10 space-y-8 text-sm leading-7 text-muted-foreground"><section><h2 className="text-lg font-semibold text-foreground">Information we may process</h2><p className="mt-2">Depending on the experience you use, this can include contact details, account information, assessment responses, order and payment references, support messages, referral or attribution data, and technical information needed to operate and secure the service.</p></section><section><h2 className="text-lg font-semibold text-foreground">How we use information</h2><p className="mt-2">We use information to provide requested services, personalize experiences, process orders and payments, communicate with members, prevent abuse, measure performance where consent permits, and improve the ResoFit ecosystem.</p></section><section><h2 className="text-lg font-semibold text-foreground">Third-party services</h2><p className="mt-2">Relevant journeys may use service providers for hosting, database/authentication, payments, messaging, analytics and advertising. Non-essential analytics and advertising scripts on this site are gated by the site's consent control.</p></section><section><h2 className="text-lg font-semibold text-foreground">Your choices</h2><p className="mt-2">You can reject non-essential analytics from the cookie banner and reopen Cookie Preferences from the footer. Account or service requests can be directed through the Contact route.</p></section><section><h2 className="text-lg font-semibold text-foreground">Security and retention</h2><p className="mt-2">Access controls, authentication, payment-provider boundaries and least-privilege practices are used where applicable. Retention depends on the purpose and legal or operational requirements for the relevant record.</p></section><section><h2 className="text-lg font-semibold text-foreground">Important</h2><p className="mt-2">This page is an operational privacy notice for the current web experience, not a legal certification. Final jurisdiction-specific wording, controller/processor details, retention periods and contact information should be reviewed and approved by qualified counsel before being treated as the company's definitive legal policy.</p></section></div></main><SiteFooter /></>;
+  return (
+    <>
+      <SiteHeader />
+      <main className="mx-auto max-w-4xl px-6 py-16">
+        <p className="text-xs uppercase tracking-[0.3em] text-gold">Legal</p>
+        <h1 className="mt-3 font-display text-4xl">Privacy Notice</h1>
+        <p className="mt-4 text-sm text-muted-foreground">
+          ResoFit explains here how information is used across assessment, member, commerce and
+          support experiences.
+        </p>
+        <div className="mt-10 space-y-8 text-sm leading-7 text-muted-foreground">
+          <section>
+            <h2 className="text-lg font-semibold text-foreground">Information we may process</h2>
+            <p className="mt-2">
+              Depending on the experience you use, this can include contact details, account
+              information, assessment responses, order and payment references, support messages,
+              referral or attribution data, and technical information needed to operate and secure
+              the service.
+            </p>
+          </section>
+          <section>
+            <h2 className="text-lg font-semibold text-foreground">How we use information</h2>
+            <p className="mt-2">
+              We use information to provide requested services, personalize experiences, process
+              orders and payments, communicate with members, prevent abuse, measure performance
+              where consent permits, and improve the ResoFit ecosystem.
+            </p>
+          </section>
+          <section>
+            <h2 className="text-lg font-semibold text-foreground">Third-party services</h2>
+            <p className="mt-2">
+              Relevant journeys may use service providers for hosting, database/authentication,
+              payments, messaging, analytics and advertising. Non-essential analytics and
+              advertising scripts on this site are gated by the site's consent control.
+            </p>
+          </section>
+          <section>
+            <h2 className="text-lg font-semibold text-foreground">Your choices</h2>
+            <p className="mt-2">
+              You can reject non-essential analytics from the cookie banner and reopen Cookie
+              Preferences from the footer. Account or service requests can be directed through the
+              Contact route.
+            </p>
+          </section>
+          <section>
+            <h2 className="text-lg font-semibold text-foreground">Security and retention</h2>
+            <p className="mt-2">
+              Access controls, authentication, payment-provider boundaries and least-privilege
+              practices are used where applicable. Retention depends on the purpose and legal or
+              operational requirements for the relevant record.
+            </p>
+          </section>
+          <section>
+            <h2 className="text-lg font-semibold text-foreground">Important</h2>
+            <p className="mt-2">
+              This page is an operational privacy notice for the current web experience, not a legal
+              certification. Final jurisdiction-specific wording, controller/processor details,
+              retention periods and contact information should be reviewed and approved by qualified
+              counsel before being treated as the company's definitive legal policy.
+            </p>
+          </section>
+        </div>
+      </main>
+      <SiteFooter />
+    </>
+  );
 }

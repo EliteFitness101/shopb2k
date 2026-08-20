@@ -41,7 +41,9 @@ export const useCartStore = create<CartStore>()(
           const current = get().items;
           const existing = current.find((i) => i.variantId === item.variantId);
           const next = existing
-            ? current.map((i) => i.variantId === item.variantId ? { ...i, quantity: i.quantity + item.quantity } : i)
+            ? current.map((i) =>
+                i.variantId === item.variantId ? { ...i, quantity: i.quantity + item.quantity } : i,
+              )
             : [...current, { ...item, lineId: crypto.randomUUID() }];
           set({ items: next, cartId: get().cartId ?? crypto.randomUUID(), checkoutUrl: null });
         } finally {
@@ -56,7 +58,10 @@ export const useCartStore = create<CartStore>()(
         }
         set({ isLoading: true });
         try {
-          set({ items: get().items.map((i) => i.variantId === variantId ? { ...i, quantity } : i), checkoutUrl: null });
+          set({
+            items: get().items.map((i) => (i.variantId === variantId ? { ...i, quantity } : i)),
+            checkoutUrl: null,
+          });
         } finally {
           set({ isLoading: false });
         }

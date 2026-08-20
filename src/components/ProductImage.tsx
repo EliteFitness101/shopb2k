@@ -86,7 +86,6 @@ export function ProductImage({
   // data URIs and arbitrary hosts pass through untouched.
   const resolvedSrcSet = errored ? undefined : shopifySrcSet(src);
 
-
   // Smart-priority tier: explicit override > priority flag > computed from signals.
   const tier: PriorityTier =
     tierOverride ?? (priority ? "high" : resolveTier(productId, placement));
@@ -103,13 +102,7 @@ export function ProductImage({
   const isMedium = tier === "medium";
 
   return (
-    <div
-      className={cn(
-        "relative w-full overflow-hidden bg-card",
-        aspectClass[aspect],
-        className,
-      )}
-    >
+    <div className={cn("relative w-full overflow-hidden bg-card", aspectClass[aspect], className)}>
       <img
         src={resolvedSrc}
         srcSet={resolvedSrcSet}

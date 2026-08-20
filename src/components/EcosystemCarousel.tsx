@@ -68,10 +68,7 @@ export function EcosystemCarousel({
   };
 
   return (
-    <section
-      aria-label={title}
-      className={cn("border-t border-border/60 py-20", className)}
-    >
+    <section aria-label={title} className={cn("border-t border-border/60 py-20", className)}>
       <div className="mx-auto max-w-7xl px-6">
         <div className="mb-8 flex items-end justify-between gap-6">
           <div>
@@ -162,7 +159,7 @@ function CarouselCard({
   }
   return (
     <Link
-      to={card.href as any}
+      to={card.href as never}
       onClick={onClick}
       className="focus-visible:outline-2 focus-visible:outline-gold"
     >

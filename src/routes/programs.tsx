@@ -10,14 +10,18 @@ export const Route = createFileRoute("/programs")({
   head: () => ({
     meta: [
       { title: "Wellness Programs — ResoFit" },
-      { name: "description", content: "Signature ResoFit programs for strength, longevity, mobility, nutrition and recovery — personalized by ChatB2K™." },
+      {
+        name: "description",
+        content:
+          "Signature ResoFit programs for strength, longevity, mobility, nutrition and recovery — personalized by ChatB2K™.",
+      },
       { property: "og:title", content: "Wellness Programs — ResoFit" },
       { property: "og:description", content: "Signature programs personalized by ChatB2K™." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://shopb2k.lovable.app/programs" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "https://shopb2k.lovable.app/programs" }],
+    links: [{ rel: "canonical", href: "https://resofit.fit/programs" }],
   }),
   component: ProgramsIndex,
 });
@@ -70,7 +74,11 @@ function ProgramsIndex() {
           </div>
         </section>
 
-        <EcosystemCarousel surface="programs" title="Continue your journey" eyebrow="The ResoFit Ecosystem" />
+        <EcosystemCarousel
+          surface="programs"
+          title="Continue your journey"
+          eyebrow="The ResoFit Ecosystem"
+        />
       </main>
       <SiteFooter />
     </div>

@@ -63,6 +63,7 @@ function IdentityGate({ open, onClose, onComplete }: IdentityGateProps) {
   const [handle, setHandle] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const firstFieldRef = useRef<HTMLInputElement | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (open) {
@@ -92,7 +93,6 @@ function IdentityGate({ open, onClose, onComplete }: IdentityGateProps) {
           ? "@yourhandle"
           : "you@gmail.com";
 
-  const router = useRouter();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!handle.trim() || submitting) return;
@@ -162,7 +162,13 @@ function IdentityGate({ open, onClose, onComplete }: IdentityGateProps) {
             <input
               ref={firstFieldRef}
               type={channel === "phone" ? "tel" : "text"}
-              inputMode={channel === "phone" ? "tel" : channel === "email" || channel === "google" ? "email" : "text"}
+              inputMode={
+                channel === "phone"
+                  ? "tel"
+                  : channel === "email" || channel === "google"
+                    ? "email"
+                    : "text"
+              }
               autoComplete={channel === "phone" ? "tel" : "email"}
               required
               value={handle}
@@ -255,10 +261,7 @@ export function CinematicWellnessExperience({
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [poster, video] = await Promise.all([
-        mediaExists(posterSrc),
-        mediaExists(videoSrc),
-      ]);
+      const [poster, video] = await Promise.all([mediaExists(posterSrc), mediaExists(videoSrc)]);
       if (cancelled) return;
       setPosterAvailable(poster);
       setVideoAvailable(video);
@@ -272,13 +275,20 @@ export function CinematicWellnessExperience({
   // Idle-load video enhancement — never blocks LCP, and only when the file exists.
   useEffect(() => {
     if (!videoSrc || !videoAvailable || reducedMotion) return;
-    const idle: any =
-      (window as any).requestIdleCallback ??
-      ((cb: () => void) => window.setTimeout(cb, 1200));
+    type IdleCallback = (callback: () => void) => number;
+    type IdleCancel = (handle: number) => void;
+    const idleWindow = window as Window & {
+      requestIdleCallback?: IdleCallback;
+      cancelIdleCallback?: IdleCancel;
+    };
+    const idle: IdleCallback = idleWindow.requestIdleCallback
+      ? idleWindow.requestIdleCallback.bind(idleWindow)
+      : (callback) => window.setTimeout(callback, 1200);
     const handle = idle(() => setVideoReady(true));
     return () => {
-      const cancel: any =
-        (window as any).cancelIdleCallback ?? window.clearTimeout;
+      const cancel: IdleCancel = idleWindow.cancelIdleCallback
+        ? idleWindow.cancelIdleCallback.bind(idleWindow)
+        : (timeout) => window.clearTimeout(timeout);
       cancel(handle);
     };
   }, [videoSrc, videoAvailable, reducedMotion]);
@@ -306,7 +316,9 @@ export function CinematicWellnessExperience({
     const v = videoRef.current;
     if (!v) return;
     if (v.paused) {
-      v.play().then(() => setPlaying(true)).catch(() => {});
+      v.play()
+        .then(() => setPlaying(true))
+        .catch(() => {});
     } else {
       v.pause();
       setPlaying(false);
@@ -361,7 +373,13 @@ export function CinematicWellnessExperience({
             onPause={() => setPlaying(false)}
           >
             {captionsAvailable && (
-              <track kind="captions" src={captionsSrc ?? undefined} srcLang="en" label="English" default />
+              <track
+                kind="captions"
+                src={captionsSrc ?? undefined}
+                srcLang="en"
+                label="English"
+                default
+              />
             )}
           </video>
         )}
@@ -383,7 +401,11 @@ export function CinematicWellnessExperience({
             aria-label={playing ? "Pause background video" : "Play background video"}
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/70 text-foreground backdrop-blur transition-colors hover:border-gold hover:text-gold focus-visible:outline-2 focus-visible:outline-gold"
           >
-            {playing ? <Pause className="h-4 w-4" aria-hidden /> : <Play className="h-4 w-4" aria-hidden />}
+            {playing ? (
+              <Pause className="h-4 w-4" aria-hidden />
+            ) : (
+              <Play className="h-4 w-4" aria-hidden />
+            )}
           </button>
           <button
             type="button"
@@ -392,7 +414,11 @@ export function CinematicWellnessExperience({
             aria-pressed={!muted}
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/70 text-foreground backdrop-blur transition-colors hover:border-gold hover:text-gold focus-visible:outline-2 focus-visible:outline-gold"
           >
-            {muted ? <VolumeX className="h-4 w-4" aria-hidden /> : <Volume2 className="h-4 w-4" aria-hidden />}
+            {muted ? (
+              <VolumeX className="h-4 w-4" aria-hidden />
+            ) : (
+              <Volume2 className="h-4 w-4" aria-hidden />
+            )}
           </button>
         </div>
       )}
@@ -456,7 +482,11 @@ export function CinematicWellnessExperience({
         </div>
       </div>
 
-      <IdentityGate open={showGate} onClose={() => setShowGate(false)} onComplete={onIdentityComplete} />
+      <IdentityGate
+        open={showGate}
+        onClose={() => setShowGate(false)}
+        onComplete={onIdentityComplete}
+      />
     </section>
   );
 }

@@ -5,7 +5,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { Loader2, ShieldAlert, Users, Trophy, Coins, Activity, Gamepad2, Sparkles } from "lucide-react";
+import {
+  Loader2,
+  ShieldAlert,
+  Users,
+  Trophy,
+  Coins,
+  Activity,
+  Gamepad2,
+  Sparkles,
+} from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -50,7 +59,8 @@ function AdminPage() {
           <ShieldAlert className="mx-auto h-10 w-10 text-gold" />
           <h1 className="mt-4 font-display text-4xl">Admin only</h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            You need the admin role to view this page. Contact CoachB2K™ if you believe this is an error.
+            You need the admin role to view this page. Contact CoachB2K™ if you believe this is an
+            error.
           </p>
           <Link to="/" className="mt-8 inline-block text-xs uppercase tracking-widest text-gold">
             ← Home
@@ -142,7 +152,10 @@ function AdminDashboard() {
             {top.data && top.data.length > 0 ? (
               <ol className="space-y-2 text-sm">
                 {top.data.map((p, i) => (
-                  <li key={p.id} className="flex items-center justify-between border-b border-border/60 pb-2 last:border-0">
+                  <li
+                    key={p.id}
+                    className="flex items-center justify-between border-b border-border/60 pb-2 last:border-0"
+                  >
                     <span className="flex items-center gap-3">
                       <span className="w-5 text-xs text-muted-foreground">{i + 1}</span>
                       <span>{p.display_name ?? "Anonymous"}</span>
@@ -161,11 +174,16 @@ function AdminDashboard() {
           </section>
 
           <section className="rounded-lg border border-border bg-card p-5">
-            <h2 className="mb-4 text-xs uppercase tracking-widest text-muted-foreground">Recent activity</h2>
+            <h2 className="mb-4 text-xs uppercase tracking-widest text-muted-foreground">
+              Recent activity
+            </h2>
             {recent.data && recent.data.length > 0 ? (
               <ul className="space-y-2 text-sm">
                 {recent.data.map((a) => (
-                  <li key={a.id} className="flex items-center justify-between border-b border-border/60 pb-2 last:border-0">
+                  <li
+                    key={a.id}
+                    className="flex items-center justify-between border-b border-border/60 pb-2 last:border-0"
+                  >
                     <span className="text-foreground">{a.kind}</span>
                     <span className="text-xs text-muted-foreground">
                       {new Date(a.created_at).toLocaleString()}
@@ -180,7 +198,8 @@ function AdminDashboard() {
         </div>
 
         <p className="mt-10 text-xs text-muted-foreground">
-          Shopify orders & inventory live in the Shopify admin. This dashboard focuses on the community layer.
+          Shopify orders & inventory live in the Shopify admin. This dashboard focuses on the
+          community layer.
         </p>
       </main>
       <SiteFooter />

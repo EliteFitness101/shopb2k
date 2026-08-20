@@ -83,12 +83,7 @@ export function resolveTier(
   return "low";
 }
 
-export type EngagementEvent =
-  | "view"
-  | "click"
-  | "add_to_cart"
-  | "checkout_start"
-  | "pdp_depth";
+export type EngagementEvent = "view" | "click" | "add_to_cart" | "checkout_start" | "pdp_depth";
 
 export function recordEngagement(id: string | undefined, event: EngagementEvent) {
   if (!id || typeof window === "undefined") return;
@@ -120,9 +115,11 @@ export function preloadOnIdle(urls: Array<string | undefined | null>) {
     }
   };
 
-  const ric = (window as any).requestIdleCallback as
-    | ((cb: () => void, opts?: { timeout: number }) => number)
-    | undefined;
+  const ric = (
+    window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    }
+  ).requestIdleCallback;
   if (ric) ric(run, { timeout: 2000 });
   else setTimeout(run, 250);
 }

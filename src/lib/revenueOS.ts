@@ -102,9 +102,10 @@ const CANONICAL_EVENT: Record<RevenueEvent, string> = {
 
 async function emitCanonicalEvent(event: RevenueEvent) {
   const eventName = CANONICAL_EVENT[event];
-  const anonymousId = typeof window !== "undefined"
-    ? window.localStorage.getItem("resofit:anon_id") ?? crypto.randomUUID()
-    : undefined;
+  const anonymousId =
+    typeof window !== "undefined"
+      ? (window.localStorage.getItem("resofit:anon_id") ?? crypto.randomUUID())
+      : undefined;
 
   if (typeof window !== "undefined" && anonymousId) {
     window.localStorage.setItem("resofit:anon_id", anonymousId);
@@ -124,9 +125,18 @@ async function emitCanonicalEvent(event: RevenueEvent) {
         contract_version: "1.0",
         idempotency_key: `${anonymousId ?? "server"}:${event}:${Date.now()}:${crypto.randomUUID()}`,
         anonymous_id: anonymousId,
-        rsid: typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("rsid") : null,
-        funnel_origin: typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("funnel_origin") : null,
-        utm: typeof window !== "undefined" ? Object.fromEntries(new URLSearchParams(window.location.search).entries()) : {},
+        rsid:
+          typeof window !== "undefined"
+            ? new URLSearchParams(window.location.search).get("rsid")
+            : null,
+        funnel_origin:
+          typeof window !== "undefined"
+            ? new URLSearchParams(window.location.search).get("funnel_origin")
+            : null,
+        utm:
+          typeof window !== "undefined"
+            ? Object.fromEntries(new URLSearchParams(window.location.search).entries())
+            : {},
         payload,
       },
     });
