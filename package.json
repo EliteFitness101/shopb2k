@@ -1,5 +1,6 @@
 {
   "name": "tanstack_start_ts",
+  "packageManager": "npm@10.9.4",
   "private": true,
   "sideEffects": false,
   "type": "module",
