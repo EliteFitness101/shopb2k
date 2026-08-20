@@ -90,7 +90,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "Personalized wellness, ResoFlex™ equipment and ChatB2K™ experiences.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://www.resofit.fit/" },
+      { property: "og:url", content: "https://resofit.fit/" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "ResoFit — Africa's Personalized Wellness Platform" },
       {
