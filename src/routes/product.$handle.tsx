@@ -21,7 +21,7 @@ import { useCartStore } from "@/stores/cartStore";
 
 export const Route = createFileRoute("/product/$handle")({
   component: ProductPage,
-  errorComponent: ({ error, reset }) => {
+  errorComponent: function ErrorComponent({ error, reset }) {
     const router = useRouter();
     return (
       <div className="min-h-screen bg-background">
@@ -41,7 +41,7 @@ export const Route = createFileRoute("/product/$handle")({
       </div>
     );
   },
-  notFoundComponent: () => {
+  notFoundComponent: function NotFoundComponent() {
     const { handle } = Route.useParams();
     return (
       <div className="min-h-screen bg-background">
@@ -131,7 +131,6 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
   const perf = getCachedPerf(product.id);
   const confident = perf && perf.pps >= 60;
 
-
   const handleAdd = async () => {
     if (!selectedVariant) return;
     await addItem({
@@ -214,7 +213,6 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
             </p>
           </div>
 
-
           {product.descriptionHtml ? (
             <div
               className="prose prose-invert mt-8 max-w-none text-muted-foreground"
@@ -227,9 +225,7 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
           {/* Variant selection */}
           {variants.length > 1 && variants[0].title !== "Default Title" && (
             <div className="mt-8 border-t border-border/60 pt-6">
-              <p className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">
-                Option
-              </p>
+              <p className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">Option</p>
               <div className="flex flex-wrap gap-2">
                 {variants.map((v) => (
                   <button

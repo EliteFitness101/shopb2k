@@ -15,7 +15,11 @@ interface Props {
   title?: string;
 }
 
-export function RecommendedProducts({ currentHandle, productType, title = "Frequently bought together" }: Props) {
+export function RecommendedProducts({
+  currentHandle,
+  productType,
+  title = "Frequently bought together",
+}: Props) {
   const { data } = useQuery({
     queryKey: ["recommended", productType ?? "all"],
     queryFn: async () => {
@@ -36,7 +40,10 @@ export function RecommendedProducts({ currentHandle, productType, title = "Frequ
     <section className="mt-16 border-t border-border/60 pt-10">
       <div className="mb-6 flex items-baseline justify-between">
         <h2 className="font-display text-2xl">{title}</h2>
-        <Link to="/shop" className="text-xs uppercase tracking-widest text-muted-foreground hover:text-gold">
+        <Link
+          to="/shop"
+          className="text-xs uppercase tracking-widest text-muted-foreground hover:text-gold"
+        >
           Shop all →
         </Link>
       </div>

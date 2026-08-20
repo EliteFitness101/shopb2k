@@ -8,9 +8,15 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — ResoFit Play" },
-      { name: "description", content: "Sign in to play games, earn XP, and unlock rewards on ResoFit." },
+      {
+        name: "description",
+        content: "Sign in to play games, earn XP, and unlock rewards on ResoFit.",
+      },
       { property: "og:title", content: "Sign in — ResoFit Play" },
-      { property: "og:description", content: "Join ResoFit Play — earn XP, ResoCoins, and wellness rewards." },
+      {
+        property: "og:description",
+        content: "Join ResoFit Play — earn XP, ResoCoins, and wellness rewards.",
+      },
     ],
   }),
   component: AuthPage,
@@ -74,7 +80,10 @@ function AuthPage() {
   return (
     <main className="min-h-dvh bg-background px-4 py-16">
       <div className="mx-auto max-w-md">
-        <Link to="/" className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground">
+        <Link
+          to="/"
+          className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground"
+        >
           ← ResoFit
         </Link>
         <h1 className="mt-4 font-display text-4xl">

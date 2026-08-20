@@ -14,9 +14,16 @@ export const Route = createFileRoute("/community/play")({
   head: () => ({
     meta: [
       { title: "ResoFit Play — Games, XP & Rewards" },
-      { name: "description", content: "Play wellness trivia, chess, and more. Earn XP, ResoCoins, and unlock rewards on ResoFit's community play layer." },
+      {
+        name: "description",
+        content:
+          "Play wellness trivia, chess, and more. Earn XP, ResoCoins, and unlock rewards on ResoFit's community play layer.",
+      },
       { property: "og:title", content: "ResoFit Play — Games, XP & Rewards" },
-      { property: "og:description", content: "Wellness-powered games with XP, ResoCoins, tournaments, and leaderboards." },
+      {
+        property: "og:description",
+        content: "Wellness-powered games with XP, ResoCoins, tournaments, and leaderboards.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -29,7 +36,7 @@ function PlayHome() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    track("play_home_view" as any);
+    track("play_home_view");
   }, []);
 
   useEffect(() => {
@@ -119,11 +126,15 @@ function PlayHome() {
                 className="h-14 w-14 text-base"
               />
               <div>
-                <p className="text-[10px] uppercase tracking-widest text-gold">Season 1 · Wellness Rising</p>
+                <p className="text-[10px] uppercase tracking-widest text-gold">
+                  Season 1 · Wellness Rising
+                </p>
                 <h1 className="mt-2 font-display text-3xl sm:text-4xl">
                   Welcome back, <span className="text-gold">{displayName}</span>
                 </h1>
-                <p className="mt-1 text-sm text-muted-foreground">Play, move, and earn — every session counts.</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Play, move, and earn — every session counts.
+                </p>
               </div>
             </div>
             <button
@@ -137,16 +148,37 @@ function PlayHome() {
 
         {/* Stats row */}
         <section className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard icon={<Zap className="h-4 w-4 text-gold" />} label="XP" value={xp.toLocaleString()} sub={`Level ${level}`} />
-          <StatCard icon={<Coins className="h-4 w-4 text-gold" />} label="ResoCoins" value={coins.toLocaleString()} />
-          <StatCard icon={<Flame className="h-4 w-4 text-gold" />} label="Streak" value="—" sub="Play daily" />
-          <StatCard icon={<Trophy className="h-4 w-4 text-gold" />} label="Rank" value="—" sub="Play to rank" />
+          <StatCard
+            icon={<Zap className="h-4 w-4 text-gold" />}
+            label="XP"
+            value={xp.toLocaleString()}
+            sub={`Level ${level}`}
+          />
+          <StatCard
+            icon={<Coins className="h-4 w-4 text-gold" />}
+            label="ResoCoins"
+            value={coins.toLocaleString()}
+          />
+          <StatCard
+            icon={<Flame className="h-4 w-4 text-gold" />}
+            label="Streak"
+            value="—"
+            sub="Play daily"
+          />
+          <StatCard
+            icon={<Trophy className="h-4 w-4 text-gold" />}
+            label="Rank"
+            value="—"
+            sub="Play to rank"
+          />
         </section>
 
         {/* XP progress */}
         <section className="mb-8 rounded-lg border border-border bg-card p-4">
           <div className="flex items-center justify-between text-xs">
-            <span className="uppercase tracking-widest text-muted-foreground">Level {level} → {level + 1}</span>
+            <span className="uppercase tracking-widest text-muted-foreground">
+              Level {level} → {level + 1}
+            </span>
             <span className="text-muted-foreground">{xp % 500} / 500 XP</span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
@@ -159,10 +191,14 @@ function PlayHome() {
           <section className="lg:col-span-2">
             <div className="mb-4 flex items-baseline justify-between">
               <h2 className="font-display text-2xl">Featured Games</h2>
-              <span className="text-xs uppercase tracking-widest text-muted-foreground">Phase 1</span>
+              <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                Phase 1
+              </span>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              {games.data?.map((g) => <GameCard key={g.id} game={g} />)}
+              {games.data?.map((g) => (
+                <GameCard key={g.id} game={g} />
+              ))}
               {games.isLoading && (
                 <>
                   <SkeletonCard />
@@ -177,7 +213,9 @@ function PlayHome() {
                 <Sparkles className="h-3 w-3" /> Daily Wellness Challenge
               </div>
               <h3 className="mt-2 font-display text-xl">Answer 5 trivia questions today</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Complete for 2× XP and a mystery ResoCoin bonus.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Complete for 2× XP and a mystery ResoCoin bonus.
+              </p>
               <Link
                 to="/community/play/$game"
                 params={{ game: "trivia" }}
@@ -196,7 +234,10 @@ function PlayHome() {
               </h3>
               <ol className="mt-4 space-y-2 text-sm">
                 {leaderboard.data?.map((p, i) => (
-                  <li key={p.id} className="flex items-center justify-between border-b border-border/50 pb-2 last:border-0">
+                  <li
+                    key={p.id}
+                    className="flex items-center justify-between border-b border-border/50 pb-2 last:border-0"
+                  >
                     <span className="flex items-center gap-2">
                       <span className="w-5 text-xs text-muted-foreground">{i + 1}</span>
                       <Avatar url={p.avatar_url} name={p.display_name ?? "Anonymous"} />
@@ -218,11 +259,16 @@ function PlayHome() {
               <ul className="mt-4 space-y-2 text-xs text-muted-foreground">
                 {recent.data?.map((a) => (
                   <li key={a.id}>
-                    <span className="text-foreground">{a.kind.replace(/_/g, " ")}</span>{" "}
-                    · {new Date(a.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    <span className="text-foreground">{a.kind.replace(/_/g, " ")}</span> ·{" "}
+                    {new Date(a.created_at).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </li>
                 ))}
-                {(!recent.data || recent.data.length === 0) && <li>No activity yet — play to fill this feed.</li>}
+                {(!recent.data || recent.data.length === 0) && (
+                  <li>No activity yet — play to fill this feed.</li>
+                )}
               </ul>
             </div>
           </aside>
@@ -234,16 +280,26 @@ function PlayHome() {
 }
 
 function initials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("") || "R";
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase() ?? "")
+      .join("") || "R"
+  );
 }
 
 /** Profile avatar with accessible alt text and initials fallback (no new deps). */
-function Avatar({ url, name, className }: { url?: string | null; name: string; className?: string }) {
+function Avatar({
+  url,
+  name,
+  className,
+}: {
+  url?: string | null;
+  name: string;
+  className?: string;
+}) {
   const [broken, setBroken] = useState(false);
   const base = cn(
     "flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-gold/40 bg-muted text-[10px] font-semibold uppercase tracking-widest text-gold",
@@ -268,7 +324,17 @@ function Avatar({ url, name, className }: { url?: string | null; name: string; c
   );
 }
 
-function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub?: string }) {
+function StatCard({
+  icon,
+  label,
+  value,
+  sub,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  sub?: string;
+}) {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -283,11 +349,15 @@ function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: s
 function GameCard({ game }: { game: Game }) {
   const live = game.status === "live";
   const inner = (
-    <div className={`group relative flex h-full flex-col justify-between rounded-lg border p-5 transition ${live ? "border-border bg-card hover:border-gold/60 hover:bg-card/80" : "border-border/50 bg-card/40"}`}>
+    <div
+      className={`group relative flex h-full flex-col justify-between rounded-lg border p-5 transition ${live ? "border-border bg-card hover:border-gold/60 hover:bg-card/80" : "border-border/50 bg-card/40"}`}
+    >
       <div>
         <div className="flex items-center justify-between text-[10px] uppercase tracking-widest">
           <span className="text-gold">{game.category}</span>
-          <span className={live ? "text-emerald-400" : "text-muted-foreground"}>{live ? "Live" : "Coming soon"}</span>
+          <span className={live ? "text-emerald-400" : "text-muted-foreground"}>
+            {live ? "Live" : "Coming soon"}
+          </span>
         </div>
         <h3 className="mt-3 font-display text-2xl">{game.name}</h3>
         <p className="mt-1 text-sm text-muted-foreground">{game.description}</p>
@@ -299,12 +369,17 @@ function GameCard({ game }: { game: Game }) {
       </div>
     </div>
   );
-  if (!live) return <div aria-disabled className="opacity-60">{inner}</div>;
+  if (!live)
+    return (
+      <div aria-disabled className="opacity-60">
+        {inner}
+      </div>
+    );
   return (
     <Link
       to="/community/play/$game"
       params={{ game: game.slug }}
-      onClick={() => track("game_selected" as any, { game: game.slug })}
+      onClick={() => track("game_selected", { game: game.slug })}
     >
       {inner}
     </Link>

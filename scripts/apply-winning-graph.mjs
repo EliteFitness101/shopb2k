@@ -29,12 +29,20 @@ const prioritized = queue.queue
     return score || a.priority.localeCompare(b.priority);
   });
 
-await fs.writeFile(outputPath, JSON.stringify({
-  ...queue,
-  prioritizedAt: new Date().toISOString(),
-  optimizationRule: "qualified revenue > checkout > recommendation acceptance > /me completion > clicks > engagement > impressions",
-  queue: prioritized,
-}, null, 2));
+await fs.writeFile(
+  outputPath,
+  JSON.stringify(
+    {
+      ...queue,
+      prioritizedAt: new Date().toISOString(),
+      optimizationRule:
+        "qualified revenue > checkout > recommendation acceptance > /me completion > clicks > engagement > impressions",
+      queue: prioritized,
+    },
+    null,
+    2,
+  ),
+);
 
 console.log(`Prioritized opportunities: ${prioritized.length}`);
 console.log(`Output: ${outputPath}`);

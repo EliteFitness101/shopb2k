@@ -10,14 +10,18 @@ export const Route = createFileRoute("/blog")({
   head: () => ({
     meta: [
       { title: "The ResoFit Journal — Wellness, Strength & Longevity" },
-      { name: "description", content: "Field notes on personalized wellness, strength, mobility, nutrition and healthy ageing." },
+      {
+        name: "description",
+        content:
+          "Field notes on personalized wellness, strength, mobility, nutrition and healthy ageing.",
+      },
       { property: "og:title", content: "The ResoFit Journal" },
       { property: "og:description", content: "Field notes on personalized wellness for Africa." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://shopb2k.lovable.app/blog" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "https://shopb2k.lovable.app/blog" }],
+    links: [{ rel: "canonical", href: "https://resofit.fit/blog" }],
   }),
   component: BlogIndex,
 });

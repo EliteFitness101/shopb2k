@@ -10,14 +10,21 @@ export const Route = createFileRoute("/success-stories")({
   head: () => ({
     meta: [
       { title: "Success Stories — ResoFit" },
-      { name: "description", content: "Real ResoFit members share their wellness, strength and longevity transformations." },
+      {
+        name: "description",
+        content:
+          "Real ResoFit members share their wellness, strength and longevity transformations.",
+      },
       { property: "og:title", content: "Success Stories — ResoFit" },
-      { property: "og:description", content: "Verified member transformations from across Africa." },
+      {
+        property: "og:description",
+        content: "Verified member transformations from across Africa.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://shopb2k.lovable.app/success-stories" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "https://shopb2k.lovable.app/success-stories" }],
+    links: [{ rel: "canonical", href: "https://resofit.fit/success-stories" }],
   }),
   component: Stories,
 });
@@ -46,7 +53,9 @@ function Stories() {
                   <Quote className="h-6 w-6 text-gold" />
                   <p className="mt-4 font-display text-2xl leading-tight">"{s.quote}"</p>
                   <p className="mt-6 text-sm text-foreground">{s.name}</p>
-                  <p className="text-xs text-muted-foreground">{s.location} · {s.program}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {s.location} · {s.program}
+                  </p>
                   <p className="mt-4 text-xs uppercase tracking-widest text-gold">{s.outcome}</p>
                 </article>
               ))}

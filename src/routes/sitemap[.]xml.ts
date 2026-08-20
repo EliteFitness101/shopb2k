@@ -25,17 +25,29 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/success-stories", changefreq: "monthly", priority: "0.6" },
           { path: "/about", changefreq: "monthly", priority: "0.5" },
           { path: "/contact", changefreq: "monthly", priority: "0.5" },
-          ...PROGRAMS.map((p) => ({ path: `/programs/${p.slug}`, changefreq: "monthly" as const, priority: "0.7" })),
-          ...ARTICLES.map((a) => ({ path: `/blog/${a.slug}`, changefreq: "monthly" as const, priority: "0.6" })),
+          ...PROGRAMS.map((p) => ({
+            path: `/programs/${p.slug}`,
+            changefreq: "monthly" as const,
+            priority: "0.7",
+          })),
+          ...ARTICLES.map((a) => ({
+            path: `/blog/${a.slug}`,
+            changefreq: "monthly" as const,
+            priority: "0.6",
+          })),
         ];
 
-        const urls = entries.map((e) => [
-          `  <url>`,
-          `    <loc>${BASE_URL}${e.path}</loc>`,
-          e.changefreq ? `    <changefreq>${e.changefreq}</changefreq>` : null,
-          e.priority ? `    <priority>${e.priority}</priority>` : null,
-          `  </url>`,
-        ].filter(Boolean).join("\n"));
+        const urls = entries.map((e) =>
+          [
+            `  <url>`,
+            `    <loc>${BASE_URL}${e.path}</loc>`,
+            e.changefreq ? `    <changefreq>${e.changefreq}</changefreq>` : null,
+            e.priority ? `    <priority>${e.priority}</priority>` : null,
+            `  </url>`,
+          ]
+            .filter(Boolean)
+            .join("\n"),
+        );
 
         const xml = [
           `<?xml version="1.0" encoding="UTF-8"?>`,
@@ -44,7 +56,9 @@ export const Route = createFileRoute("/sitemap.xml")({
           `</urlset>`,
         ].join("\n");
 
-        return new Response(xml, { headers: { "Content-Type": "application/xml", "Cache-Control": "public, max-age=3600" } });
+        return new Response(xml, {
+          headers: { "Content-Type": "application/xml", "Cache-Control": "public, max-age=3600" },
+        });
       },
     },
   },

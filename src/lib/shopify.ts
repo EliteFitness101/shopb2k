@@ -67,7 +67,11 @@ function mapProduct(p: StorefrontProduct): ShopifyProductNode {
   return {
     id: p.id,
     title: p.title,
-    description: p.body_html?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ?? "",
+    description:
+      p.body_html
+        ?.replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim() ?? "",
     descriptionHtml: p.body_html ?? undefined,
     handle: p.handle,
     productType: p.product_type,
@@ -80,7 +84,7 @@ function mapProduct(p: StorefrontProduct): ShopifyProductNode {
   };
 }
 
-export async function storefrontApiRequest<T = any>(
+export async function storefrontApiRequest<T = unknown>(
   query: string,
   variables: Record<string, unknown> = {},
 ): Promise<{ data?: T; errors?: Array<{ message: string }> } | undefined> {
@@ -90,7 +94,7 @@ export async function storefrontApiRequest<T = any>(
 
   const response = await fetch(url.toString(), { method: "GET" });
   if (!response.ok) throw new Error(`ResoFit storefront HTTP ${response.status}`);
-  const payload = await response.json() as { products?: StorefrontProduct[]; error?: string };
+  const payload = (await response.json()) as { products?: StorefrontProduct[]; error?: string };
   if (payload.error) throw new Error(payload.error);
 
   const nodes = (payload.products ?? []).map(mapProduct);
@@ -114,7 +118,53 @@ export const PRODUCTS_QUERY = /* GraphQL */ `
 `;
 
 export const PRODUCT_BY_HANDLE_QUERY = /* GraphQL */ `
-  query ProductByHandle($handle: String!) { product(handle: $handle) { id title description descriptionHtml handle productType vendor tags priceRange { minVariantPrice { amount currencyCode } } images(first: 12) { edges { node { url altText } } } variants(first: 50) { edges { node { id title availableForSale price { amount currencyCode } selectedOptions { name value } } } } options { name values } } }
+  query ProductByHandle($handle: String!) {
+    product(handle: $handle) {
+      id
+      title
+      description
+      descriptionHtml
+      handle
+      productType
+      vendor
+      tags
+      priceRange {
+        minVariantPrice {
+          amount
+          currencyCode
+        }
+      }
+      images(first: 12) {
+        edges {
+          node {
+            url
+            altText
+          }
+        }
+      }
+      variants(first: 50) {
+        edges {
+          node {
+            id
+            title
+            availableForSale
+            price {
+              amount
+              currencyCode
+            }
+            selectedOptions {
+              name
+              value
+            }
+          }
+        }
+      }
+      options {
+        name
+        values
+      }
+    }
+  }
 `;
 
 export const CART_QUERY = `query cart($id: ID!) { cart(id: $id) { id totalQuantity } }`;
@@ -123,16 +173,28 @@ export const CART_LINES_ADD_MUTATION = "";
 export const CART_LINES_UPDATE_MUTATION = "";
 export const CART_LINES_REMOVE_MUTATION = "";
 
-export function formatCheckoutUrl(checkoutUrl: string): string { return checkoutUrl; }
+export function formatCheckoutUrl(checkoutUrl: string): string {
+  return checkoutUrl;
+}
 
-export function isCartNotFoundError(userErrors: Array<{ field: string[] | null; message: string }>): boolean {
-  return userErrors.some((e) => e.message.toLowerCase().includes("cart not found") || e.message.toLowerCase().includes("does not exist"));
+export function isCartNotFoundError(
+  userErrors: Array<{ field: string[] | null; message: string }>,
+): boolean {
+  return userErrors.some(
+    (e) =>
+      e.message.toLowerCase().includes("cart not found") ||
+      e.message.toLowerCase().includes("does not exist"),
+  );
 }
 
 export function formatMoney(money: MoneyV2): string {
   const amount = parseFloat(money.amount);
   try {
-    return new Intl.NumberFormat("en-NG", { style: "currency", currency: money.currencyCode, maximumFractionDigits: money.currencyCode === "NGN" ? 0 : 2 }).format(amount);
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: money.currencyCode,
+      maximumFractionDigits: money.currencyCode === "NGN" ? 0 : 2,
+    }).format(amount);
   } catch {
     return `${money.currencyCode} ${amount.toFixed(2)}`;
   }
@@ -142,5 +204,9 @@ const NGN_PER_USD = 1600;
 export function approxUSD(money: MoneyV2): string {
   const amount = parseFloat(money.amount);
   const usd = money.currencyCode === "NGN" ? amount / NGN_PER_USD : amount;
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: usd >= 100 ? 0 : 2 }).format(usd);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: usd >= 100 ? 0 : 2,
+  }).format(usd);
 }

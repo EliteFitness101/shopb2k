@@ -9,14 +9,18 @@ export const Route = createFileRoute("/knowledge")({
   head: () => ({
     meta: [
       { title: "Knowledge Hub — ResoFit" },
-      { name: "description", content: "Practitioner-written guides on nutrition, movement, recovery, healthy ageing and body confidence." },
+      {
+        name: "description",
+        content:
+          "Practitioner-written guides on nutrition, movement, recovery, healthy ageing and body confidence.",
+      },
       { property: "og:title", content: "Knowledge Hub — ResoFit" },
       { property: "og:description", content: "Practitioner-written wellness guides." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://shopb2k.lovable.app/knowledge" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "https://shopb2k.lovable.app/knowledge" }],
+    links: [{ rel: "canonical", href: "https://resofit.fit/knowledge" }],
   }),
   component: KnowledgePage,
 });
@@ -50,7 +54,9 @@ function KnowledgePage() {
                 >
                   <h2 className="font-display text-2xl leading-tight">{c.title}</h2>
                   <p className="mt-2 text-sm text-muted-foreground">{c.tagline}</p>
-                  <p className="mt-4 text-[10px] uppercase tracking-widest text-gold">Read guides →</p>
+                  <p className="mt-4 text-[10px] uppercase tracking-widest text-gold">
+                    Read guides →
+                  </p>
                 </Link>
               ))}
             </div>

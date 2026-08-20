@@ -11,7 +11,16 @@ const results = [];
 
 async function check(product) {
   const url = `${baseUrl}${manifest.routePrefix}${encodeURIComponent(product.handle)}`;
-  const result = { ...product, url, status: null, ok: false, titleFound: false, skuFound: false, notFound: false, error: null };
+  const result = {
+    ...product,
+    url,
+    status: null,
+    ok: false,
+    titleFound: false,
+    skuFound: false,
+    notFound: false,
+    error: null,
+  };
 
   try {
     const response = await fetch(url, {
@@ -53,10 +62,7 @@ const report = {
   results,
 };
 
-await fs.writeFile(
-  "product-pages-smoke-report.json",
-  JSON.stringify(report, null, 2),
-);
+await fs.writeFile("product-pages-smoke-report.json", JSON.stringify(report, null, 2));
 
 console.log(`\n${report.passed}/${report.total} product pages returned HTTP 200.`);
 console.log(`Report: product-pages-smoke-report.json`);

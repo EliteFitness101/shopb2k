@@ -65,8 +65,8 @@ function Shop() {
             <span className="text-gradient-gold">no compromise.</span>
           </h1>
           <p className="mt-6 max-w-xl text-muted-foreground">
-            Every piece spec'd, tested, and shipped from our Lagos workshop. Prices in ₦ with
-            ≈USD shown. Shipping calculated at secure checkout.
+            Every piece spec'd, tested, and shipped from our Lagos workshop. Prices in ₦ with ≈USD
+            shown. Shipping calculated at secure checkout.
           </p>
         </div>
       </section>
@@ -277,11 +277,7 @@ function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; pla
 
   return (
     <article className="group flex flex-col border border-border/60 bg-card transition-colors hover:border-gold/60">
-      <Link
-        to="/product/$handle"
-        params={{ handle: node.handle }}
-        className="relative block"
-      >
+      <Link to="/product/$handle" params={{ handle: node.handle }} className="relative block">
         <ProductImage
           src={image?.url}
           alt={image?.altText}

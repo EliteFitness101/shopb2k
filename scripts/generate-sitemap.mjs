@@ -2,39 +2,54 @@
 
 import fs from "node:fs/promises";
 
-const BASE_URL = "https://resofit.fit";
 const manifest = JSON.parse(await fs.readFile("scripts/product-pages.json", "utf8"));
+const BASE_URL = (process.env.SITEMAP_BASE_URL || manifest.baseUrl).replace(/\/$/, "");
+const coreRoutes = [
+  "/",
+  "/me",
+  "/shop",
+  "/about",
+  "/contact",
+  "/blog",
+  "/knowledge",
+  "/compliance",
+  "/cookies",
+];
 
-const coreRoutes = ["/", "/me", "/shop", "/about", "/contact", "/blog", "/knowledge", "/compliance", "/cookies"];
-
-async function isLive(url) {
-  try {
-    const response = await fetch(url, { redirect: "follow", headers: { "User-Agent": "ResoFit-Sitemap-Builder/1.0" } });
-    return response.ok && new URL(response.url).hostname === "resofit.fit";
-  } catch {
-    return false;
-  }
-}
-
+// CI/build mode is deterministic: sitemap generation uses only the canonical
+// route/product manifest and never depends on an already-deployed website.
 const candidates = [
   ...coreRoutes.map((path) => `${BASE_URL}${path}`),
   ...manifest.products.map(({ handle }) => `${BASE_URL}${manifest.routePrefix}${handle}`),
 ];
 
-const live = [];
-for (const url of candidates) {
-  if (await isLive(url)) live.push(url);
-}
+const urls = [...new Set(candidates)].map((url) => `  <url><loc>${url}</loc></url>`).join("\n");
 
-const urls = [...new Set(live)].map((url) => `<url><loc>${url}</loc></url>`).join("\n");
 const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
 
 await fs.writeFile("public/sitemap.xml", xml);
 
-const productUrls = live.filter((url) => url.includes("/product/")).length;
-console.log(`Sitemap generated: ${live.length} live URLs; ${productUrls}/${manifest.products.length} product URLs.`);
+console.log(
+  `Sitemap generated deterministically: ${candidates.length} manifest URLs; ${manifest.products.length} product URLs.`,
+);
 
-if (process.argv.includes("--strict") && productUrls !== manifest.products.length) {
-  console.error(`STRICT SEO GATE FAILED: ${manifest.products.length - productUrls} product URLs are not HTTP 200 yet.`);
-  process.exit(1);
+if (process.argv.includes("--strict")) {
+  if (manifest.products.length === 0) {
+    console.error("STRICT SEO GATE FAILED: product manifest is empty.");
+    process.exit(1);
+  }
+
+  const duplicateHandles =
+    manifest.products.length - new Set(manifest.products.map(({ handle }) => handle)).size;
+  const duplicateSkus =
+    manifest.products.length - new Set(manifest.products.map(({ sku }) => sku)).size;
+
+  if (duplicateHandles || duplicateSkus) {
+    console.error(
+      `STRICT SEO GATE FAILED: duplicate handles=${duplicateHandles}, duplicate SKUs=${duplicateSkus}.`,
+    );
+    process.exit(1);
+  }
+
+  console.log("STRICT SEO GATE PASSED: manifest routes are structurally valid.");
 }

@@ -19,9 +19,7 @@ const manifestPath = path.join(ROOT, "scripts", "product-pages.json");
 const outputDir = path.join(ROOT, "content-intelligence");
 const outputPath = path.join(outputDir, "daily-opportunity-queue.json");
 
-const { products, baseUrl, routePrefix } = JSON.parse(
-  await fs.readFile(manifestPath, "utf8")
-);
+const { products, baseUrl, routePrefix } = JSON.parse(await fs.readFile(manifestPath, "utf8"));
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -65,10 +63,7 @@ function titleFromHandle(handle) {
 
 function inferIntent(product) {
   const haystack = `${product.sku} ${product.handle}`.toLowerCase();
-  return (
-    intentMap.find(([keyword]) => haystack.includes(keyword))?.[1] ||
-    "personalized wellness"
-  );
+  return intentMap.find(([keyword]) => haystack.includes(keyword))?.[1] || "personalized wellness";
 }
 
 function opportunity(product, index) {

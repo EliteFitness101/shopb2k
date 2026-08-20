@@ -44,7 +44,9 @@ export function CartDrawer() {
         setFullName(value.fullName ?? "");
         setEmail(value.email ?? "");
         setPhone(value.phone ?? "");
-      } catch { /* ignore malformed local state */ }
+      } catch {
+        /* ignore malformed local state */
+      }
     }
   }, [open]);
 
@@ -75,7 +77,12 @@ export function CartDrawer() {
       if (!response.ok || !payload.authorizationUrl) {
         throw new Error(payload.error || "Unable to start secure payment");
       }
-      track("checkout_start", { item_count: totalItems, total: totalAmount, currency, source: "resofit_paystack" });
+      track("checkout_start", {
+        item_count: totalItems,
+        total: totalAmount,
+        currency,
+        source: "resofit_paystack",
+      });
       window.location.assign(payload.authorizationUrl);
     } catch (error) {
       console.error("Paystack checkout:", error);
@@ -88,20 +95,38 @@ export function CartDrawer() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="icon" className="relative border-border bg-transparent text-foreground hover:border-gold hover:text-gold" aria-label="Open cart">
+        <Button
+          variant="outline"
+          size="icon"
+          className="relative border-border bg-transparent text-foreground hover:border-gold hover:text-gold"
+          aria-label="Open cart"
+        >
           <ShoppingCart className="h-5 w-5" />
-          {totalItems > 0 && <Badge className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full p-0 text-[10px] bg-gold text-gold-foreground">{totalItems}</Badge>}
+          {totalItems > 0 && (
+            <Badge className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full p-0 text-[10px] bg-gold text-gold-foreground">
+              {totalItems}
+            </Badge>
+          )}
         </Button>
       </SheetTrigger>
       <SheetContent className="flex h-full w-full flex-col bg-background sm:max-w-lg">
         <SheetHeader className="flex-shrink-0">
           <SheetTitle className="font-display text-2xl">Your Cart</SheetTitle>
-          <SheetDescription>{totalItems === 0 ? "No hardware in your cart yet." : `${totalItems} item${totalItems !== 1 ? "s" : ""} ready for secure payment`}</SheetDescription>
+          <SheetDescription>
+            {totalItems === 0
+              ? "No hardware in your cart yet."
+              : `${totalItems} item${totalItems !== 1 ? "s" : ""} ready for secure payment`}
+          </SheetDescription>
         </SheetHeader>
 
         <div className="flex min-h-0 flex-1 flex-col pt-6">
           {items.length === 0 ? (
-            <div className="flex flex-1 items-center justify-center"><div className="text-center"><ShoppingCart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" /><p className="text-muted-foreground">Your cart is empty</p></div></div>
+            <div className="flex flex-1 items-center justify-center">
+              <div className="text-center">
+                <ShoppingCart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                <p className="text-muted-foreground">Your cart is empty</p>
+              </div>
+            </div>
           ) : (
             <>
               <div className="min-h-0 flex-1 overflow-y-auto pr-2">
@@ -110,18 +135,55 @@ export function CartDrawer() {
                     const img = item.product.images?.edges?.[0]?.node;
                     return (
                       <div key={item.variantId} className="flex gap-4 border border-border/60 p-3">
-                        <div className="h-20 w-20 flex-shrink-0 overflow-hidden bg-card">{img && <img src={img.url} alt={img.altText ?? item.product.title} className="h-full w-full object-cover" />}</div>
+                        <div className="h-20 w-20 flex-shrink-0 overflow-hidden bg-card">
+                          {img && (
+                            <img
+                              src={img.url}
+                              alt={img.altText ?? item.product.title}
+                              className="h-full w-full object-cover"
+                            />
+                          )}
+                        </div>
                         <div className="min-w-0 flex-1">
                           <h4 className="truncate font-medium">{item.product.title}</h4>
-                          {item.variantTitle && item.variantTitle !== "Default Title" && <p className="text-xs text-muted-foreground">{item.variantTitle}</p>}
-                          <p className="mt-1 font-display text-gold">{formatMoney(item.price)} <span className="text-xs text-muted-foreground">· {approxUSD(item.price)}</span></p>
+                          {item.variantTitle && item.variantTitle !== "Default Title" && (
+                            <p className="text-xs text-muted-foreground">{item.variantTitle}</p>
+                          )}
+                          <p className="mt-1 font-display text-gold">
+                            {formatMoney(item.price)}{" "}
+                            <span className="text-xs text-muted-foreground">
+                              · {approxUSD(item.price)}
+                            </span>
+                          </p>
                         </div>
                         <div className="flex flex-shrink-0 flex-col items-end gap-2">
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeItem(item.variantId)} aria-label="Remove"><Trash2 className="h-3 w-3" /></Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => removeItem(item.variantId)}
+                            aria-label="Remove"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
                           <div className="flex items-center gap-1">
-                            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.variantId, item.quantity - 1)}><Minus className="h-3 w-3" /></Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
                             <span className="w-8 text-center text-sm">{item.quantity}</span>
-                            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.variantId, item.quantity + 1)}><Plus className="h-3 w-3" /></Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -132,20 +194,58 @@ export function CartDrawer() {
 
               <div className="flex-shrink-0 space-y-4 border-t border-border/60 bg-background pt-4">
                 <div className="flex items-end justify-between">
-                  <div><p className="text-xs uppercase tracking-widest text-muted-foreground">Total</p><p className="font-display text-3xl text-gold">{formatMoney(totalMoney)}</p><p className="text-xs text-muted-foreground">≈ {approxUSD(totalMoney)}</p></div>
-                  <p className="text-right text-[11px] uppercase tracking-widest text-muted-foreground">Secure Paystack<br />Card · Bank · USSD</p>
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-muted-foreground">Total</p>
+                    <p className="font-display text-3xl text-gold">{formatMoney(totalMoney)}</p>
+                    <p className="text-xs text-muted-foreground">≈ {approxUSD(totalMoney)}</p>
+                  </div>
+                  <p className="text-right text-[11px] uppercase tracking-widest text-muted-foreground">
+                    Secure Paystack
+                    <br />
+                    Card · Bank · USSD
+                  </p>
                 </div>
 
                 <div className="grid gap-2">
-                  <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full name" autoComplete="name" />
-                  <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" type="email" autoComplete="email" />
-                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" type="tel" autoComplete="tel" />
+                  <Input
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Full name"
+                    autoComplete="name"
+                  />
+                  <Input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email"
+                    type="email"
+                    autoComplete="email"
+                  />
+                  <Input
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="Phone"
+                    type="tel"
+                    autoComplete="tel"
+                  />
                 </div>
 
-                <Button onClick={handleCheckout} className="h-12 w-full rounded-sm bg-gold text-xs font-semibold uppercase tracking-widest text-gold-foreground hover:bg-gold/90" disabled={items.length === 0 || isLoading || checkoutBusy}>
-                  {checkoutBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CreditCard className="mr-2 h-4 w-4" />Pay securely with Paystack</>}
+                <Button
+                  onClick={handleCheckout}
+                  className="h-12 w-full rounded-sm bg-gold text-xs font-semibold uppercase tracking-widest text-gold-foreground hover:bg-gold/90"
+                  disabled={items.length === 0 || isLoading || checkoutBusy}
+                >
+                  {checkoutBusy ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Pay securely with Paystack
+                    </>
+                  )}
                 </Button>
-                <Button variant="ghost" className="w-full text-xs" onClick={clearCart}>Clear cart</Button>
+                <Button variant="ghost" className="w-full text-xs" onClick={clearCart}>
+                  Clear cart
+                </Button>
               </div>
             </>
           )}

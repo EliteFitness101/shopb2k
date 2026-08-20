@@ -96,11 +96,7 @@ export function computePPS(stats: EngStats, purchases = 0): ProductPerformance["
 
   // Targets calibrated for a luxe fitness funnel.
   const score =
-    (norm(ctr, 0.25) +
-      norm(atcRate, 0.15) +
-      norm(checkoutRate, 0.5) +
-      norm(cvr, 0.03)) *
-    25; // each component max 25
+    (norm(ctr, 0.25) + norm(atcRate, 0.15) + norm(checkoutRate, 0.5) + norm(cvr, 0.03)) * 25; // each component max 25
   return Math.round(score * 10) / 10;
 }
 

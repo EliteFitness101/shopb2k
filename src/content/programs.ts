@@ -18,7 +18,8 @@ export const PROGRAMS: Program[] = [
     slug: "strength-foundations",
     title: "Strength Foundations",
     eyebrow: "12-Week Program",
-    summary: "Build a resilient, capable body with progressive strength training coached by ChatB2K™.",
+    summary:
+      "Build a resilient, capable body with progressive strength training coached by ChatB2K™.",
     overview:
       "A twelve-week strength arc designed for everyday humans who want to feel powerful, mobile and confident. Every session is personalized to your equipment, schedule and recovery.",
     benefits: [
@@ -38,7 +39,10 @@ export const PROGRAMS: Program[] = [
       "Habit consistency and confidence",
     ],
     faqs: [
-      { q: "Do I need a full gym?", a: "No. A barbell, a rack and plates cover 95% of the program." },
+      {
+        q: "Do I need a full gym?",
+        a: "No. A barbell, a rack and plates cover 95% of the program.",
+      },
       { q: "How much time per session?", a: "45–60 minutes, three to four times a week." },
     ],
     relatedProductTags: ["barbell", "rack", "plate"],
@@ -63,7 +67,10 @@ export const PROGRAMS: Program[] = [
       "Sustainable habits you actually keep",
     ],
     faqs: [
-      { q: "Is this a weight-loss program?", a: "No. It is a healthspan program — body composition improves as a side effect of consistent training and nutrition." },
+      {
+        q: "Is this a weight-loss program?",
+        a: "No. It is a healthspan program — body composition improves as a side effect of consistent training and nutrition.",
+      },
     ],
   },
   {
@@ -81,9 +88,7 @@ export const PROGRAMS: Program[] = [
     ],
     audience: ["Desk workers", "Post-injury returnees", "High-stress professionals"],
     outcomes: ["Freer hips and shoulders", "Deeper sleep", "Calmer nervous system"],
-    faqs: [
-      { q: "How long each day?", a: "15–20 minutes, six days a week." },
-    ],
+    faqs: [{ q: "How long each day?", a: "15–20 minutes, six days a week." }],
   },
   {
     slug: "nutrition-reset",
@@ -101,7 +106,10 @@ export const PROGRAMS: Program[] = [
     audience: ["Anyone wanting food clarity", "Busy professionals", "Families cooking together"],
     outcomes: ["Steady energy", "Improved body confidence", "Sustainable habits"],
     faqs: [
-      { q: "Is anything banned?", a: "No banned foods — just smarter defaults and portion literacy." },
+      {
+        q: "Is anything banned?",
+        a: "No banned foods — just smarter defaults and portion literacy.",
+      },
     ],
   },
   {
@@ -119,9 +127,7 @@ export const PROGRAMS: Program[] = [
     ],
     audience: ["Founders, executives, athletes"],
     outcomes: ["Sustainable performance", "Body confidence", "Longevity ROI"],
-    faqs: [
-      { q: "How do I join?", a: "Members are onboarded by invitation after an intake call." },
-    ],
+    faqs: [{ q: "How do I join?", a: "Members are onboarded by invitation after an intake call." }],
   },
 ];
 

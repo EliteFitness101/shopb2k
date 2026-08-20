@@ -15,10 +15,7 @@ export const Route = createFileRoute("/programs/$slug")({
   head: ({ loaderData, params }) => {
     if (!loaderData) {
       return {
-        meta: [
-          { title: "Program not found — ResoFit" },
-          { name: "robots", content: "noindex" },
-        ],
+        meta: [{ title: "Program not found — ResoFit" }, { name: "robots", content: "noindex" }],
       };
     }
     const url = `https://shopb2k.lovable.app/programs/${params.slug}`;

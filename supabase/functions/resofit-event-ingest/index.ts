@@ -9,7 +9,9 @@ const corsHeaders = {
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const publishableKeys = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}");
-const publishableKeySet = new Set(Object.values(publishableKeys).filter((value): value is string => typeof value === "string"));
+const publishableKeySet = new Set(
+  Object.values(publishableKeys).filter((value): value is string => typeof value === "string"),
+);
 const admin = createClient(supabaseUrl, serviceRoleKey);
 
 const MAX_PAYLOAD_BYTES = 64_000;
@@ -51,7 +53,8 @@ Deno.serve(async (req) => {
     const adapters = Array.isArray(body.adapters) ? body.adapters.map(String).filter(Boolean) : [];
 
     if (!EVENT_NAME.test(eventName)) return json({ error: "Invalid event_name" }, 400);
-    if (!/^[0-9]+\.[0-9]+$/.test(contractVersion)) return json({ error: "Invalid contract_version" }, 400);
+    if (!/^[0-9]+\.[0-9]+$/.test(contractVersion))
+      return json({ error: "Invalid contract_version" }, 400);
     if (idempotencyKey.length > 200) return json({ error: "Invalid idempotency_key" }, 400);
     if (adapters.length > 10) return json({ error: "Too many adapters" }, 400);
 
@@ -71,9 +74,15 @@ Deno.serve(async (req) => {
     if (contractError) throw contractError;
     if (!contract) return json({ error: "Unknown event contract" }, 400);
 
-    const payload = (body.payload && typeof body.payload === "object" ? body.payload : {}) as Record<string, unknown>;
-    const missing = (contract.required_fields ?? []).filter((field: string) => payload[field] === undefined || payload[field] === null || payload[field] === "");
-    if (missing.length) return json({ error: "Missing required event fields", fields: missing }, 400);
+    const payload = (
+      body.payload && typeof body.payload === "object" ? body.payload : {}
+    ) as Record<string, unknown>;
+    const missing = (contract.required_fields ?? []).filter(
+      (field: string) =>
+        payload[field] === undefined || payload[field] === null || payload[field] === "",
+    );
+    if (missing.length)
+      return json({ error: "Missing required event fields", fields: missing }, 400);
 
     const { data: event, error: eventError } = await admin
       .from("resofit_events")
