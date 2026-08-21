@@ -1,7 +1,9 @@
+// Production-ready initializer endpoint. The current working function is 'paystack-init'.
 const PRODUCTION_PAYSTACK_INITIALIZE_URL =
-  "https://vbqjvmnhdtdhmeeudqnn.supabase.co/functions/v1/paystack-initialize";
-const FALLBACK_PAYSTACK_INITIALIZE_URL =
   "https://vbqjvmnhdtdhmeeudqnn.supabase.co/functions/v1/paystack-init";
+// Fallback kept for compatibility; older deployments may still reference this name.
+const FALLBACK_PAYSTACK_INITIALIZE_URL =
+  "https://vbqjvmnhdtdhmeeudqnn.supabase.co/functions/v1/paystack-initialize";
 
 export const RESET_OFFER = "₦1,000 Reset";
 export const RESET_PRODUCT_ID = "reset";
