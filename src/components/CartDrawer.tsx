@@ -80,9 +80,17 @@ export function CartDrawer() {
           currency,
           product: items.map((i) => `${i.product.title} x${i.quantity}`).join(", "),
           productId: primary.product.id,
+          items: items.map((i) => ({
+            variantId: i.variantId,
+            quantity: i.quantity,
+            productHandle: i.product.handle,
+            title: i.product.title,
+            unitAmountKobo: toPaystackAmountKobo(parseFloat(i.price.amount)),
+          })),
           fullName: fullName.trim(),
           phone: phone.trim(),
           source: "resofit_paystack",
+          currentUrl: typeof window !== "undefined" ? window.location.href : undefined,
         }),
       });
       const payload = await response.json();
