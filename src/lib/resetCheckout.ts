@@ -1,10 +1,54 @@
 const PRODUCTION_PAYSTACK_INITIALIZE_URL =
   "https://vbqjvmnhdtdhmeeudqnn.supabase.co/functions/v1/paystack-initialize";
+const FALLBACK_PAYSTACK_INITIALIZE_URL =
+  "https://vbqjvmnhdtdhmeeudqnn.supabase.co/functions/v1/paystack-init";
 
 export const RESET_OFFER = "₦1,000 Reset";
 export const RESET_PRODUCT_ID = "reset";
 export const RESET_AMOUNT_KOBO = 100000;
 export const RESET_CURRENCY = "NGN";
+
+export function resolvePaystackInitUrl(): string {
+  const configured =
+    import.meta.env.VITE_PAYSTACK_INITIALIZE_URL?.trim() ||
+    import.meta.env.VITE_PAYSTACK_INIT_URL?.trim() ||
+    import.meta.env.VITE_RESET_PAYSTACK_INITIALIZE_URL?.trim();
+
+  if (configured) return configured;
+
+  return PRODUCTION_PAYSTACK_INITIALIZE_URL;
+}
+
+export function toPaystackAmountKobo(amount: number): number {
+  if (!Number.isFinite(amount)) return 0;
+  return Math.max(0, Math.round(amount * 100));
+}
+
+export function extractPaystackAuthorizationUrl(payload: unknown): string | undefined {
+  if (!payload || typeof payload !== "object") return undefined;
+
+  const value = payload as Record<string, unknown>;
+  const nested =
+    value.data && typeof value.data === "object" ? (value.data as Record<string, unknown>) : null;
+
+  const candidates = [
+    value.authorizationUrl,
+    value.authorization_url,
+    value.checkout_url,
+    value.url,
+    nested?.authorizationUrl,
+    nested?.authorization_url,
+    nested?.checkout_url,
+    nested?.url,
+  ];
+
+  const resolved = candidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === "string" && candidate.trim().length > 0,
+  );
+
+  return resolved?.trim();
+}
 
 export interface ResetCheckoutInput {
   email: string;
@@ -45,9 +89,7 @@ function getAttribution(): Attribution {
 }
 
 function getInitializerUrl(): string {
-  const configured = import.meta.env.VITE_RESET_PAYSTACK_INITIALIZE_URL?.trim();
-  if (configured) return configured;
-  return PRODUCTION_PAYSTACK_INITIALIZE_URL;
+  return resolvePaystackInitUrl() || FALLBACK_PAYSTACK_INITIALIZE_URL;
 }
 
 export async function startResetCheckout(input: ResetCheckoutInput): Promise<string> {
@@ -80,15 +122,8 @@ export async function startResetCheckout(input: ResetCheckoutInput): Promise<str
 
   if (!response.ok) throw new Error("Payment initialization failed.");
 
-  const data = (await response.json()) as {
-    authorizationUrl?: string;
-    authorization_url?: string;
-    checkout_url?: string;
-    url?: string;
-  };
-
-  const authorizationUrl =
-    data.authorizationUrl ?? data.authorization_url ?? data.checkout_url ?? data.url;
+  const data = (await response.json()) as unknown;
+  const authorizationUrl = extractPaystackAuthorizationUrl(data);
 
   if (!authorizationUrl || !/^https:\/\/checkout\.paystack\.com\//i.test(authorizationUrl)) {
     throw new Error("Payment initialization returned no valid Paystack authorization URL.");

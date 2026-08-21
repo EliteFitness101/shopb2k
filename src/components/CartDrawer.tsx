@@ -15,8 +15,11 @@ import { toast } from "sonner";
 import { useCartStore } from "@/stores/cartStore";
 import { approxUSD, formatMoney } from "@/lib/shopify";
 import { track } from "@/lib/tracking";
-
-const PAYSTACK_INIT_URL = "https://vbqjvmnhdtdhmeeudqnn.supabase.co/functions/v1/paystack-init";
+import {
+  extractPaystackAuthorizationUrl,
+  resolvePaystackInitUrl,
+  toPaystackAmountKobo,
+} from "@/lib/resetCheckout";
 
 export function CartDrawer() {
   const [open, setOpen] = useState(false);
@@ -32,7 +35,7 @@ export function CartDrawer() {
 
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
   const currency = items[0]?.price.currencyCode ?? "NGN";
-  const totalAmount = items.reduce((s, i) => parseFloat(i.price.amount) * i.quantity, 0);
+  const totalAmount = items.reduce((s, i) => s + parseFloat(i.price.amount) * i.quantity, 0);
   const totalMoney = { amount: totalAmount.toString(), currencyCode: currency };
 
   useEffect(() => {
@@ -57,25 +60,42 @@ export function CartDrawer() {
       return;
     }
 
+    const amountKobo = toPaystackAmountKobo(totalAmount);
+    if (!Number.isFinite(totalAmount) || amountKobo <= 0) {
+      toast.error("Your cart total is invalid. Please review your items and try again.");
+      return;
+    }
+
     setCheckoutBusy(true);
     try {
       localStorage.setItem("resofit-checkout-contact", JSON.stringify({ fullName, email, phone }));
       const primary = items[0];
-      const response = await fetch(PAYSTACK_INIT_URL, {
+      const response = await fetch(resolvePaystackInitUrl(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: email.trim(),
-          amount: Math.round(totalAmount * 100),
+          amount: amountKobo,
+          amountKobo,
+          currency,
           product: items.map((i) => `${i.product.title} x${i.quantity}`).join(", "),
           productId: primary.product.id,
           fullName: fullName.trim(),
           phone: phone.trim(),
+          source: "resofit_paystack",
         }),
       });
       const payload = await response.json();
-      if (!response.ok || !payload.authorizationUrl) {
-        throw new Error(payload.error || "Unable to start secure payment");
+      const authorizationUrl = extractPaystackAuthorizationUrl(payload);
+      if (!response.ok || !authorizationUrl) {
+        throw new Error(
+          payload &&
+            typeof payload === "object" &&
+            "error" in payload &&
+            typeof payload.error === "string"
+            ? payload.error
+            : "Unable to start secure payment",
+        );
       }
       track("checkout_start", {
         item_count: totalItems,
@@ -83,7 +103,7 @@ export function CartDrawer() {
         currency,
         source: "resofit_paystack",
       });
-      window.location.assign(payload.authorizationUrl);
+      window.location.assign(authorizationUrl);
     } catch (error) {
       console.error("Paystack checkout:", error);
       toast.error(error instanceof Error ? error.message : "Unable to start secure payment");
