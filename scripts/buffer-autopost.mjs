@@ -11,7 +11,7 @@
  * Buffer's public API is GraphQL at https://api.buffer.com.
  */
 
-const BUFFER_API = "https://api.buffer.com";
+const BUFFER_API = "https://api.buffer.com/graphql"; // Buffer GraphQL endpoint
 const ORG_ID = "6a7cfd9705e59fe6e2a3bf71";
 const CHANNELS = Object.freeze({
   tiktok: "6a7cfe5ab2d9d57743686cc5",
