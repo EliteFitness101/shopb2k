@@ -4,7 +4,7 @@ import type { MoneyV2, ShopifyProductNode } from "@/lib/shopify";
 
 export interface CartItem {
   lineId: string | null;
-  product: Pick<ShopifyProductNode, "id" | "title" | "handle" | "images">;
+  product: Pick<ShopifyProductNode, "id" | "title" | "handle" | "sku" | "images">;
   variantId: string;
   variantTitle: string;
   price: MoneyV2;
