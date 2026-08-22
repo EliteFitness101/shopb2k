@@ -15,17 +15,14 @@ import { toast } from "sonner";
 import { useCartStore } from "@/stores/cartStore";
 import { approxUSD, formatMoney } from "@/lib/shopify";
 import { track } from "@/lib/tracking";
-import {
-  extractPaystackAuthorizationUrl,
-  resolvePaystackInitUrl,
-  toPaystackAmountKobo,
-} from "@/lib/resetCheckout";
+import { extractPaystackAuthorizationUrl, resolvePaystackInitUrl } from "@/lib/resetCheckout";
 
 export function CartDrawer() {
   const [open, setOpen] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const items = useCartStore((s) => s.items);
   const isLoading = useCartStore((s) => s.isLoading);
@@ -35,7 +32,7 @@ export function CartDrawer() {
 
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
   const currency = items[0]?.price.currencyCode ?? "NGN";
-  const totalAmount = items.reduce((s, i) => s + parseFloat(i.price.amount) * i.quantity, 0);
+  const totalAmount = items.reduce((s, i) => parseFloat(i.price.amount) * i.quantity + s, 0);
   const totalMoney = { amount: totalAmount.toString(), currencyCode: currency };
 
   useEffect(() => {
@@ -47,6 +44,7 @@ export function CartDrawer() {
         setFullName(value.fullName ?? "");
         setEmail(value.email ?? "");
         setPhone(value.phone ?? "");
+        setAddress(value.address ?? "");
       } catch {
         /* ignore malformed local state */
       }
@@ -55,37 +53,41 @@ export function CartDrawer() {
 
   const handleCheckout = async () => {
     if (!items.length) return;
-    if (!fullName.trim() || !email.trim() || !phone.trim()) {
-      toast.error("Complete your name, email and phone first.");
+    if (items.length !== 1 || items[0].quantity !== 1) {
+      toast.error("Paystack checkout currently supports one product per secure transaction. Please checkout one item at a time.");
       return;
     }
 
-    const amountKobo = toPaystackAmountKobo(totalAmount);
-    if (!Number.isFinite(totalAmount) || amountKobo <= 0) {
-      toast.error("Your cart total is invalid. Please review your items and try again.");
+    const primary = items[0];
+    const sku = primary.product.sku?.trim();
+    if (!sku) {
+      toast.error("This product is missing its canonical SKU. Please return to the product page and try again.");
+      return;
+    }
+    if (!fullName.trim() || !email.trim() || !phone.trim() || !address.trim()) {
+      toast.error("Complete your name, email, phone and delivery address first.");
       return;
     }
 
     setCheckoutBusy(true);
     try {
-      localStorage.setItem("resofit-checkout-contact", JSON.stringify({ fullName, email, phone }));
-      const primary = items[0];
+      localStorage.setItem(
+        "resofit-checkout-contact",
+        JSON.stringify({ fullName, email, phone, address }),
+      );
+
       const response = await fetch(resolvePaystackInitUrl(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          sku,
           email: email.trim(),
-          amount: amountKobo,
-          amountKobo,
-          currency,
-          product: items.map((i) => `${i.product.title} x${i.quantity}`).join(", "),
-          productId: primary.product.id,
-          fullName: fullName.trim(),
+          name: fullName.trim(),
           phone: phone.trim(),
-          source: "resofit_paystack",
+          address: address.trim(),
         }),
       });
-      const payload = await response.json();
+      const payload = await response.json().catch(() => null);
       const authorizationUrl = extractPaystackAuthorizationUrl(payload);
       if (!response.ok || !authorizationUrl) {
         throw new Error(
@@ -97,7 +99,9 @@ export function CartDrawer() {
             : "Unable to start secure payment",
         );
       }
+
       track("checkout_start", {
+        sku,
         item_count: totalItems,
         total: totalAmount,
         currency,
@@ -170,38 +174,19 @@ export function CartDrawer() {
                             <p className="text-xs text-muted-foreground">{item.variantTitle}</p>
                           )}
                           <p className="mt-1 font-display text-gold">
-                            {formatMoney(item.price)}{" "}
-                            <span className="text-xs text-muted-foreground">
-                              · {approxUSD(item.price)}
-                            </span>
+                            {formatMoney(item.price)} <span className="text-xs text-muted-foreground">· {approxUSD(item.price)}</span>
                           </p>
                         </div>
                         <div className="flex flex-shrink-0 flex-col items-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => removeItem(item.variantId)}
-                            aria-label="Remove"
-                          >
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeItem(item.variantId)} aria-label="Remove">
                             <Trash2 className="h-3 w-3" />
                           </Button>
                           <div className="flex items-center gap-1">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
-                            >
+                            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.variantId, item.quantity - 1)}>
                               <Minus className="h-3 w-3" />
                             </Button>
                             <span className="w-8 text-center text-sm">{item.quantity}</span>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
-                            >
+                            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.variantId, item.quantity + 1)}>
                               <Plus className="h-3 w-3" />
                             </Button>
                           </div>
@@ -219,53 +204,20 @@ export function CartDrawer() {
                     <p className="font-display text-3xl text-gold">{formatMoney(totalMoney)}</p>
                     <p className="text-xs text-muted-foreground">≈ {approxUSD(totalMoney)}</p>
                   </div>
-                  <p className="text-right text-[11px] uppercase tracking-widest text-muted-foreground">
-                    Secure Paystack
-                    <br />
-                    Card · Bank · USSD
-                  </p>
+                  <p className="text-right text-[11px] uppercase tracking-widest text-muted-foreground">Secure Paystack<br />Card · Bank · USSD</p>
                 </div>
 
                 <div className="grid gap-2">
-                  <Input
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Full name"
-                    autoComplete="name"
-                  />
-                  <Input
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email"
-                    type="email"
-                    autoComplete="email"
-                  />
-                  <Input
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Phone"
-                    type="tel"
-                    autoComplete="tel"
-                  />
+                  <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full name" autoComplete="name" />
+                  <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" type="email" autoComplete="email" />
+                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" type="tel" autoComplete="tel" />
+                  <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Delivery address" autoComplete="street-address" />
                 </div>
 
-                <Button
-                  onClick={handleCheckout}
-                  className="h-12 w-full rounded-sm bg-gold text-xs font-semibold uppercase tracking-widest text-gold-foreground hover:bg-gold/90"
-                  disabled={items.length === 0 || isLoading || checkoutBusy}
-                >
-                  {checkoutBusy ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      Pay securely with Paystack
-                    </>
-                  )}
+                <Button onClick={handleCheckout} className="h-12 w-full rounded-sm bg-gold text-xs font-semibold uppercase tracking-widest text-gold-foreground hover:bg-gold/90" disabled={items.length === 0 || isLoading || checkoutBusy}>
+                  {checkoutBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CreditCard className="mr-2 h-4 w-4" />Pay securely with Paystack</>}
                 </Button>
-                <Button variant="ghost" className="w-full text-xs" onClick={clearCart}>
-                  Clear cart
-                </Button>
+                <Button variant="ghost" className="w-full text-xs" onClick={clearCart}>Clear cart</Button>
               </div>
             </>
           )}
