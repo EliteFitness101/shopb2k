@@ -28,6 +28,7 @@ export interface ShopifyProductNode {
   description: string;
   descriptionHtml?: string;
   handle: string;
+  sku?: string | null;
   productType?: string;
   vendor?: string;
   tags?: string[];
@@ -75,6 +76,7 @@ function mapProduct(p: StorefrontProduct): ShopifyProductNode {
         .trim() ?? "",
     descriptionHtml: p.body_html ?? undefined,
     handle: p.handle,
+    sku: p.sku,
     productType: p.product_type,
     vendor: p.vendor ?? "ResoFlex",
     tags: p.tags ?? [],
