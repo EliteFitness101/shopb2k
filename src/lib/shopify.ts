@@ -2,6 +2,7 @@
 
 export const RESOFIT_SUPABASE_URL = "https://vbqjvmnhdtdhmeeudqnn.supabase.co";
 export const RESOFIT_STOREFRONT_URL = `${RESOFIT_SUPABASE_URL}/functions/v1/storefront-products`;
+export const RESOFIT_CATALOG_URL = `${RESOFIT_SUPABASE_URL}/functions/v1/catalog-public`;
 
 export interface MoneyV2 {
   amount: string;
@@ -84,28 +85,54 @@ function mapProduct(p: StorefrontProduct): ShopifyProductNode {
   };
 }
 
+async function fetchStorefrontProducts(handle: string | null): Promise<StorefrontProduct[]> {
+  const url = new URL(RESOFIT_STOREFRONT_URL);
+  if (handle) url.searchParams.set("handle", handle);
+  const response = await fetch(url.toString(), { method: "GET" });
+  if (!response.ok) throw new Error(`ResoFit storefront HTTP ${response.status}`);
+  const payload = (await response.json()) as { products?: StorefrontProduct[]; error?: string };
+  if (payload.error) throw new Error(payload.error);
+  return payload.products ?? [];
+}
+
+async function fetchCanonicalCatalog(handle: string | null): Promise<StorefrontProduct[]> {
+  const url = new URL(handle ? `${RESOFIT_CATALOG_URL}/product` : RESOFIT_CATALOG_URL);
+  if (handle) url.searchParams.set("handle", handle);
+  else url.searchParams.set("limit", "100");
+  const response = await fetch(url.toString(), { method: "GET" });
+  if (!response.ok) throw new Error(`ResoFit canonical catalog HTTP ${response.status}`);
+  const payload = (await response.json()) as { data?: StorefrontProduct | StorefrontProduct[]; error?: string };
+  if (payload.error) throw new Error(payload.error);
+  if (handle) return payload.data ? [payload.data as StorefrontProduct] : [];
+  return Array.isArray(payload.data) ? payload.data : [];
+}
+
 export async function storefrontApiRequest<T = unknown>(
   query: string,
   variables: Record<string, unknown> = {},
 ): Promise<{ data?: T; errors?: Array<{ message: string }> } | undefined> {
   const handle = typeof variables.handle === "string" ? variables.handle : null;
-  const url = new URL(RESOFIT_STOREFRONT_URL);
-  if (handle) url.searchParams.set("handle", handle);
+  let products: StorefrontProduct[] = [];
 
-  const response = await fetch(url.toString(), { method: "GET" });
-  if (!response.ok) throw new Error(`ResoFit storefront HTTP ${response.status}`);
-  const payload = (await response.json()) as { products?: StorefrontProduct[]; error?: string };
-  if (payload.error) throw new Error(payload.error);
+  try {
+    products = await fetchStorefrontProducts(handle);
+  } catch (primaryError) {
+    console.warn("Primary ResoFit storefront unavailable; using canonical catalog fallback", primaryError);
+  }
 
-  const nodes = (payload.products ?? []).map(mapProduct);
+  if (products.length === 0) {
+    products = await fetchCanonicalCatalog(handle);
+  }
+
+  const nodes = products.map(mapProduct);
   const isHandleQuery = /product\s*\(handle/i.test(query);
-  const products = isHandleQuery ? (nodes[0] ?? null) : { edges: nodes.map((node) => ({ node })) };
+  const mappedProducts = isHandleQuery ? (nodes[0] ?? null) : { edges: nodes.map((node) => ({ node })) };
 
-  if (/product\s*\(handle/i.test(query)) {
-    return { data: { product: products } as T };
+  if (isHandleQuery) {
+    return { data: { product: mappedProducts } as T };
   }
   if (/products\s*\(/i.test(query)) {
-    return { data: { products } as T };
+    return { data: { products: mappedProducts } as T };
   }
   if (/query\s+cart/i.test(query)) {
     return { data: { cart: null } as T };
