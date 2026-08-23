@@ -93,7 +93,7 @@ const FALLBACK_PRODUCTS: Record<string, { url: string; title: string; cta: strin
     cta: "Start My Reset",
   },
   muscle: {
-    url: "https://shop.resofit.fit/product/res-coach-01",
+    url: "https://resofit.fit/product/res-coach-01",
     title: "ResoFlex Premium Coaching",
     cta: "Start My Coaching",
   },
