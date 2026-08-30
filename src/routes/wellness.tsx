@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { ArrowRight, LocateFixed, Search } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -69,12 +69,11 @@ function WellnessHome() {
     );
   };
 
-  const submitSearch = (event: React.FormEvent) => {
+  const submitSearch = (event: FormEvent) => {
     event.preventDefault();
     const value = query.trim();
     if (!value) return;
     trackEvent("wellness_search");
-    // The initial public loop preserves the query for the next intelligence/search surface.
     window.location.href = `/wellness/states/cities/hubs/geo-locator?q=${encodeURIComponent(value)}`;
   };
 
@@ -100,9 +99,7 @@ function WellnessHome() {
             </form>
 
             <div className="mt-4 flex flex-wrap items-center gap-4">
-              <button type="button" onClick={locate} disabled={loading} className="inline-flex items-center gap-2 border border-border px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-colors hover:border-gold hover:text-gold disabled:opacity-50">
-                <LocateFixed className="h-4 w-4" /> {loading ? "Locating…" : "Use my location"}
-              </button>
+              <button type="button" onClick={locate} disabled={loading} className="inline-flex items-center gap-2 border border-border px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-colors hover:border-gold hover:text-gold disabled:opacity-50"><LocateFixed className="h-4 w-4" /> {loading ? "Locating…" : "Use my location"}</button>
               {locationMessage && <span className="text-sm text-muted-foreground">{locationMessage}</span>}
             </div>
           </div>
@@ -111,18 +108,12 @@ function WellnessHome() {
         <section className="border-b border-border/60 py-20">
           <div className="mx-auto max-w-7xl px-6">
             <div className="mb-8 flex items-end justify-between gap-6">
-              <div>
-                <p className="mb-3 text-xs uppercase tracking-[0.3em] text-gold">Explore Nigeria</p>
-                <h2 className="font-display text-4xl md:text-5xl">Find wellness by location.</h2>
-              </div>
+              <div><p className="mb-3 text-xs uppercase tracking-[0.3em] text-gold">Explore Nigeria</p><h2 className="font-display text-4xl md:text-5xl">Find wellness by location.</h2></div>
               <Link to="/wellness/states/cities/hubs/geo-locator" className="hidden text-xs uppercase tracking-widest text-muted-foreground hover:text-gold md:inline-flex">Open locator →</Link>
             </div>
             <div className="grid grid-cols-2 gap-px bg-border/60 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {states.map((state) => (
-                <Link key={state.id} to="/wellness/states/cities/hubs/geo-locator" search={{ state: state.slug }} className="bg-background p-5 text-sm transition-colors hover:bg-card hover:text-gold">
-                  <span className="block text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{state.state_code}</span>
-                  <span className="mt-2 block font-medium">{state.name}</span>
-                </Link>
+                <a key={state.id} href={`/wellness/states/cities/hubs/geo-locator?state=${encodeURIComponent(state.slug)}`} className="bg-background p-5 text-sm transition-colors hover:bg-card hover:text-gold"><span className="block text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{state.state_code}</span><span className="mt-2 block font-medium">{state.name}</span></a>
               ))}
             </div>
           </div>
@@ -130,12 +121,9 @@ function WellnessHome() {
 
         <section className="py-20">
           <div className="mx-auto max-w-7xl px-6">
-            <p className="mb-3 text-xs uppercase tracking-[0.3em] text-gold">The Wellness Loop</p>
-            <h2 className="font-display text-4xl md:text-5xl">One intelligent front door.</h2>
+            <p className="mb-3 text-xs uppercase tracking-[0.3em] text-gold">The Wellness Loop</p><h2 className="font-display text-4xl md:text-5xl">One intelligent front door.</h2>
             <div className="mt-10 grid gap-px bg-border/60 md:grid-cols-4">
-              {[{ n: "01", t: "Tell us", d: "Describe your need, goal or location." }, { n: "02", t: "We resolve", d: "ChatB2K interprets intent and location." }, { n: "03", t: "We match", d: "The canonical registry supplies verified services and hubs." }, { n: "04", t: "Take action", d: "Book, chat, call or continue your wellness journey." }].map((step) => (
-                <div key={step.n} className="bg-background p-6"><p className="font-display text-3xl text-gold">{step.n}</p><h3 className="mt-4 font-display text-xl">{step.t}</h3><p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.d}</p></div>
-              ))}
+              {[{ n: "01", t: "Tell us", d: "Describe your need, goal or location." }, { n: "02", t: "We resolve", d: "ChatB2K interprets intent and location." }, { n: "03", t: "We match", d: "The canonical registry supplies verified services and hubs." }, { n: "04", t: "Take action", d: "Book, chat, call or continue your wellness journey." }].map((step) => <div key={step.n} className="bg-background p-6"><p className="font-display text-3xl text-gold">{step.n}</p><h3 className="mt-4 font-display text-xl">{step.t}</h3><p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.d}</p></div>)}
             </div>
           </div>
         </section>
