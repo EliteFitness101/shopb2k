@@ -2,3 +2,6 @@ project_id = "vbqjvmnhdtdhmeeudqnn"
 
 [functions.resofit-event-ingest]
 verify_jwt = false
+
+[functions.wellness-locator]
+verify_jwt = false
