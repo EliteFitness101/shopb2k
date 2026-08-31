@@ -96,21 +96,23 @@ function getInitializerUrl(): string {
 
 export async function startResetCheckout(input: ResetCheckoutInput): Promise<string> {
   const email = input.email.trim();
+  const name = input.fullName?.trim() || "ResoFit Customer";
+  const phone = input.phone?.trim() || "";
+
   if (!email) throw new Error("Email is required to start checkout.");
+  if (!phone) throw new Error("Phone number is required to start checkout.");
 
   const attribution = getAttribution();
   const response = await fetch(getInitializerUrl(), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      // Canonical paystack-init contract. Price is resolved server-side from SKU.
+      sku: RESET_PRODUCT_ID,
       email,
-      fullName: input.fullName?.trim() || undefined,
-      phone: input.phone?.trim() || undefined,
-      amount: RESET_AMOUNT_KOBO,
-      amountKobo: RESET_AMOUNT_KOBO,
-      currency: RESET_CURRENCY,
-      product: RESET_OFFER,
-      productId: RESET_PRODUCT_ID,
+      name,
+      phone,
+      address: "ResoFit 7-Day Nigerian Reset Protocol",
       source: "shopb2k",
       funnel_origin: attribution.funnel_origin,
       rsid: attribution.rsid,
@@ -122,11 +124,16 @@ export async function startResetCheckout(input: ResetCheckoutInput): Promise<str
     }),
   });
 
-  if (!response.ok) throw new Error("Payment initialization failed.");
+  const data = (await response.json().catch(() => ({}))) as unknown;
+  if (!response.ok) {
+    const message =
+      data && typeof data === "object" && typeof (data as Record<string, unknown>).error === "string"
+        ? ((data as Record<string, unknown>).error as string)
+        : "Payment initialization failed.";
+    throw new Error(message);
+  }
 
-  const data = (await response.json()) as unknown;
   const authorizationUrl = extractPaystackAuthorizationUrl(data);
-
   if (!authorizationUrl || !/^https:\/\/checkout\.paystack\.com\//i.test(authorizationUrl)) {
     throw new Error("Payment initialization returned no valid Paystack authorization URL.");
   }
