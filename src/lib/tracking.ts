@@ -1,10 +1,11 @@
-// Lightweight event tracker → Make.com webhook + ad pixels.
-// Fire-and-forget; never block UI; never throw.
+// ResoFit canonical telemetry boundary.
+// The browser never depends directly on Make.com/n8n for core analytics.
+// Optional adapters receive events only through the ResoFit/Supabase event boundary.
 
+import { supabase } from "@/integrations/supabase/client";
 import { getAttribution } from "./attribution";
 import { pixelEvent } from "./pixels";
 
-const WEBHOOK_URL = "https://hook.eu1.make.com/p0c26asklninfrxhp2sw6nkdjjb19a89";
 const ANON_KEY = "resofit:anon_id";
 const VARIANT_KEY = "resofit:landing_variant";
 
@@ -38,6 +39,13 @@ export type TrackEvent =
   | "friend_invited"
   | "wellness_bonus"
   | "chatb2k_play_assist";
+
+const CANONICAL_PUBLIC_EVENT: Partial<Record<TrackEvent, string>> = {
+  product_view: "funnel.page_viewed",
+  checkout_start: "checkout.started",
+  identity_started: "assessment.started",
+  chatb2k_handoff: "conversation.whatsapp_clicked",
+};
 
 function getAnonId(): string {
   if (typeof window === "undefined") return "ssr";
@@ -75,38 +83,48 @@ function getDevice(): string {
   return "desktop";
 }
 
+async function emitCanonicalTelemetry(
+  event: TrackEvent,
+  payload: Record<string, unknown>,
+) {
+  const eventName = CANONICAL_PUBLIC_EVENT[event];
+  if (!eventName || typeof window === "undefined") return;
+
+  const attr = getAttribution();
+  const anonymousId = getAnonId();
+  const params = new URLSearchParams(window.location.search);
+
+  try {
+    await supabase.functions.invoke("resofit-event-ingest", {
+      body: {
+        event_name: eventName,
+        contract_version: "1.0",
+        idempotency_key: `${anonymousId}:${event}:${Date.now()}:${crypto.randomUUID()}`,
+        anonymous_id: anonymousId,
+        rsid: attr.rsid ?? params.get("rsid"),
+        funnel_origin: attr.funnel_origin ?? params.get("funnel_origin"),
+        utm: Object.fromEntries(params.entries()),
+        source_system: "resofit",
+        payload: {
+          original_event: event,
+          page: window.location.pathname,
+          device: getDevice(),
+          landing_variant: getLandingVariant(),
+          attribution: attr,
+          ...payload,
+        },
+      },
+    });
+  } catch {
+    // Telemetry must never block the customer journey.
+  }
+}
+
 export function track(event: TrackEvent, payload: Record<string, unknown> = {}) {
   if (typeof window === "undefined") return;
-  const attr = getAttribution();
-  const body = JSON.stringify({
-    event,
-    anon_id: getAnonId(),
-    rsid: attr.rsid ?? null,
-    utm_source: attr.utm_source ?? null,
-    utm_medium: attr.utm_medium ?? null,
-    utm_campaign: attr.utm_campaign ?? null,
-    utm_content: attr.utm_content ?? null,
-    utm_term: attr.utm_term ?? null,
-    landing_variant: getLandingVariant(),
-    timestamp: new Date().toISOString(),
-    page: window.location.pathname,
-    device: getDevice(),
-    referrer: document.referrer || null,
-    attribution: attr,
-    ...payload,
-  });
-  try {
-    fetch(WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body,
-      keepalive: true,
-      mode: "no-cors",
-    }).catch(() => {});
-  } catch {
-    /* noop */
-  }
-  // Mirror commerce/lead events to ad pixels (inert unless env IDs set).
+
+  void emitCanonicalTelemetry(event, payload);
+
   try {
     pixelEvent(event, {
       value: typeof payload.value === "number" ? payload.value : undefined,
@@ -116,7 +134,8 @@ export function track(event: TrackEvent, payload: Record<string, unknown> = {}) 
         : typeof payload.product_id === "string"
           ? [payload.product_id]
           : undefined,
-      content_name: typeof payload.product_title === "string" ? payload.product_title : undefined,
+      content_name:
+        typeof payload.product_title === "string" ? payload.product_title : undefined,
       content_type: "product",
       num_items: typeof payload.quantity === "number" ? payload.quantity : undefined,
     });
