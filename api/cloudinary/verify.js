@@ -7,8 +7,8 @@ const json = (body, status = 200) => new Response(JSON.stringify(body, null, 2),
 });
 
 const MAX_RESULTS = 100;
-const MAX_PAGES = 5;
-const REQUEST_TIMEOUT_MS = 8000;
+const MAX_PAGES = 2;
+const REQUEST_TIMEOUT_MS = 5000;
 
 function getConfig() {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
@@ -29,12 +29,10 @@ function getConfig() {
   return { cloudName: fallbackCloudName, apiKey: fallbackApiKey, apiSecret: fallbackApiSecret };
 }
 
-function sign(params, apiSecret) {
-  const canonical = Object.keys(params)
-    .sort()
-    .map((key) => `${key}=${params[key]}`)
-    .join("&");
-  return crypto.createHash("sha1").update(`${canonical}${apiSecret}`).digest("hex");
+async function sha1(value) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-1", bytes);
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 async function cloudinarySearch(config, expression, nextCursor) {
@@ -66,12 +64,6 @@ async function cloudinarySearch(config, expression, nextCursor) {
     throw error;
   }
   return data;
-}
-
-async function sha1(value) {
-  const bytes = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest("SHA-1", bytes);
-  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 function normaliseResource(resource) {
@@ -106,21 +98,17 @@ async function collect(config, expression) {
 }
 
 async function verifyRequested(config, publicIds) {
-  return Promise.all(publicIds.map(async (publicId) => {
+  const results = [];
+  for (const publicId of publicIds) {
     try {
       const resources = await collect(config, `public_id:"${publicId.replace(/"/g, "\\\"")}"`);
       const resource = resources.find((item) => item.public_id === publicId) ?? resources[0];
-      return {
-        publicId,
-        found: Boolean(resource),
-        live: Boolean(resource?.secure_url),
-        asset: resource ? normaliseResource(resource) : null,
-        error: null,
-      };
+      results.push({ publicId, found: Boolean(resource), live: Boolean(resource?.secure_url), asset: resource ? normaliseResource(resource) : null, error: null });
     } catch (error) {
-      return { publicId, found: false, live: false, asset: null, error: error instanceof Error ? error.message : "Cloudinary verification failed" };
+      results.push({ publicId, found: false, live: false, asset: null, error: error instanceof Error ? error.message : "Cloudinary verification failed" });
     }
-  }));
+  }
+  return results;
 }
 
 export default async function handler(request) {
@@ -144,7 +132,7 @@ export default async function handler(request) {
     return json({ status: "INVALID_REQUEST", message: "folder must resolve under the production Cloudinary resofit root." }, 400);
   }
 
-  const requestedIds = publicIdsParam ? [...new Set(publicIdsParam.split(",").map((id) => id.trim()).filter(Boolean))].slice(0, 100) : [];
+  const requestedIds = publicIdsParam ? [...new Set(publicIdsParam.split(",").map((id) => id.trim()).filter(Boolean))].slice(0, 25) : [];
 
   try {
     if (requestedIds.length) {
@@ -155,7 +143,7 @@ export default async function handler(request) {
 
     const assets = (await collect(config, `asset_folder:"${folder.replace(/"/g, "\\\"")}"`)).map(normaliseResource);
     const live = assets.filter((asset) => Boolean(asset.secureUrl)).length;
-    return json({ status: "PASS", mode: "discovery", cloudName: config.cloudName, folder, discovered: assets.length, live, generatedAt: new Date().toISOString(), assets });
+    return json({ status: "PASS", mode: "discovery", cloudName: config.cloudName, folder, discovered: assets.length, live, capped: assets.length === MAX_RESULTS * MAX_PAGES, generatedAt: new Date().toISOString(), assets });
   } catch (error) {
     const status = error?.name === "TimeoutError" || error?.name === "AbortError" ? 504 : (error?.status === 401 || error?.status === 403 ? 502 : 500);
     return json({ status: "ERROR", error: "Cloudinary resource verification failed", details: { message: error instanceof Error ? error.message : "Unknown error" } }, status);
