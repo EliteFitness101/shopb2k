@@ -29,6 +29,14 @@ function getConfig() {
   return { cloudName: fallbackCloudName, apiKey: fallbackApiKey, apiSecret: fallbackApiSecret };
 }
 
+function headerValue(request, name) {
+  const headers = request?.headers;
+  if (!headers) return null;
+  if (typeof headers.get === "function") return headers.get(name);
+  const value = headers[name] ?? headers[name.toLowerCase()];
+  return Array.isArray(value) ? value[0] : value ?? null;
+}
+
 async function sha1(value) {
   const bytes = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest("SHA-1", bytes);
@@ -101,7 +109,7 @@ async function verifyRequested(config, publicIds) {
   const results = [];
   for (const publicId of publicIds) {
     try {
-      const resources = await collect(config, `public_id:"${publicId.replace(/"/g, "\\\"")}"`);
+      const resources = await collect(config, `public_id:\"${publicId.replace(/\"/g, "\\\"")}\"`);
       const resource = resources.find((item) => item.public_id === publicId) ?? resources[0];
       results.push({ publicId, found: Boolean(resource), live: Boolean(resource?.secure_url), asset: resource ? normaliseResource(resource) : null, error: null });
     } catch (error) {
@@ -121,10 +129,10 @@ export default async function handler(request) {
     return json({ status: "CONFIG_ERROR", message: error instanceof Error ? error.message : "Cloudinary configuration is incomplete" }, 500);
   }
 
-  const forwardedHost = request.headers.get("x-forwarded-host") || request.headers.get("host");
-  const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
+  const forwardedHost = headerValue(request, "x-forwarded-host") || headerValue(request, "host");
+  const forwardedProto = headerValue(request, "x-forwarded-proto") || "https";
   const base = forwardedHost ? `${forwardedProto}://${forwardedHost}` : "https://resofit.fit";
-  const url = new URL(request.url, base);
+  const url = new URL(request.url || "/api/cloudinary/verify", base);
   const publicIdsParam = url.searchParams.get("public_ids");
   const folder = (url.searchParams.get("folder") || "resofit").trim().replace(/^\/+|\/+$/g, "");
 
@@ -141,7 +149,7 @@ export default async function handler(request) {
       return json({ status: live === results.length ? "PASS" : "FAIL", mode: "requested", cloudName: config.cloudName, checked: results.length, live, missing: results.length - live, complete: `${live}/${results.length}`, generatedAt: new Date().toISOString(), assets: results }, live === results.length ? 200 : 502);
     }
 
-    const assets = (await collect(config, `asset_folder:"${folder.replace(/"/g, "\\\"")}"`)).map(normaliseResource);
+    const assets = (await collect(config, `asset_folder:\"${folder.replace(/\"/g, "\\\"")}\"`)).map(normaliseResource);
     const live = assets.filter((asset) => Boolean(asset.secureUrl)).length;
     return json({ status: "PASS", mode: "discovery", cloudName: config.cloudName, folder, discovered: assets.length, live, capped: assets.length === MAX_RESULTS * MAX_PAGES, generatedAt: new Date().toISOString(), assets });
   } catch (error) {
