@@ -1,24 +1,26 @@
 // Central media registry — single source of truth for media paths and CDN transforms.
 // No path literals should be duplicated in components.
 
+import { cloudinaryVisualUrl, getCloudinaryVisualAsset } from "./cloudinaryVisuals";
+
+const cloudinaryCommunityPoster = cloudinaryVisualUrl(getCloudinaryVisualAsset("resofit-community-poster")!);
+const cloudinaryCommunityVideo = cloudinaryVisualUrl(getCloudinaryVisualAsset("resofit-community-video")!);
+
 /** Community cinematic assets.
- *  These are OPTIONAL enhancements. Keep them `null` until the real production
- *  files are uploaded to /public/assets — a null entry means the UI never
- *  references (or requests) a missing file, so there are zero 404s.
- *  To enable, set the value to the served path, e.g.
- *    communityVideo: PATHS.communityVideo
+ * Cloudinary is the production visual-experience CDN. If the public cloud name
+ * is not configured, values remain null so the UI never requests a bad URL.
  */
 export const MEDIA: {
   communityPoster: string | null;
   communityVideo: string | null;
   communityCaptions: string | null;
 } = {
-  communityPoster: null,
-  communityVideo: null,
+  communityPoster: cloudinaryCommunityPoster || null,
+  communityVideo: cloudinaryCommunityVideo || null,
   communityCaptions: null,
 };
 
-/** Canonical paths for the community media, for when assets are uploaded. */
+/** Legacy local paths retained only as fallback/documentation. */
 export const MEDIA_PATHS = {
   communityPoster: "/assets/resofit-community-poster.webp",
   communityVideo: "/assets/resofit-community-intro.mp4",
