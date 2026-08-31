@@ -41,7 +41,8 @@ export default async function handler(request) {
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
   if (!cloudName || !apiKey || !apiSecret) return json({ status: "CONFIG_ERROR", message: "CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET must be configured server-side." }, 500);
 
-  const url = new URL(request.url);
+  const host = request.headers?.get?.("host") || "localhost";
+  const url = new URL(request.url, `https://${host}`);
   const publicIdsParam = url.searchParams.get("public_ids");
   const folder = (url.searchParams.get("folder") || "resofit").trim().replace(/^\/+|\/+$/g, "");
   if (!folder || folder === "resofit-cdn" || (!folder.startsWith("resofit") && !publicIdsParam)) return json({ status: "INVALID_REQUEST", message: "folder must resolve under the production Cloudinary resofit root." }, 400);
@@ -55,7 +56,7 @@ export default async function handler(request) {
     }
 
     // Dynamic folders: asset_folder is the authoritative folder field. No fixed count or asset list.
-    const resources = await cloudinarySearch(cloudName, apiKey, apiSecret, `asset_folder:"${folder}"`, 500);
+    const resources = await cloudinarySearch(cloudName, apiKey, apiSecret, `asset_folder:"${folder.replace(/"/g, "\\\"")}"`, 500);
     const assets = resources.map(normaliseResource);
     const live = assets.filter((asset) => Boolean(asset.secureUrl)).length;
     return json({ status: "PASS", mode: "discovery", cloudName, folder, discovered: assets.length, live, generatedAt: new Date().toISOString(), assets });
