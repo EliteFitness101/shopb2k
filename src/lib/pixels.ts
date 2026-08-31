@@ -1,12 +1,15 @@
-// Ads pixel loader — Meta Pixel, TikTok Pixel, GA4.
-// Fully inert until the matching VITE_ env var is set at build time.
+// Ads pixel loader — Meta Pixel, TikTok Pixel, GA4, Metricool.
+// Fully inert until the matching analytics consent / env var is available.
 // Reuses existing tracking.ts; no new dependencies.
 
 const META_ID = import.meta.env.VITE_META_PIXEL_ID as string | undefined;
 const TIKTOK_ID = import.meta.env.VITE_TIKTOK_PIXEL_ID as string | undefined;
 const GA4_ID = import.meta.env.VITE_GA4_ID as string | undefined;
+const METRICOOL_URL =
+  "https://tracker.metricool.com/c3po.jpg?hash=c09fea6a141d18712f0ea923d611846";
 
 let initialized = false;
+let metricoolInitialized = false;
 
 type MetaPixel = ((...args: unknown[]) => void) & {
   callMethod?: (...args: unknown[]) => void;
@@ -47,9 +50,29 @@ function loadScript(src: string, id: string) {
   document.head.appendChild(s);
 }
 
+export function initMetricool() {
+  if (metricoolInitialized || typeof window === "undefined") return;
+  metricoolInitialized = true;
+  const img = document.createElement("img");
+  img.src = METRICOOL_URL;
+  img.alt = "";
+  img.width = 1;
+  img.height = 1;
+  img.setAttribute("aria-hidden", "true");
+  img.style.position = "absolute";
+  img.style.width = "1px";
+  img.style.height = "1px";
+  img.style.opacity = "0";
+  img.style.pointerEvents = "none";
+  document.body.appendChild(img);
+}
+
 export function initPixels() {
   if (initialized || typeof window === "undefined") return;
   initialized = true;
+
+  // Metricool tracking beacon
+  initMetricool();
 
   // Meta Pixel
   if (META_ID) {
