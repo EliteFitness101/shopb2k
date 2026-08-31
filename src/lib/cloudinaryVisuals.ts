@@ -1,6 +1,6 @@
-// Canonical Cloudinary Visual Experience registry for the ResoFit main ecosystem.
-// This mirrors the 28-asset visual registry in reso-flex.
-// Cloudinary is the visual-experience CDN; ImageKit remains the product DAM.
+// Cloudinary visual-experience helpers for the ResoFit main ecosystem.
+// The verification API is dynamically discovered from Cloudinary; this registry
+// only provides stable semantic keys used by existing UI components.
 
 export type VisualAssetKind = "video" | "poster";
 export type VisualExperienceGroup = "brand" | "category" | "product-family" | "service";
@@ -51,14 +51,6 @@ export const CLOUDINARY_VISUAL_EXPERIENCE: readonly CloudinaryVisualAsset[] = [
   visual("wellness-service-video", "service", "video", "resofit-cdn/services/wellness/resofit-personalized-wellness", "mp4"),
   visual("wellness-service-poster", "service", "poster", "resofit-cdn/services/wellness/resofit-personalized-wellness-poster", "webp"),
 ] as const;
-
-export const CLOUDINARY_VISUAL_EXPERIENCE_COUNT = 28;
-export const CLOUDINARY_VISUAL_VIDEO_COUNT = 14;
-export const CLOUDINARY_VISUAL_POSTER_COUNT = 14;
-
-if (CLOUDINARY_VISUAL_EXPERIENCE.length !== CLOUDINARY_VISUAL_EXPERIENCE_COUNT) {
-  throw new Error("Cloudinary visual-experience registry must contain exactly 28 assets.");
-}
 
 export const getCloudinaryVisualAsset = (key: string) =>
   CLOUDINARY_VISUAL_EXPERIENCE.find((asset) => asset.key === key);
