@@ -38,6 +38,15 @@ const json = (body, status = 200) =>
     },
   });
 
+function requestedAssets(request) {
+  const url = new URL(request.url);
+  const raw = url.searchParams.get("public_ids");
+  if (!raw) return CANONICAL_ASSETS;
+
+  const requested = new Set(raw.split(",").map((id) => id.trim()).filter(Boolean));
+  return CANONICAL_ASSETS.filter((asset) => requested.has(asset[2]));
+}
+
 async function verifyAsset(cloudName, apiKey, apiSecret, asset) {
   const [key, resourceType, publicId, format] = asset;
   const expression = `public_id:"${publicId}" AND resource_type:${resourceType}`;
@@ -92,46 +101,39 @@ async function verifyAsset(cloudName, apiKey, apiSecret, asset) {
 }
 
 export default async function handler(request) {
-  if (request.method !== "GET") {
-    return json({ error: "Method Not Allowed" }, 405);
-  }
+  if (request.method !== "GET") return json({ error: "Method Not Allowed" }, 405);
 
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
   const apiKey = process.env.CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
   if (!cloudName || !apiKey || !apiSecret) {
-    return json(
-      {
-        status: "CONFIG_ERROR",
-        message: "CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET must be configured server-side.",
-      },
-      500,
-    );
+    return json({
+      status: "CONFIG_ERROR",
+      message: "CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET must be configured server-side.",
+    }, 500);
   }
 
-  const results = await Promise.all(
-    CANONICAL_ASSETS.map((asset) => verifyAsset(cloudName, apiKey, apiSecret, asset)),
-  );
+  const assets = requestedAssets(request);
+  if (!assets.length) return json({ status: "INVALID_REQUEST", message: "No canonical public_ids matched the request.", canonical: 28 }, 400);
 
+  const results = await Promise.all(assets.map((asset) => verifyAsset(cloudName, apiKey, apiSecret, asset)));
   const live = results.filter((result) => result.live).length;
   const missing = results.filter((result) => !result.found).length;
   const formatErrors = results.filter((result) => result.found && !result.formatMatches).length;
-  const healthy = live === CANONICAL_ASSETS.length;
+  const healthy = live === assets.length;
 
-  return json(
-    {
-      status: healthy ? "PASS" : "FAIL",
-      canonical: 28,
-      checked: results.length,
-      live,
-      missing,
-      formatErrors,
-      complete: `${live}/28`,
-      cloudName,
-      generatedAt: new Date().toISOString(),
-      assets: results,
-    },
-    healthy ? 200 : 502,
-  );
+  return json({
+    status: healthy ? "PASS" : "FAIL",
+    canonical: 28,
+    checked: results.length,
+    live,
+    missing,
+    formatErrors,
+    complete: `${live}/${results.length}`,
+    canonicalComplete: assets.length === 28 && live === 28,
+    cloudName,
+    generatedAt: new Date().toISOString(),
+    assets: results,
+  }, healthy ? 200 : 502);
 }
