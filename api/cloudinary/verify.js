@@ -1,34 +1,3 @@
-const CANONICAL_ASSETS = [
-  ["resofit-hero-video", "video", "resofit-cdn/brand/videos/resofit-hero", "mp4"],
-  ["resofit-hero-poster", "image", "resofit-cdn/brand/posters/resofit-hero-poster", "webp"],
-  ["resofit-community-video", "video", "resofit-cdn/brand/videos/resofit-community", "mp4"],
-  ["resofit-community-poster", "image", "resofit-cdn/brand/posters/resofit-community-poster", "webp"],
-  ["strength-video", "video", "resofit-cdn/categories/strength/bg-strength", "mp4"],
-  ["strength-poster", "image", "resofit-cdn/categories/strength/bg-strength-poster", "webp"],
-  ["functional-video", "video", "resofit-cdn/categories/functional/bg-functional", "mp4"],
-  ["functional-poster", "image", "resofit-cdn/categories/functional/bg-functional-poster", "webp"],
-  ["boxing-video", "video", "resofit-cdn/categories/boxing/bg-boxing", "mp4"],
-  ["boxing-poster", "image", "resofit-cdn/categories/boxing/bg-boxing-poster", "webp"],
-  ["running-video", "video", "resofit-cdn/categories/running/bg-running", "mp4"],
-  ["running-poster", "image", "resofit-cdn/categories/running/bg-running-poster", "webp"],
-  ["apparel-video", "video", "resofit-cdn/categories/apparel/bg-apparel", "mp4"],
-  ["apparel-poster", "image", "resofit-cdn/categories/apparel/bg-apparel-poster", "webp"],
-  ["womens-training-video", "video", "resofit-cdn/categories/womens-training/bg-womens-training", "mp4"],
-  ["womens-training-poster", "image", "resofit-cdn/categories/womens-training/bg-womens-training-poster", "webp"],
-  ["wellness-video", "video", "resofit-cdn/categories/wellness/bg-wellness", "mp4"],
-  ["wellness-poster", "image", "resofit-cdn/categories/wellness/bg-wellness-poster", "webp"],
-  ["coaching-video", "video", "resofit-cdn/categories/coaching/bg-coaching", "mp4"],
-  ["coaching-poster", "image", "resofit-cdn/categories/coaching/bg-coaching-poster", "webp"],
-  ["resoflex-equipment-video", "video", "resofit-cdn/products/resoflex-equipment/resoflex-equipment", "mp4"],
-  ["resoflex-equipment-poster", "image", "resofit-cdn/products/resoflex-equipment/resoflex-equipment-poster", "webp"],
-  ["resoflex-apparel-video", "video", "resofit-cdn/products/resoflex-apparel/resoflex-apparel", "mp4"],
-  ["resoflex-apparel-poster", "image", "resofit-cdn/products/resoflex-apparel/resoflex-apparel-poster", "webp"],
-  ["chatb2k-video", "video", "resofit-cdn/services/chatb2k/chatb2k-personalized-coaching", "mp4"],
-  ["chatb2k-poster", "image", "resofit-cdn/services/chatb2k/chatb2k-poster", "webp"],
-  ["wellness-service-video", "video", "resofit-cdn/services/wellness/resofit-personalized-wellness", "mp4"],
-  ["wellness-service-poster", "image", "resofit-cdn/services/wellness/resofit-personalized-wellness-poster", "webp"],
-];
-
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body, null, 2), {
     status,
@@ -38,21 +7,12 @@ const json = (body, status = 200) =>
     },
   });
 
-function requestedAssets(request) {
-  const url = new URL(request.url);
-  const raw = url.searchParams.get("public_ids");
-  if (!raw) return CANONICAL_ASSETS;
-
-  const requested = new Set(raw.split(",").map((id) => id.trim()).filter(Boolean));
-  return CANONICAL_ASSETS.filter((asset) => requested.has(asset[2]));
-}
-
-async function verifyAsset(cloudName, apiKey, apiSecret, asset) {
-  const [key, resourceType, publicId, format] = asset;
-  const expression = `public_id:"${publicId}" AND resource_type:${resourceType}`;
+const cloudinarySearch = async (cloudName, apiKey, apiSecret, expression, maxResults = 500) => {
   const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString("base64");
+  const resources = [];
+  let nextCursor;
 
-  try {
+  do {
     const response = await fetch(
       `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/resources/search`,
       {
@@ -61,43 +21,72 @@ async function verifyAsset(cloudName, apiKey, apiSecret, asset) {
           authorization: `Basic ${auth}`,
           "content-type": "application/json",
         },
-        body: JSON.stringify({ expression, max_results: 1 }),
+        body: JSON.stringify({
+          expression,
+          max_results: Math.min(maxResults, 500),
+          ...(nextCursor ? { next_cursor: nextCursor } : {}),
+        }),
       },
     );
 
     const data = await response.json().catch(() => ({}));
-    const resource = Array.isArray(data.resources) ? data.resources[0] : undefined;
-    const found = Boolean(resource);
-    const formatMatches = found ? resource.format === format : false;
+    if (!response.ok) {
+      const error = new Error(data.error?.message ?? `Cloudinary HTTP ${response.status}`);
+      error.status = response.status;
+      throw error;
+    }
 
-    return {
-      key,
-      resourceType,
-      publicId,
-      expectedFormat: format,
-      found,
-      formatMatches,
-      live: found && formatMatches,
-      secureUrl: resource?.secure_url ?? null,
-      cloudinaryResourceType: resource?.resource_type ?? null,
-      actualFormat: resource?.format ?? null,
-      error: response.ok ? null : data.error?.message ?? `Cloudinary HTTP ${response.status}`,
-    };
-  } catch (error) {
-    return {
-      key,
-      resourceType,
-      publicId,
-      expectedFormat: format,
-      found: false,
-      formatMatches: false,
-      live: false,
-      secureUrl: null,
-      cloudinaryResourceType: null,
-      actualFormat: null,
-      error: error instanceof Error ? error.message : "Cloudinary verification failed",
-    };
-  }
+    if (Array.isArray(data.resources)) resources.push(...data.resources);
+    nextCursor = data.next_cursor;
+  } while (nextCursor && resources.length < maxResults);
+
+  return resources.slice(0, maxResults);
+};
+
+function normaliseResource(resource) {
+  return {
+    publicId: resource.public_id,
+    resourceType: resource.resource_type ?? null,
+    type: resource.type ?? null,
+    format: resource.format ?? null,
+    secureUrl: resource.secure_url ?? null,
+    bytes: resource.bytes ?? null,
+    width: resource.width ?? null,
+    height: resource.height ?? null,
+    version: resource.version ?? null,
+    createdAt: resource.created_at ?? null,
+    folder: resource.folder ?? null,
+  };
+}
+
+async function verifyRequestedAssets(cloudName, apiKey, apiSecret, publicIds) {
+  return Promise.all(publicIds.map(async (publicId) => {
+    try {
+      const resources = await cloudinarySearch(
+        cloudName,
+        apiKey,
+        apiSecret,
+        `public_id:"${publicId.replace(/"/g, "\\\"")}"`,
+        10,
+      );
+      const resource = resources.find((item) => item.public_id === publicId) ?? resources[0];
+      return {
+        publicId,
+        found: Boolean(resource),
+        live: Boolean(resource?.secure_url),
+        asset: resource ? normaliseResource(resource) : null,
+        error: null,
+      };
+    } catch (error) {
+      return {
+        publicId,
+        found: false,
+        live: false,
+        asset: null,
+        error: error instanceof Error ? error.message : "Cloudinary verification failed",
+      };
+    }
+  }));
 }
 
 export default async function handler(request) {
@@ -114,26 +103,57 @@ export default async function handler(request) {
     }, 500);
   }
 
-  const assets = requestedAssets(request);
-  if (!assets.length) return json({ status: "INVALID_REQUEST", message: "No canonical public_ids matched the request.", canonical: 28 }, 400);
+  const url = new URL(request.url);
+  const publicIdsParam = url.searchParams.get("public_ids");
+  const folder = url.searchParams.get("folder") || "resofit-cdn";
+  const requestedIds = publicIdsParam
+    ? [...new Set(publicIdsParam.split(",").map((id) => id.trim()).filter(Boolean))]
+    : [];
 
-  const results = await Promise.all(assets.map((asset) => verifyAsset(cloudName, apiKey, apiSecret, asset)));
-  const live = results.filter((result) => result.live).length;
-  const missing = results.filter((result) => !result.found).length;
-  const formatErrors = results.filter((result) => result.found && !result.formatMatches).length;
-  const healthy = live === assets.length;
+  try {
+    if (requestedIds.length) {
+      const results = await verifyRequestedAssets(cloudName, apiKey, apiSecret, requestedIds);
+      const live = results.filter((result) => result.live).length;
+      return json({
+        status: live === results.length ? "PASS" : "FAIL",
+        mode: "requested",
+        cloudName,
+        checked: results.length,
+        live,
+        missing: results.length - live,
+        complete: `${live}/${results.length}`,
+        generatedAt: new Date().toISOString(),
+        assets: results,
+      }, live === results.length ? 200 : 502);
+    }
 
-  return json({
-    status: healthy ? "PASS" : "FAIL",
-    canonical: 28,
-    checked: results.length,
-    live,
-    missing,
-    formatErrors,
-    complete: `${live}/${results.length}`,
-    canonicalComplete: assets.length === 28 && live === 28,
-    cloudName,
-    generatedAt: new Date().toISOString(),
-    assets: results,
-  }, healthy ? 200 : 502);
+    // Dynamic discovery: Cloudinary is the source of truth for what currently exists.
+    // No fixed asset count, list, or expected total is used.
+    const resources = await cloudinarySearch(
+      cloudName,
+      apiKey,
+      apiSecret,
+      `folder:${folder}/*`,
+      500,
+    );
+    const assets = resources.map(normaliseResource);
+    const live = assets.filter((asset) => Boolean(asset.secureUrl)).length;
+
+    return json({
+      status: "PASS",
+      mode: "discovery",
+      cloudName,
+      folder,
+      discovered: assets.length,
+      live,
+      generatedAt: new Date().toISOString(),
+      assets,
+    });
+  } catch (error) {
+    return json({
+      status: "ERROR",
+      error: "Cloudinary resource verification failed",
+      details: { message: error instanceof Error ? error.message : "Unknown error" },
+    }, error?.status === 401 || error?.status === 403 ? 502 : 500);
+  }
 }
