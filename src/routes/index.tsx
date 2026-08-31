@@ -5,6 +5,7 @@ import heroImg from "@/assets/hero-barbell.jpg";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TrustBar } from "@/components/TrustBar";
+import { TrustStories } from "@/components/TrustStories";
 import { ProductImage } from "@/components/ProductImage";
 import { EcosystemCarousel } from "@/components/EcosystemCarousel";
 import { CinematicWellnessExperience } from "@/components/CinematicWellnessExperience";
@@ -185,7 +186,7 @@ function Index() {
           </div>
         </div>
       </section>
-      <section className="border-t border-border/60 bg-card/30 py-24"><div className="mx-auto max-w-5xl px-6 text-center"><p className="mb-3 text-xs uppercase tracking-[0.3em] text-gold">Verified Results</p><h2 className="font-display text-4xl md:text-5xl">Real customer wins.</h2><p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground">Verified transformations from the ResoFit community. New stories drop weekly inside the Reset.</p><div className="mt-10 grid gap-px bg-border/40 md:grid-cols-3">{[1,2,3].map((i)=><div key={i} className="bg-background p-6 text-left"><div className="h-2 w-12 bg-gold/60"/><p className="mt-4 text-sm text-muted-foreground">Customer story #{i} — coming soon.</p></div>)}</div></div></section>
+      <TrustStories compact />
       <EcosystemCarousel surface="home" />
       <section className="border-t border-border/60 py-24"><div className="mx-auto max-w-3xl px-6 text-center"><p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold">Start Today</p><h2 className="font-display text-4xl leading-tight md:text-6xl">Your body,<br /><span className="text-gradient-gold">personalized for life.</span></h2><div className="mt-10 flex flex-wrap justify-center gap-4"><Link to="/me" onClick={handlePrimaryCta} className="inline-flex h-14 items-center justify-center gap-3 rounded-sm bg-gold px-8 text-sm font-semibold uppercase tracking-widest text-gold-foreground shadow-gold transition-transform hover:-translate-y-0.5">{CTA.primary}<span>→</span></Link><Link to="/programs" onClick={handleAssessment} className="inline-flex h-14 items-center justify-center rounded-sm border border-border px-8 text-sm font-semibold uppercase tracking-widest text-foreground transition-colors hover:border-gold hover:text-gold">Explore Programs</Link></div></div></section>
       <SiteFooter />
