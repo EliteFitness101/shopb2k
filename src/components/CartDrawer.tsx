@@ -15,7 +15,21 @@ import { toast } from "sonner";
 import { useCartStore } from "@/stores/cartStore";
 import { approxUSD, formatMoney } from "@/lib/shopify";
 import { track } from "@/lib/tracking";
-import { extractPaystackAuthorizationUrl, resolvePaystackInitUrl } from "@/lib/resetCheckout";
+
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL ?? "https://vbqjvmnhdtdhmeeudqnn.supabase.co";
+const PAYSTACK_INIT_URL = `${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/paystack-init`;
+
+function extractPaystackAuthorizationUrl(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") return null;
+  const data = (payload as Record<string, unknown>).data;
+  if (data && typeof data === "object") {
+    const nested = (data as Record<string, unknown>).authorization_url;
+    if (typeof nested === "string" && /^https:\/\//.test(nested)) return nested;
+  }
+  const direct = (payload as Record<string, unknown>).authorization_url;
+  return typeof direct === "string" && /^https:\/\//.test(direct) ? direct : null;
+}
 
 export function CartDrawer() {
   const [open, setOpen] = useState(false);
@@ -76,7 +90,7 @@ export function CartDrawer() {
         JSON.stringify({ fullName, email, phone, address }),
       );
 
-      const response = await fetch(resolvePaystackInitUrl(), {
+      const response = await fetch(PAYSTACK_INIT_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
