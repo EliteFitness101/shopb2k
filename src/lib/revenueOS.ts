@@ -13,9 +13,8 @@ export type RevenueEvent =
 const STORAGE_KEY = "revenueOS:v2";
 
 export const CTA_VARIANTS = {
-  A: "Start ₦1,000 Reset",
-  B: "Transform My Body",
-  C: "Chat With CoachB2K",
+  A: "Transform My Body",
+  B: "Chat With CoachB2K",
 } as const;
 
 export type CtaVariant = keyof typeof CTA_VARIANTS;
@@ -37,7 +36,6 @@ const EMPTY: RevenueState = {
   stats: {
     A: { impressions: 0, clicks: 0, conversions: 0 },
     B: { impressions: 0, clicks: 0, conversions: 0 },
-    C: { impressions: 0, clicks: 0, conversions: 0 },
   },
   events: {},
 };
@@ -69,7 +67,7 @@ function conversionRate(s: VariantStats): number {
 }
 
 function pickVariant(state: RevenueState): CtaVariant {
-  const variants: CtaVariant[] = ["A", "B", "C"];
+  const variants: CtaVariant[] = ["A", "B"];
   const hasConversions = variants.some((v) => state.stats[v].conversions > 0);
   if (hasConversions) {
     return variants.reduce((best, v) =>
@@ -116,8 +114,6 @@ async function emitCanonicalEvent(event: RevenueEvent) {
     page_path: typeof window !== "undefined" ? window.location.pathname : undefined,
   };
 
-  // Best-effort delivery: local UX analytics must never be blocked by an
-  // unavailable network/vendor. The canonical boundary handles persistence.
   try {
     await supabase.functions.invoke("resofit-event-ingest", {
       body: {
