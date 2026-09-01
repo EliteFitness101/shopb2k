@@ -4,9 +4,14 @@ import { ArrowRight, LocateFixed, Search } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { trackEvent } from "@/lib/revenueOS";
+import heroImg from "@/assets/hero-barbell.jpg";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
+
+// Primary production Wellness Hero video. Vercel Blob is the canonical delivery
+// source for this route; the existing hero image remains the poster/fallback.
+const WELLNESS_HERO_VIDEO = "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/wellness/bg-wellness.mp4";
 
 type State = { id: string; state_code: string; name: string; slug: string; status: string };
 
@@ -81,8 +86,37 @@ function WellnessHome() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main>
-        <section className="relative overflow-hidden border-b border-border/60">
-          <div className="mx-auto max-w-7xl px-6 py-24 md:py-32">
+        <section className="relative min-h-[72svh] overflow-hidden border-b border-border/60">
+          <div className="absolute inset-0 bg-background">
+            <img
+              src={heroImg}
+              alt=""
+              aria-hidden="true"
+              width={1536}
+              height={1280}
+              fetchPriority="high"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover opacity-60"
+            />
+            <video
+              className="absolute inset-0 h-full w-full object-cover opacity-70"
+              src={WELLNESS_HERO_VIDEO}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              poster={heroImg}
+              aria-hidden="true"
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/75 to-background/15" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/35" />
+          </div>
+
+          <div className="relative z-10 mx-auto max-w-7xl px-6 py-24 md:py-32">
             <div className="max-w-4xl">
               <p className="mb-5 text-xs uppercase tracking-[0.35em] text-gold">ResoFit™ Wellness Network</p>
               <h1 className="font-display text-6xl leading-[0.92] sm:text-7xl md:text-8xl">What wellness<br /><span className="text-gradient-gold">do you need today?</span></h1>
