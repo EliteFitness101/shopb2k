@@ -8,6 +8,69 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { MARTIAL_VIDEOS } from "@/content/martialVideos";
 
+const BUFFER_API = "https://api.buffer.com";
+const BUFFER_CHANNELS = {
+  tiktok: "6a7cfe5ab2d9d57743686cc5",
+  youtube: "6a7d4ae7b2d9d577436a9c08",
+  google_business: "6a7d4d1fb2d9d577436aa192",
+} as const;
+
+type BufferChannel = keyof typeof BUFFER_CHANNELS;
+
+function gqlString(value: unknown) {
+  return JSON.stringify(String(value ?? ""));
+}
+
+async function publishDirectToBuffer(input: {
+  mediaUrl: string;
+  title: string;
+  caption: string;
+  platform: BufferChannel;
+}) {
+  const key = process.env.BUFFER_API_KEY;
+  if (!key) throw new Error("BUFFER_API_KEY is not configured server-side");
+
+  const channelId = BUFFER_CHANNELS[input.platform];
+  const text = input.platform === "youtube"
+    ? `${input.title}\n\n${input.caption}`
+    : input.caption;
+
+  const query = `mutation CreateResoFitPost {
+    createPost(input: {
+      text: ${gqlString(text)}
+      channelId: ${gqlString(channelId)}
+      schedulingType: automatic
+      mode: addToQueue
+      assets: [{ url: ${gqlString(input.mediaUrl)} }]
+      source: "resofit-content-engine"
+      aiAssisted: true
+      metadata: { }
+    }) {
+      ... on PostActionSuccess { post { id dueAt status channelId } }
+      ... on MutationError { message }
+    }
+  }`;
+
+  const response = await fetch(BUFFER_API, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`,
+    },
+    body: JSON.stringify({ query }),
+  });
+
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || body.errors?.length) {
+    throw new Error(JSON.stringify(body.errors || body));
+  }
+
+  const result = body?.data?.createPost;
+  if (result?.message) throw new Error(result.message);
+  if (!result?.post?.id) throw new Error(`Buffer did not return a post ID: ${JSON.stringify(body)}`);
+  return result.post;
+}
+
 export const Route = createFileRoute("/content")({
   head: () => ({
     meta: [
@@ -35,11 +98,11 @@ export const Route = createFileRoute("/content")({
 
         const { data: existing, error: duplicateError } = await supabaseAdmin
           .from("content_queue")
-          .select("id,status")
+          .select("id,status,buffer_post_ids")
           .eq("asset_url", asset.url)
           .limit(1);
         if (duplicateError) throw duplicateError;
-        if (existing?.length) return Response.json({ ok: true, status: "duplicate", queueId: existing[0].id });
+        if (existing?.length) return Response.json({ ok: true, status: "duplicate", queueId: existing[0].id, bufferPostIds: existing[0].buffer_post_ids ?? [] });
 
         const geminiKey = process.env.GEMINI_API_KEY;
         if (!geminiKey) return Response.json({ ok: false, error: "GEMINI_API_KEY is not configured server-side" }, { status: 503 });
@@ -124,18 +187,64 @@ export const Route = createFileRoute("/content")({
           .single();
         if (insertError) throw insertError;
 
-        const publishResponse = await fetch(`${process.env.SUPABASE_URL}/functions/v1/buffer-publisher`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` },
-          body: JSON.stringify({ id: row.id }),
-        });
-        const publishBody = await publishResponse.json().catch(() => ({}));
-        if (!publishResponse.ok || publishBody.ok === false) {
-          await supabaseAdmin.from("content_queue").update({ status: "publish_failed", error_message: JSON.stringify(publishBody) }).eq("id", row.id);
-          throw new Error(`Buffer publishing failed: ${JSON.stringify(publishBody)}`);
+        const posts: Array<{ id: string; channelId: string; dueAt?: string; status?: string }> = [];
+        const platformCaption = (platform: BufferChannel) => {
+          if (platform === "tiktok") return enrichment.platforms?.tiktok || enrichment.hook || enrichment.caption || enrichment.title || asset.label;
+          if (platform === "youtube") return enrichment.platforms?.youtube_shorts || enrichment.caption || enrichment.title || asset.label;
+          return enrichment.platforms?.google_business || enrichment.caption || enrichment.title || asset.label;
+        };
+
+        try {
+          for (const platform of Object.keys(BUFFER_CHANNELS) as BufferChannel[]) {
+            const post = await publishDirectToBuffer({
+              mediaUrl: asset.url,
+              title: enrichment.title || asset.label,
+              caption: platformCaption(platform),
+              platform,
+            });
+            posts.push(post);
+          }
+        } catch (publishError) {
+          await supabaseAdmin.from("content_queue").update({
+            status: "publish_failed",
+            error_message: publishError instanceof Error ? publishError.message : String(publishError),
+            metadata: {
+              source: "resofit_content_engine",
+              site_section: "martial",
+              brand: "ResoFit",
+              experience: "Martial-X",
+              media_role: asset.role,
+              enrichment_engine: "ChatB2K + Gemini",
+              enrichment,
+              generated_by: userData.user.id,
+              generated_at: new Date().toISOString(),
+              direct_buffer: true,
+              partial_buffer_posts: posts,
+            },
+          }).eq("id", row.id);
+          throw publishError;
         }
 
-        return Response.json({ ok: true, status: "published_to_buffer", queueId: row.id, enrichment });
+        await supabaseAdmin.from("content_queue").update({
+          status: "published",
+          buffer_post_ids: posts.map((post) => post.id),
+          published_at: new Date().toISOString(),
+          metadata: {
+            source: "resofit_content_engine",
+            site_section: "martial",
+            brand: "ResoFit",
+            experience: "Martial-X",
+            media_role: asset.role,
+            enrichment_engine: "ChatB2K + Gemini",
+            enrichment,
+            generated_by: userData.user.id,
+            generated_at: new Date().toISOString(),
+            direct_buffer: true,
+            buffer_channels: BUFFER_CHANNELS,
+          },
+        }).eq("id", row.id);
+
+        return Response.json({ ok: true, status: "published_direct_to_buffer", queueId: row.id, posts, enrichment });
       },
     },
   },
@@ -193,7 +302,7 @@ function ContentEnginePage() {
       <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-gold"><Sparkles className="h-3 w-3" /> ChatB2K™ Content Engine</div>
         <div className="mt-2 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div><h1 className="font-display text-4xl">ResoFit Content Command</h1><p className="mt-2 max-w-2xl text-sm text-muted-foreground">Canonical content intake, Gemini enrichment and Buffer syndication. Martial-X is the first controlled production stream.</p></div>
+          <div><h1 className="font-display text-4xl">ResoFit Content Command</h1><p className="mt-2 max-w-2xl text-sm text-muted-foreground">Canonical content intake, Gemini enrichment and direct Buffer syndication. Martial-X is the first controlled production stream.</p></div>
           <button onClick={runAll} disabled={Boolean(running)} className="inline-flex items-center justify-center gap-2 rounded-md bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-widest text-black disabled:opacity-50"><Send className="h-4 w-4" /> Run Martial Pipeline</button>
         </div>
 
@@ -202,8 +311,8 @@ function ContentEnginePage() {
             <article key={asset.id} className="overflow-hidden rounded-xl border border-border bg-card">
               <video src={asset.url} muted playsInline preload="metadata" className="aspect-video w-full object-cover" />
               <div className="p-4"><div className="flex items-start justify-between gap-3"><div><h2 className="text-sm font-semibold">{asset.label}</h2><p className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground">{asset.role.replaceAll("_", " ")}</p></div><Video className="h-4 w-4 text-gold" /></div>
-                <button onClick={() => runAsset(asset.id)} disabled={Boolean(running)} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-xs uppercase tracking-widest disabled:opacity-50">{running === asset.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} ChatB2K Enrich + Auto-Post</button>
-                {results[asset.id] && <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">{results[asset.id] === "published_to_buffer" || results[asset.id] === "duplicate" ? <CheckCircle2 className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />} {results[asset.id]}</p>}
+                <button onClick={() => runAsset(asset.id)} disabled={Boolean(running)} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-xs uppercase tracking-widest disabled:opacity-50">{running === asset.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} ChatB2K Enrich + Direct Buffer</button>
+                {results[asset.id] && <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">{results[asset.id].includes("published") || results[asset.id] === "duplicate" ? <CheckCircle2 className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />} {results[asset.id]}</p>}
               </div>
             </article>
           ))}
