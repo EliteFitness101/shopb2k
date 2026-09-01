@@ -1,4 +1,5 @@
 export type WellnessHubQuery = {
+  query?: string;
   state?: string;
   city?: string;
   latitude?: number;
@@ -19,6 +20,7 @@ export type WellnessHubResult = {
   phone?: string | null;
   whatsapp?: string | null;
   website?: string | null;
+  email?: string | null;
   distance_km: number | null;
   verification_status: string;
   services: Array<{
@@ -33,10 +35,52 @@ export type WellnessHubResult = {
   }>;
 };
 
+export type WellnessSearchIntent = {
+  originalQuery: string;
+  service?: string;
+  state?: string;
+  city?: string;
+  needsLocation: boolean;
+};
+
+const SERVICE_TERMS: Array<[string, string]> = [
+  ["massage", "massage"],
+  ["spa", "spa"],
+  ["physiotherapy", "physiotherapy"],
+  ["physical therapy", "physiotherapy"],
+  ["back pain", "back pain"],
+  ["joint pain", "joint pain"],
+  ["arthritis", "arthritis"],
+  ["recovery", "recovery"],
+  ["mobility", "mobility"],
+  ["stretch", "stretching"],
+  ["fitness", "fitness"],
+  ["wellness", "wellness"],
+];
+
+const NIGERIAN_STATES = [
+  "abia","adamawa","akwa-ibom","anambra","bauchi","bayelsa","benue","borno","cross river","delta","ebonyi","edo","ekiti","enugu","gombe","imo","jigawa","kaduna","kano","katsina","kebbi","kogi","kwara","lagos","nasarawa","niger","ogun","ondo","osun","oyo","plateau","rivers","sokoto","taraba","yobe","zamfara","fct","abuja"
+];
+
+/**
+ * Convert a natural-language wellness question into a canonical locator intent.
+ * This deliberately resolves only against the ResoFit verified registry; it
+ * does not claim that an unlisted external spa is verified.
+ */
+export function parseWellnessSearchIntent(input: string): WellnessSearchIntent {
+  const originalQuery = input.trim();
+  const normalized = originalQuery.toLowerCase();
+  const service = SERVICE_TERMS.find(([term]) => normalized.includes(term))?.[1];
+  const state = NIGERIAN_STATES.find((candidate) => normalized.includes(candidate));
+  const needsLocation = /near me|nearby|around me|closest|nearest|in my area|where can i|where is/i.test(normalized);
+
+  return { originalQuery, service, state, needsLocation };
+}
+
 /**
  * ChatB2K Wellness capability: resolve verified wellness hubs from the
- * canonical ResoFit Wellness Locator. This is intentionally a thin tool
- * adapter so ChatB2K and the public Geo-Locator use the same source of truth.
+ * canonical ResoFit Wellness Locator. The public locator and ChatB2K use the
+ * same source of truth, while natural-language intent is normalized here.
  */
 export async function findWellnessHubs(query: WellnessHubQuery) {
   const baseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -44,10 +88,15 @@ export async function findWellnessHubs(query: WellnessHubQuery) {
 
   if (!baseUrl) throw new Error("Wellness locator is not configured");
 
+  const intent = query.query ? parseWellnessSearchIntent(query.query) : undefined;
   const params = new URLSearchParams({ action: "nearby" });
-  if (query.state) params.set("state", query.state);
+  const state = query.state ?? intent?.state;
+  const service = query.service ?? intent?.service;
+
+  if (state) params.set("state", state);
   if (query.city) params.set("city", query.city);
-  if (query.service) params.set("service", query.service);
+  if (service) params.set("service", service);
+  if (query.query) params.set("q", query.query);
   if (query.latitude !== undefined) params.set("lat", String(query.latitude));
   if (query.longitude !== undefined) params.set("lng", String(query.longitude));
   if (query.radiusKm !== undefined) params.set("radius_km", String(query.radiusKm));
