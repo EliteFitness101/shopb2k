@@ -17,6 +17,8 @@ import { auditCatalog } from "@/lib/productIntelligence";
 import { initPixels, pixelPageView } from "@/lib/pixels";
 import appCss from "../styles.css?url";
 
+const SOCIAL_COVER = "https://resofit.fit/og?section=RESOFIT%E2%84%A2&title=Africa%27s%20Personalized%20Wellness%20Platform&subtitle=Wellness%20%E2%80%A2%20Strength%20%E2%80%A2%20Longevity";
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -27,10 +29,7 @@ function NotFoundComponent() {
           The page you're looking for doesn't exist or has been moved.
         </p>
         <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
+          <Link to="/" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
             Go home
           </Link>
         </div>
@@ -44,28 +43,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
-        </p>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">This page didn't load</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Something went wrong on our end. You can try refreshing or head back home.</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Try again
-          </button>
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
-          >
-            Go home
-          </a>
+          <button onClick={() => { router.invalidate(); reset(); }} className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">Try again</button>
+          <a href="/" className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent">Go home</a>
         </div>
       </div>
     </div>
@@ -78,25 +60,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "ResoFit — Africa's Personalized Wellness Platform" },
-      {
-        name: "description",
-        content:
-          "Africa's Personalized Wellness Platform for clarity, strength, longevity and healthy living.",
-      },
+      { name: "description", content: "Africa's Personalized Wellness Platform for clarity, strength, longevity and healthy living." },
       { name: "author", content: "ResoFit" },
       { property: "og:title", content: "ResoFit — Africa's Personalized Wellness Platform" },
-      {
-        property: "og:description",
-        content: "Personalized wellness, ResoFlex™ equipment and ChatB2K™ experiences.",
-      },
+      { property: "og:description", content: "Personalized wellness, ResoFlex™ equipment and ChatB2K™ experiences." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://resofit.fit/" },
-      { name: "twitter:card", content: "summary" },
+      { property: "og:image", content: SOCIAL_COVER },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "ResoFit — Africa's Personalized Wellness Platform" },
-      {
-        name: "twitter:description",
-        content: "Personalized wellness, ResoFlex™ equipment and ChatB2K™ experiences.",
-      },
+      { name: "twitter:description", content: "Personalized wellness, ResoFlex™ equipment and ChatB2K™ experiences." },
+      { name: "twitter:image", content: SOCIAL_COVER },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -109,25 +85,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 function RootShell({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  );
+  return <html lang="en"><head><HeadContent /></head><body>{children}<Scripts /></body></html>;
 }
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AppInner />
-    </QueryClientProvider>
-  );
+  return <QueryClientProvider client={queryClient}><AppInner /></QueryClientProvider>;
 }
 function AppInner() {
   useCartSync();
@@ -135,9 +97,7 @@ function AppInner() {
   useEffect(() => {
     captureAttributionFromUrl();
     if (hasAnalyticsConsent()) initPixels();
-    const onConsent = () => {
-      if (hasAnalyticsConsent()) initPixels();
-    };
+    const onConsent = () => { if (hasAnalyticsConsent()) initPixels(); };
     window.addEventListener("resofit:consent-changed", onConsent);
     try {
       const raw = localStorage.getItem("resofit:imgPriority:v1");
@@ -146,9 +106,7 @@ function AppInner() {
         const ids = Object.keys(parsed.products ?? {});
         if (ids.length) auditCatalog(ids);
       }
-    } catch {
-      /* noop */
-    }
+    } catch { /* noop */ }
     return () => window.removeEventListener("resofit:consent-changed", onConsent);
   }, []);
   useEffect(() => {
@@ -157,12 +115,5 @@ function AppInner() {
     });
     return () => unsub();
   }, [router]);
-  return (
-    <>
-      <Outlet />
-      <WhatsAppFloat />
-      <CookieConsent />
-      <Toaster position="top-center" />
-    </>
-  );
+  return <><Outlet /><WhatsAppFloat /><CookieConsent /><Toaster position="top-center" /></>;
 }
