@@ -1,0 +1,14 @@
+{
+  "redirects": [
+    {
+      "source": "/martial-x",
+      "destination": "https://martial.resofit.fit",
+      "permanent": true
+    },
+    {
+      "source": "/martial-x/:path*",
+      "destination": "https://martial.resofit.fit/:path*",
+      "permanent": true
+    }
+  ]
+}
