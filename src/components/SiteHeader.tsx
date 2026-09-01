@@ -8,6 +8,8 @@ const NAV = [
   {
     label: "Wellness",
     items: [
+      { label: "Wellness Network", to: "/wellness" },
+      { label: "Find a Wellness Hub", to: "/wellness/states/cities/hubs/geo-locator" },
       { label: "Programs", to: "/programs" },
       { label: "Assessment", to: "/me" },
       { label: "Knowledge Hub", to: "/knowledge" },
