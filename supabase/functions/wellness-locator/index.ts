@@ -13,7 +13,6 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 });
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
-
 const haversineKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const r = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -47,64 +46,83 @@ Deno.serve(async (req) => {
       return json({ state: stateRow, cities: data ?? [] });
     }
 
-    if (action === "hub") {
-      const hub = url.searchParams.get("hub");
-      if (!hub) return json({ error: "hub_required" }, 400);
-      const { data, error } = await db.from("resofit_wellness_hubs").select("id,hub_code,name,slug,description,address,latitude,longitude,phone,whatsapp,website,state_id,city_id").eq("hub_code", hub).eq("status", "active").eq("verification_status", "verified").maybeSingle();
-      if (error) throw error;
-      if (!data) return json({ error: "hub_not_found" }, 404);
-      const { data: services, error: serviceError } = await db.from("resofit_wellness_hub_services").select("id,service_entity_id,service_name,description,price,currency,duration_minutes,booking_method").eq("hub_id", data.id).eq("status", "active").order("service_name");
-      if (serviceError) throw serviceError;
-      return json({ hub: data, services: services ?? [] });
-    }
-
     const lat = Number(url.searchParams.get("lat"));
     const lng = Number(url.searchParams.get("lng"));
     const state = url.searchParams.get("state");
     const city = url.searchParams.get("city");
-    const service = url.searchParams.get("service");
+    const service = (url.searchParams.get("service") ?? "").trim().toLowerCase();
+    const q = (url.searchParams.get("q") ?? "").trim().toLowerCase();
     const radius = Math.min(Math.max(Number(url.searchParams.get("radius_km") ?? 25) || 25, 1), 100);
 
-    let query = db.from("resofit_wellness_hubs").select("id,hub_code,name,slug,description,address,latitude,longitude,phone,whatsapp,website,state_id,city_id").eq("status", "active").eq("verification_status", "verified");
-    if (state) {
-      const { data, error } = await db.from("resofit_wellness_states").select("id").or(`slug.eq.${state},state_code.eq.${state}`).eq("status", "active").maybeSingle();
-      if (error) throw error;
-      if (!data) return json({ results: [], count: 0 });
-      query = query.eq("state_id", data.id);
-    }
-    if (city) {
-      const { data, error } = await db.from("resofit_wellness_cities").select("id").eq("slug", city).eq("status", "active").maybeSingle();
-      if (error) throw error;
-      if (!data) return json({ results: [], count: 0 });
-      query = query.eq("city_id", data.id);
-    }
+    // Unified public discovery source: verified Wellness hubs plus all discovered
+    // Network entities. Private contract metadata is never selected or returned.
+    const { data: network, error: networkError } = await db.from("resofit_network_directory")
+      .select("id,entity_type,slug,name,tagline,description,country_code,state,city,latitude,longitude,public_location_label,phone,whatsapp,website,email,services,capabilities,verification_status,contract_status,status,discovery_source,source_url,public_metadata")
+      .limit(500);
+    if (networkError) throw networkError;
 
-    const { data: hubs, error: hubError } = await query.limit(250);
-    if (hubError) throw hubError;
+    const { data: wellness, error: wellnessError } = await db.from("resofit_wellness_hubs")
+      .select("id,hub_code,name,slug,description,address,latitude,longitude,phone,whatsapp,website,state_id,city_id")
+      .eq("status", "active").eq("verification_status", "verified").limit(250);
+    if (wellnessError) throw wellnessError;
 
-    let results = (hubs ?? []).map((hub) => ({ ...hub, distance_km: Number.isFinite(lat) && Number.isFinite(lng) ? haversineKm(lat, lng, hub.latitude, hub.longitude) : null }));
-    if (Number.isFinite(lat) && Number.isFinite(lng)) results = results.filter((hub) => (hub.distance_km ?? Infinity) <= radius).sort((a, b) => (a.distance_km ?? Infinity) - (b.distance_km ?? Infinity));
-    else results.sort((a, b) => a.name.localeCompare(b.name));
-
-    const ids = results.map((hub) => hub.id);
-    let services: Array<Record<string, unknown>> = [];
-    if (ids.length) {
-      const { data, error } = await db.from("resofit_wellness_hub_services").select("id,hub_id,service_entity_id,service_name,description,price,currency,duration_minutes,booking_method").in("hub_id", ids).eq("status", "active").order("service_name");
+    const wellnessIds = new Set((wellness ?? []).map((h) => h.id));
+    const legacyIds = (wellness ?? []).map((h) => h.id);
+    let legacyServices: Array<Record<string, unknown>> = [];
+    if (legacyIds.length) {
+      const { data, error } = await db.from("resofit_wellness_hub_services")
+        .select("id,hub_id,service_entity_id,service_name,description,price,currency,duration_minutes,booking_method")
+        .in("hub_id", legacyIds).eq("status", "active").order("service_name");
       if (error) throw error;
-      services = data ?? [];
+      legacyServices = data ?? [];
     }
-    if (service) {
-      const serviceHubIds = new Set(services.filter((item) => String(item.service_name).toLowerCase().includes(service.toLowerCase())).map((item) => item.hub_id));
-      results = results.filter((hub) => serviceHubIds.has(hub.id));
-    }
-    const servicesByHub = new Map<string, Array<Record<string, unknown>>>();
-    for (const item of services) {
-      const list = servicesByHub.get(String(item.hub_id)) ?? [];
+    const servicesByLegacyHub = new Map<string, Array<Record<string, unknown>>>();
+    for (const item of legacyServices) {
+      const list = servicesByLegacyHub.get(String(item.hub_id)) ?? [];
       list.push(item);
-      servicesByHub.set(String(item.hub_id), list);
+      servicesByLegacyHub.set(String(item.hub_id), list);
     }
 
-    return json({ query: { state, city, service, latitude: Number.isFinite(lat) ? lat : null, longitude: Number.isFinite(lng) ? lng : null, radius_km: radius }, results: results.map((hub) => ({ ...hub, services: servicesByHub.get(hub.id) ?? [] })), count: results.length });
+    type Result = Record<string, unknown> & { distance_km: number | null; services: Array<Record<string, unknown>> };
+    const results: Result[] = [];
+    const seen = new Set<string>();
+
+    for (const item of network ?? []) {
+      const searchable = [item.name, item.tagline, item.description, item.state, item.city, ...(item.services ?? []), ...(item.capabilities ?? [])].filter(Boolean).join(" ").toLowerCase();
+      const locationMatch = (!state || String(item.state ?? "").toLowerCase() === state.toLowerCase() || String(item.public_location_label ?? "").toLowerCase().includes(state.toLowerCase())) &&
+        (!city || String(item.city ?? "").toLowerCase() === city.toLowerCase() || String(item.public_location_label ?? "").toLowerCase().includes(city.toLowerCase()));
+      const queryMatch = !q || searchable.includes(q);
+      const serviceMatch = !service || searchable.includes(service);
+      if (!locationMatch || !queryMatch || !serviceMatch) continue;
+      const distance = Number.isFinite(lat) && Number.isFinite(lng) && Number.isFinite(Number(item.latitude)) && Number.isFinite(Number(item.longitude))
+        ? haversineKm(lat, lng, Number(item.latitude), Number(item.longitude)) : null;
+      if (distance !== null && distance > radius) continue;
+      seen.add(String(item.name).toLowerCase());
+      results.push({
+        id: item.id, hub_code: item.slug, slug: item.slug, name: item.name, description: item.description ?? item.tagline ?? null,
+        address: item.public_location_label ?? null, latitude: item.latitude, longitude: item.longitude, phone: item.phone, whatsapp: item.whatsapp,
+        website: item.website, email: item.email, distance_km: distance,
+        services: (item.services ?? []).map((name: string) => ({ id: `${item.id}:${name}`, service_name: name, price: null, currency: "NGN", booking_method: "external" })),
+        entity_type: item.entity_type, discovery_status: item.status === "active" && item.verification_status === "verified" ? "verified" : "discovered",
+        verification_status: item.verification_status, contract_status: item.contract_status, discovery_source: item.discovery_source, source_url: item.source_url,
+      });
+    }
+
+    // Preserve verified Wellness records even if not yet mirrored into the Network table.
+    for (const hub of wellness ?? []) {
+      if (seen.has(String(hub.name).toLowerCase())) continue;
+      const locationMatch = (!state && !city) || true;
+      if (!locationMatch) continue;
+      const searchable = [hub.name, hub.description].filter(Boolean).join(" ").toLowerCase();
+      if (q && !searchable.includes(q)) continue;
+      if (service && !(servicesByLegacyHub.get(hub.id) ?? []).some((s) => String(s.service_name).toLowerCase().includes(service))) continue;
+      const distance = Number.isFinite(lat) && Number.isFinite(lng) ? haversineKm(lat, lng, hub.latitude, hub.longitude) : null;
+      if (distance !== null && distance > radius) continue;
+      results.push({ ...hub, distance_km: distance, services: servicesByLegacyHub.get(hub.id) ?? [], entity_type: "wellness_hub", discovery_status: "verified", verification_status: "verified", contract_status: "active", discovery_source: "resofit_wellness_registry", source_url: null });
+    }
+
+    results.sort((a, b) => a.distance_km !== null && b.distance_km !== null ? a.distance_km - b.distance_km : String(a.name).localeCompare(String(b.name)));
+    return json({ query: { state, city, service: service || null, q: q || null, latitude: Number.isFinite(lat) ? lat : null, longitude: Number.isFinite(lng) ? lng : null, radius_km: radius }, results, count: results.length });
   } catch (error) {
     console.error("wellness-locator error", error);
     return json({ error: "internal_error" }, 500);
