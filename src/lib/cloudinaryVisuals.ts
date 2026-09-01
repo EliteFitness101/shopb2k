@@ -1,5 +1,6 @@
 // Cloudinary visual-experience helpers for the ResoFit main ecosystem.
-// The Cloudinary root is resolved dynamically; semantic keys remain stable for UI components.
+// Canonical publishing source: resofit/buffer/videos/.
+// Originals remain untouched; all optimization is dynamic at CDN delivery time.
 
 export type VisualAssetKind = "video" | "poster";
 export type VisualExperienceGroup = "brand" | "category" | "product-family" | "service";
@@ -12,60 +13,59 @@ export type CloudinaryVisualAsset = {
   format: "mp4" | "webp";
 };
 
-const CLOUDINARY_ROOT_FOLDER = (import.meta.env.VITE_CLOUDINARY_ROOT_FOLDER || "resofit")
-  .trim()
-  .replace(/^\/+|\/+$/g, "");
+const CLOUDINARY_CLOUD_NAME = (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ihlmr2hd").trim();
+const CLOUDINARY_ROOT_FOLDER = "resofit/buffer/videos";
 
 const visual = (
   key: string,
   group: VisualExperienceGroup,
   kind: VisualAssetKind,
-  relativePublicId: string,
+  publicId: string,
   format: "mp4" | "webp",
-): CloudinaryVisualAsset => ({
-  key,
-  group,
-  kind,
-  publicId: `${CLOUDINARY_ROOT_FOLDER}/${relativePublicId.replace(/^\/+/, "")}`,
-  format,
-});
+): CloudinaryVisualAsset => ({ key, group, kind, publicId, format });
 
 export const CLOUDINARY_VISUAL_EXPERIENCE: readonly CloudinaryVisualAsset[] = [
-  visual("resofit-hero-video", "brand", "video", "brand/videos/resofit-hero", "mp4"),
-  visual("resofit-hero-poster", "brand", "poster", "brand/posters/resofit-hero-poster", "webp"),
-  visual("resofit-community-video", "brand", "video", "brand/videos/resofit-community", "mp4"),
-  visual("resofit-community-poster", "brand", "poster", "brand/posters/resofit-community-poster", "webp"),
-  visual("strength-video", "category", "video", "categories/strength/bg-strength", "mp4"),
-  visual("strength-poster", "category", "poster", "categories/strength/bg-strength-poster", "webp"),
-  visual("functional-video", "category", "video", "categories/functional/bg-functional", "mp4"),
-  visual("functional-poster", "category", "poster", "categories/functional/bg-functional-poster", "webp"),
-  visual("boxing-video", "category", "video", "categories/boxing/bg-boxing", "mp4"),
-  visual("boxing-poster", "category", "poster", "categories/boxing/bg-boxing-poster", "webp"),
-  visual("running-video", "category", "video", "categories/running/bg-running", "mp4"),
-  visual("running-poster", "category", "poster", "categories/running/bg-running-poster", "webp"),
-  visual("apparel-video", "category", "video", "categories/apparel/bg-apparel", "mp4"),
-  visual("apparel-poster", "category", "poster", "categories/apparel/bg-apparel-poster", "webp"),
-  visual("womens-training-video", "category", "video", "categories/womens-training/bg-womens-training", "mp4"),
-  visual("womens-training-poster", "category", "poster", "categories/womens-training/bg-womens-training-poster", "webp"),
-  visual("wellness-video", "category", "video", "categories/wellness/bg-wellness", "mp4"),
-  visual("wellness-poster", "category", "poster", "categories/wellness/bg-wellness-poster", "webp"),
-  visual("coaching-video", "category", "video", "categories/coaching/bg-coaching", "mp4"),
-  visual("coaching-poster", "category", "poster", "categories/coaching/bg-coaching-poster", "webp"),
-  visual("resoflex-equipment-video", "product-family", "video", "products/resoflex-equipment/resoflex-equipment", "mp4"),
-  visual("resoflex-equipment-poster", "product-family", "poster", "products/resoflex-equipment/resoflex-equipment-poster", "webp"),
-  visual("resoflex-apparel-video", "product-family", "video", "products/resoflex-apparel/resoflex-apparel", "mp4"),
-  visual("resoflex-apparel-poster", "product-family", "poster", "products/resoflex-apparel/resoflex-apparel-poster", "webp"),
-  visual("chatb2k-video", "service", "video", "services/chatb2k/chatb2k-personalized-coaching", "mp4"),
-  visual("chatb2k-poster", "service", "poster", "services/chatb2k/chatb2k-poster", "webp"),
-  visual("wellness-service-video", "service", "video", "services/wellness/resofit-personalized-wellness", "mp4"),
-  visual("wellness-service-poster", "service", "poster", "services/wellness/resofit-personalized-wellness-poster", "webp"),
+  visual("resofit-hero-video", "brand", "video", `${CLOUDINARY_ROOT_FOLDER}/resofit-hero`, "mp4"),
+  visual("resofit-hero-poster", "brand", "poster", `${CLOUDINARY_ROOT_FOLDER}/resofit-hero`, "webp"),
+  visual("resofit-community-video", "brand", "video", `${CLOUDINARY_ROOT_FOLDER}/resofit-community`, "mp4"),
+  visual("resofit-community-poster", "brand", "poster", `${CLOUDINARY_ROOT_FOLDER}/resofit-community`, "webp"),
+  visual("strength-video", "category", "video", `${CLOUDINARY_ROOT_FOLDER}/bg-strength`, "mp4"),
+  visual("strength-poster", "category", "poster", `${CLOUDINARY_ROOT_FOLDER}/bg-strength`, "webp"),
+  visual("functional-video", "category", "video", `${CLOUDINARY_ROOT_FOLDER}/bg-functional`, "mp4"),
+  visual("functional-poster", "category", "poster", `${CLOUDINARY_ROOT_FOLDER}/bg-functional`, "webp"),
+  visual("boxing-video", "category", "video", `${CLOUDINARY_ROOT_FOLDER}/bg-boxing`, "mp4"),
+  visual("boxing-poster", "category", "poster", `${CLOUDINARY_ROOT_FOLDER}/bg-boxing`, "webp"),
+  visual("running-video", "category", "video", `${CLOUDINARY_ROOT_FOLDER}/bg-running`, "mp4"),
+  visual("running-poster", "category", "poster", `${CLOUDINARY_ROOT_FOLDER}/bg-running`, "webp"),
+  visual("apparel-video", "category", "video", `${CLOUDINARY_ROOT_FOLDER}/bg-apparel`, "mp4"),
+  visual("apparel-poster", "category", "poster", `${CLOUDINARY_ROOT_FOLDER}/bg-apparel`, "webp"),
+  visual("womens-training-video", "category", "video", `${CLOUDINARY_ROOT_FOLDER}/bg-womens-training`, "mp4"),
+  visual("womens-training-poster", "category", "poster", `${CLOUDINARY_ROOT_FOLDER}/bg-womens-training`, "webp"),
+  visual("wellness-video", "category", "video", `${CLOUDINARY_ROOT_FOLDER}/bg-wellness`, "mp4"),
+  visual("wellness-poster", "category", "poster", `${CLOUDINARY_ROOT_FOLDER}/bg-wellness`, "webp"),
+  visual("coaching-video", "category", "video", `${CLOUDINARY_ROOT_FOLDER}/bg-coaching`, "mp4"),
+  visual("coaching-poster", "category", "poster", `${CLOUDINARY_ROOT_FOLDER}/bg-coaching`, "webp"),
+  visual("resoflex-equipment-video", "product-family", "video", `${CLOUDINARY_ROOT_FOLDER}/resoflex-equipment`, "mp4"),
+  visual("resoflex-equipment-poster", "product-family", "poster", `${CLOUDINARY_ROOT_FOLDER}/resoflex-equipment`, "webp"),
+  visual("resoflex-apparel-video", "product-family", "video", `${CLOUDINARY_ROOT_FOLDER}/resoflex-apparel`, "mp4"),
+  visual("resoflex-apparel-poster", "product-family", "poster", `${CLOUDINARY_ROOT_FOLDER}/resoflex-apparel`, "webp"),
+  visual("chatb2k-video", "service", "video", `${CLOUDINARY_ROOT_FOLDER}/chatb2k-personalized-coaching`, "mp4"),
+  visual("chatb2k-poster", "service", "poster", `${CLOUDINARY_ROOT_FOLDER}/chatb2k-personalized-coaching`, "webp"),
+  visual("wellness-service-video", "service", "video", `${CLOUDINARY_ROOT_FOLDER}/resofit-personalized-wellness`, "mp4"),
+  visual("wellness-service-poster", "service", "poster", `${CLOUDINARY_ROOT_FOLDER}/resofit-personalized-wellness`, "webp"),
 ] as const;
 
 export const getCloudinaryVisualAsset = (key: string) =>
   CLOUDINARY_VISUAL_EXPERIENCE.find((asset) => asset.key === key);
 
+/** Build dynamic Cloudinary delivery URLs without modifying originals. */
 export const cloudinaryVisualUrl = (asset: CloudinaryVisualAsset): string => {
-  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-  if (!cloudName) return "";
-  return `https://res.cloudinary.com/${cloudName}/${asset.kind === "video" ? "video" : "image"}/upload/f_auto,q_auto/${asset.publicId}.${asset.format}`;
+  if (!CLOUDINARY_CLOUD_NAME) return "";
+
+  if (asset.kind === "video") {
+    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/q_auto,f_auto/${asset.publicId}`;
+  }
+
+  // Generate the poster dynamically from the same source video.
+  return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/so_auto,q_auto,f_auto/${asset.publicId}.webp`;
 };
