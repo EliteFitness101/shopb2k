@@ -41,12 +41,12 @@ async function publishDirectToBuffer(input: {
       channelId: ${gqlString(channelId)}
       schedulingType: automatic
       mode: addToQueue
-      assets: [{ url: ${gqlString(input.mediaUrl)} }]
+      assets: [{ video: { url: ${gqlString(input.mediaUrl)} } }]
       source: "resofit-content-engine"
       aiAssisted: true
       metadata: { }
     }) {
-      ... on PostActionSuccess { post { id dueAt status channelId } }
+      ... on PostActionSuccess { post { id dueAt status channelId assets { id mimeType } } }
       ... on MutationError { message }
     }
   }`;
