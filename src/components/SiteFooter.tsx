@@ -99,30 +99,6 @@ export function SiteFooter() {
           <div className="flex flex-col gap-4 text-xs uppercase tracking-widest text-muted-foreground md:flex-row md:items-center md:justify-between">
             <p>© {new Date().getFullYear()} ResoFit. Africa's Personalized Wellness Platform.</p>
             <div className="flex flex-wrap items-center gap-5">
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-gold"
-              >
-                Instagram
-              </a>
-              <a
-                href="https://x.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-gold"
-              >
-                X
-              </a>
-              <a
-                href="https://youtube.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-gold"
-              >
-                YouTube
-              </a>
               <CookiePreferencesLink />
             </div>
           </div>
