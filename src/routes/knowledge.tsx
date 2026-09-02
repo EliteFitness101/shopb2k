@@ -17,7 +17,7 @@ export const Route = createFileRoute("/knowledge")({
       { property: "og:title", content: "Knowledge Hub — ResoFit" },
       { property: "og:description", content: "Practitioner-written wellness guides." },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://shopb2k.lovable.app/knowledge" },
+      { property: "og:url", content: "https://resofit.fit/knowledge" },
       { name: "twitter:card", content: "summary" },
     ],
     links: [{ rel: "canonical", href: "https://resofit.fit/knowledge" }],
