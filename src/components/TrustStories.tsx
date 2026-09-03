@@ -22,7 +22,7 @@ const stories: Story[] = [
   {
     label: "ResoFlex equipment",
     title: "Premium training tools without the guesswork.",
-    body: "From strength and mobility to recovery and home training, the ResoFlex catalogue is organized around practical outcomes rather than isolated products.",
+    body: "From strength and mobility to recovery and home training, ResoFlex equipment is organized around practical outcomes rather than isolated products.",
     image: productDumbbell,
     alt: "Premium ResoFlex-style dumbbell equipment",
   },
