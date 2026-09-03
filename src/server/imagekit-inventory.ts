@@ -28,7 +28,7 @@ export async function listImageKitAssets(options: { path?: string; searchQuery?:
   let skip = 0;
   const limit = 1000;
 
-  do {
+  for (;;) {
     const params = new URLSearchParams({ limit: String(limit), skip: String(skip) });
     if (options.path) params.set("path", options.path);
     if (options.searchQuery) params.set("searchQuery", options.searchQuery);
@@ -43,7 +43,7 @@ export async function listImageKitAssets(options: { path?: string; searchQuery?:
     assets.push(...page);
     if (page.length < limit) break;
     skip += page.length;
-  } while (true);
+  }
 
   return assets;
 }
