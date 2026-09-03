@@ -34,7 +34,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           const entities = await response.json() as Array<{ entity_type: string; slug: string }>;
           for (const entity of entities) entries.push({ path: `/network/${encodeURIComponent(entity.entity_type)}/${encodeURIComponent(entity.slug)}`, changefreq: "weekly", priority: "0.7" });
         }
-      } catch {}
+      } catch { void 0; }
     }
 
     const urls = entries.map((e) => [`  <url>`, `    <loc>${BASE_URL}${e.path}</loc>`, e.changefreq ? `    <changefreq>${e.changefreq}</changefreq>` : null, e.priority ? `    <priority>${e.priority}</priority>` : null, `  </url>`].filter(Boolean).join("\n"));
