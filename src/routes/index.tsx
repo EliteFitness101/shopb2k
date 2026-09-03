@@ -14,6 +14,8 @@ import { trackEvent } from "@/lib/revenueOS";
 import { preloadOnIdle } from "@/lib/imagePriority";
 import { CTA } from "@/lib/ctas";
 
+const CANONICAL_ORIGIN = "https://www.resofit.fit";
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -22,11 +24,11 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "ResoFit — Africa's Personalized Wellness Platform" },
       { property: "og:description", content: "Discover premium Services, Custom Equipment Offers & Proprietary ChatB2K™ Ancestral Intelligence deployment for clarity, strength, longevity & healthy living." },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://resofit.fit/" },
+      { property: "og:url", content: `${CANONICAL_ORIGIN}/` },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
-      { rel: "canonical", href: "https://resofit.fit/" },
+      { rel: "canonical", href: `${CANONICAL_ORIGIN}/` },
       { rel: "preload", as: "image", href: heroImg, fetchpriority: "high" },
     ],
   }),
