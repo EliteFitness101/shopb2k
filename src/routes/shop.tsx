@@ -25,13 +25,13 @@ export const Route = createFileRoute("/shop")({
       {
         name: "description",
         content:
-          "Shop competition-grade barbells, bumper plates, dumbbells, and power racks. Real Shopify checkout with shipping and Paystack.",
+          "Shop competition-grade barbells, bumper plates, dumbbells, and power racks with secure Paystack checkout.",
       },
       { property: "og:title", content: "Shop — ResoFit Hardware" },
       {
         property: "og:description",
         content:
-          "Competition-grade barbells, bumper plates, dumbbells, and power racks. Ships from Lagos.",
+          "Competition-grade barbells, bumper plates, dumbbells, and power racks. Secure Paystack checkout.",
       },
     ],
   }),
@@ -120,7 +120,6 @@ function ShopGrid() {
         );
         break;
       case "newest":
-        // Shopify products ordered by id descending approximates newest first
         sorted.sort((a, b) => (a.node.id < b.node.id ? 1 : -1));
         break;
       default:
@@ -135,7 +134,6 @@ function ShopGrid() {
   return (
     <section className="py-16">
       <div className="mx-auto max-w-7xl px-6">
-        {/* Filters + sort */}
         {data && data.length > 0 && (
           <div className="mb-10 flex flex-wrap items-end gap-4 border-b border-border/60 pb-6">
             {productTypes.length > 0 && (
@@ -219,7 +217,7 @@ function ShopGrid() {
           <div className="py-24 text-center">
             <p className="font-display text-2xl">No products found</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Try clearing filters, or tell the AI what to add to your Shopify catalogue.
+              Try clearing filters, or use ChatB2K™ to find the right ResoFlex equipment.
             </p>
           </div>
         )}
@@ -233,7 +231,7 @@ function ShopGrid() {
         )}
 
         <p className="mt-16 text-center text-xs uppercase tracking-widest text-muted-foreground">
-          Checkout secured by Shopify · Paystack · Card · Worldwide shipping
+          Secure checkout by Paystack · Card · Bank · USSD
         </p>
       </div>
     </section>
