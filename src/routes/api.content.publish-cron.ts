@@ -3,10 +3,9 @@ import { createFileRoute } from "@tanstack/react-router";
 const SUPABASE_FUNCTION = "buffer-publisher";
 
 function cronAuthorized(request: Request) {
-  const secret = process.env.CHATGPT_PUBLISH_SECRET;
-  const cron = request.headers.get("authorization") ?? "";
-  const vercelCron = request.headers.get("x-vercel-cron-schedule");
-  return Boolean(secret && cron === `Bearer ${secret}`) || Boolean(vercelCron);
+  const secret = process.env.CRON_SECRET || process.env.CHATGPT_PUBLISH_SECRET;
+  const authorization = request.headers.get("authorization") ?? "";
+  return Boolean(secret && authorization === `Bearer ${secret}`);
 }
 
 export const Route = createFileRoute("/api/content/publish-cron")({
