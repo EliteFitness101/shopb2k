@@ -10,6 +10,7 @@ import { auditCatalog } from "@/lib/productIntelligence";
 import { initPixels, pixelPageView } from "@/lib/pixels";
 import appCss from "../styles.css?url";
 
+const CANONICAL_ORIGIN = "https://www.resofit.fit";
 const MAIN_COVER = "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/cover/resofit-cover";
 const MAIN_FALLBACK_COVER = "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/cover/resofit-cover2";
 
@@ -25,11 +26,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "author", content: "ResoFit" },
       { property: "og:title", content: "ResoFit — Africa's Personalized Wellness Platform" },
       { property: "og:description", content: "Personalized wellness, ResoFlex™ equipment and ChatB2K™ experiences." },
-      { property: "og:type", content: "website" }, { property: "og:url", content: "https://resofit.fit/" },
+      { property: "og:type", content: "website" }, { property: "og:url", content: `${CANONICAL_ORIGIN}/` },
       { property: "og:image", content: MAIN_COVER }, { property: "og:image:width", content: "1200" }, { property: "og:image:height", content: "630" },
       { name: "twitter:card", content: "summary_large_image" }, { name: "twitter:title", content: "ResoFit — Africa's Personalized Wellness Platform" },
       { name: "twitter:description", content: "Personalized wellness, ResoFlex™ equipment and ChatB2K™ experiences." }, { name: "twitter:image", content: MAIN_COVER },
-    ], links: [{ rel: "stylesheet", href: appCss }, { rel: "canonical", href: "https://resofit.fit/" }],
+    ], links: [{ rel: "stylesheet", href: appCss }, { rel: "canonical", href: `${CANONICAL_ORIGIN}/` }],
   }), shellComponent: RootShell, component: RootComponent, notFoundComponent: NotFoundComponent, errorComponent: ErrorComponent,
 });
 function RootShell({ children }: { children: React.ReactNode }) { return <html lang="en"><head><HeadContent /></head><body>{children}<Scripts /></body></html>; }
