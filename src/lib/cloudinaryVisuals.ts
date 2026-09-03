@@ -1,6 +1,6 @@
 // Cloudinary visual-experience helpers for the ResoFit main ecosystem.
 // Canonical publishing source: resofit/buffer/videos/.
-// Originals remain untouched; all optimization is dynamic at CDN delivery time.
+// Originals remain untouched; optimization happens at CDN delivery time.
 
 export type VisualAssetKind = "video" | "poster";
 export type VisualExperienceGroup = "brand" | "category" | "product-family" | "service";
@@ -58,14 +58,20 @@ export const CLOUDINARY_VISUAL_EXPERIENCE: readonly CloudinaryVisualAsset[] = [
 export const getCloudinaryVisualAsset = (key: string) =>
   CLOUDINARY_VISUAL_EXPERIENCE.find((asset) => asset.key === key);
 
-/** Build dynamic Cloudinary delivery URLs without modifying originals. */
+/**
+ * Build a deterministic Cloudinary delivery URL.
+ *
+ * Videos intentionally end in .mp4 and do not use f_auto. This keeps the
+ * public asset URL stable and fetchable by social schedulers such as Buffer,
+ * while q_auto still lets Cloudinary optimize delivery quality.
+ */
 export const cloudinaryVisualUrl = (asset: CloudinaryVisualAsset): string => {
   if (!CLOUDINARY_CLOUD_NAME) return "";
 
   if (asset.kind === "video") {
-    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/q_auto,f_auto/${asset.publicId}`;
+    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/q_auto/${asset.publicId}.mp4`;
   }
 
-  // Generate the poster dynamically from the same source video.
-  return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/so_auto,q_auto,f_auto/${asset.publicId}.webp`;
+  // Generate a WebP poster from the same canonical source video.
+  return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/so_auto,q_auto/${asset.publicId}.webp`;
 };
