@@ -15,7 +15,7 @@ export const ECOSYSTEM_CARDS: EcosystemCard[] = [
     title: "ChatB2K™ Wellness Assessment",
     tagline: "60 seconds to your personalized wellness protocol.",
     cta: "Start Assessment",
-    href: "/personalize",
+    href: "/me",
     category: "Assessment",
   },
   {
