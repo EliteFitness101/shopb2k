@@ -198,8 +198,8 @@ function AdminDashboard() {
         </div>
 
         <p className="mt-10 text-xs text-muted-foreground">
-          Shopify orders & inventory live in the Shopify admin. This dashboard focuses on the
-          community layer.
+          Commerce, inventory, payments, and revenue state are governed by the canonical ResoFit
+          backend. This dashboard focuses on community, play, and wellness engagement.
         </p>
       </main>
       <SiteFooter />
@@ -218,9 +218,10 @@ function StatCard({
 }) {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
-      <Icon className="h-4 w-4 text-gold" />
-      <p className="mt-3 font-display text-2xl">{value ?? "—"}</p>
-      <p className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
+      <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
+        <Icon className="h-4 w-4 text-gold" /> {label}
+      </div>
+      <p className="mt-2 font-display text-3xl">{value ?? "—"}</p>
     </div>
   );
 }
