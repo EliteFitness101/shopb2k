@@ -1,4 +1,5 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "redirects": [
     {
       "source": "/martial-x",
@@ -9,6 +10,12 @@
       "source": "/martial-x/:path*",
       "destination": "https://martial.resofit.fit/:path*",
       "permanent": true
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/content/publish-cron",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
