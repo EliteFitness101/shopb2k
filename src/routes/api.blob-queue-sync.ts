@@ -3,7 +3,6 @@ import { list } from "@vercel/blob";
 
 const PRODUCT_PREFIX = "imagekit/assets/products/";
 const MUSIC_PREFIX = "doc/audio/";
-const MANIFEST_PREFIXES = ["buffer/assets/ResoFlex_Vault/", "elite/", ""] as const;
 const SOCIAL_PLATFORMS = ["tiktok", "youtube", "google_business"] as const;
 
 type Platform = (typeof SOCIAL_PLATFORMS)[number];
@@ -20,6 +19,17 @@ function cronAuthorized(request: Request) {
   const secret = process.env.CRON_SECRET || process.env.CHATGPT_PUBLISH_SECRET;
   const authorization = request.headers.get("authorization") ?? "";
   return Boolean(secret && authorization === `Bearer ${secret}`);
+}
+
+async function adminAuthorized(request: Request) {
+  const auth = request.headers.get("authorization") ?? "";
+  if (!auth.startsWith("Bearer ")) return false;
+  const token = auth.slice(7);
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin.auth.getUser(token);
+  if (error || !data.user) return false;
+  const { data: isAdmin } = await supabaseAdmin.rpc("has_role", { _user_id: data.user.id, _role: "admin" });
+  return Boolean(isAdmin);
 }
 
 function productAsset(pathname: string) {
@@ -44,11 +54,7 @@ function classify(pathname: string) {
 
 function titleFromPath(pathname: string) {
   const name = pathname.split("/").pop() || pathname;
-  return name
-    .replace(/\.[^.]+$/, "")
-    .replace(/[._-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return name.replace(/\.[^.]+$/, "").replace(/[._-]+/g, " ").replace(/\s+/g, " ").trim();
 }
 
 async function listAllBlobs() {
@@ -92,7 +98,7 @@ async function sync() {
     try {
       if (kind === "product") {
         const parsed = productAsset(blob.pathname)!;
-        await supabaseAdmin.from("ingested_blobs").upsert(
+        const { error } = await supabaseAdmin.from("ingested_blobs").upsert(
           {
             pathname: blob.pathname,
             etag: blob.etag,
@@ -107,13 +113,14 @@ async function sync() {
           },
           { onConflict: "pathname" },
         );
+        if (error) throw error;
         skipped += 1;
         continue;
       }
 
       if (kind === "music") {
         const title = titleFromPath(blob.pathname);
-        const { error } = await supabaseAdmin.from("music_library").upsert(
+        const { error: musicError } = await supabaseAdmin.from("music_library").upsert(
           {
             blob_pathname: blob.pathname,
             title,
@@ -123,8 +130,8 @@ async function sync() {
           },
           { onConflict: "blob_pathname" },
         );
-        if (error) throw error;
-        await supabaseAdmin.from("ingested_blobs").upsert(
+        if (musicError) throw musicError;
+        const { error: ingestError } = await supabaseAdmin.from("ingested_blobs").upsert(
           {
             pathname: blob.pathname,
             etag: blob.etag,
@@ -139,6 +146,7 @@ async function sync() {
           },
           { onConflict: "pathname" },
         );
+        if (ingestError) throw ingestError;
         skipped += 1;
         continue;
       }
@@ -152,12 +160,13 @@ async function sync() {
       if (manifestError) throw manifestError;
 
       if (!manifest) {
-        await supabaseAdmin.from("asset_manifest").insert({
+        const { error } = await supabaseAdmin.from("asset_manifest").insert({
           blob_pathname: blob.pathname,
           campaign_type: blob.pathname.startsWith("elite/") ? "brand" : blob.pathname.includes("bg-") ? "background" : "brand",
           status: "pending_review",
           notes: "Auto-discovered by Blob sync; assign platform and approve before publishing.",
         });
+        if (error && !String(error.message).toLowerCase().includes("duplicate")) throw error;
         discovered += 1;
       } else if (manifest.status === "approved" && manifest.platform) {
         const platform = String(manifest.platform) as Platform;
@@ -202,7 +211,7 @@ async function sync() {
         }
       }
 
-      await supabaseAdmin.from("ingested_blobs").upsert(
+      const { error: ingestError } = await supabaseAdmin.from("ingested_blobs").upsert(
         {
           pathname: blob.pathname,
           etag: blob.etag,
@@ -217,8 +226,10 @@ async function sync() {
         },
         { onConflict: "pathname" },
       );
+      if (ingestError) throw ingestError;
     } catch (error) {
-      errors.push({ pathname: blob.pathname, error: error instanceof Error ? error.message : String(error) });
+      const message = error instanceof Error ? error.message : String(error);
+      errors.push({ pathname: blob.pathname, error: message });
       await supabaseAdmin.from("ingested_blobs").upsert(
         {
           pathname: blob.pathname,
@@ -226,7 +237,7 @@ async function sync() {
           url: blob.url,
           source_prefix: blob.pathname.split("/").slice(0, 2).join("/") + "/",
           status: "failed",
-          metadata: { error: error instanceof Error ? error.message : String(error) },
+          metadata: { error: message },
           last_seen_at: new Date().toISOString(),
         },
         { onConflict: "pathname" },
@@ -241,7 +252,7 @@ export const Route = createFileRoute("/api/blob-queue-sync")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        if (!cronAuthorized(request)) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+        if (!cronAuthorized(request) && !(await adminAuthorized(request))) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
         try {
           return Response.json(await sync(), { status: 200 });
         } catch (error) {
