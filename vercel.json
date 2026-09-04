@@ -14,12 +14,8 @@
   ],
   "crons": [
     {
-      "path": "/api/content/publish-cron",
-      "schedule": "*/5 * * * *"
-    },
-    {
       "path": "/api/blob-queue-sync",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 2 * * *"
     }
   ]
 }
