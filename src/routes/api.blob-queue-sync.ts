@@ -168,7 +168,7 @@ async function sync() {
         });
         if (error && !String(error.message).toLowerCase().includes("duplicate")) throw error;
         discovered += 1;
-      } else if (manifest.status === "approved" && manifest.platform) {
+      } else if (manifest.status === "approved" && manifest.safety_checked && manifest.platform) {
         const platform = String(manifest.platform) as Platform;
         if (!SOCIAL_PLATFORMS.includes(platform)) throw new Error(`Unsupported platform: ${manifest.platform}`);
 
@@ -194,7 +194,7 @@ async function sync() {
             platform,
             destination: manifest.destination || "https://www.resofit.fit",
             keywords: manifest.keywords ?? [],
-            safety_checked: manifest.safety_checked,
+            safety_checked: true,
             status: "approved",
             metadata: {
               source: "vercel_blob_manifest",
