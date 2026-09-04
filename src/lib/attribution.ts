@@ -1,9 +1,10 @@
-// Attribution capture — rsid, utm_source, utm_campaign (and related utm_*)
-// Persisted in localStorage; appended to outbound checkout / partner URLs.
+// Attribution capture — rsid, UTM params and TikTok click ID.
+// Persisted in localStorage so paid attribution survives SPA navigation and checkout.
 
-const STORAGE_KEY = "resofit:attribution:v1";
+const STORAGE_KEY = "resofit:attribution:v2";
 const TRACKED_PARAMS = [
   "rsid",
+  "ttclid",
   "utm_source",
   "utm_campaign",
   "utm_medium",
@@ -16,7 +17,7 @@ export type AttributionParams = Partial<Record<(typeof TRACKED_PARAMS)[number], 
 export function getAttribution(): AttributionParams {
   if (typeof window === "undefined") return {};
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem("resofit:attribution:v1");
     return raw ? (JSON.parse(raw) as AttributionParams) : {};
   } catch {
     return {};
@@ -32,30 +33,32 @@ function save(attr: AttributionParams) {
   }
 }
 
-/** Read current URL once on mount; merge any tracked params into storage. */
+/** Read the current URL and persist paid/marketing attribution. */
 export function captureAttributionFromUrl() {
   if (typeof window === "undefined") return;
   const url = new URL(window.location.href);
   const existing = getAttribution();
   const next: AttributionParams = { ...existing };
   let changed = false;
-  for (const k of TRACKED_PARAMS) {
-    const v = url.searchParams.get(k);
-    if (v && v !== existing[k]) {
-      next[k] = v;
+
+  for (const key of TRACKED_PARAMS) {
+    const value = url.searchParams.get(key);
+    if (value && value !== existing[key]) {
+      next[key] = value;
       changed = true;
     }
   }
+
   if (changed) save(next);
 }
 
-/** Append persisted attribution params to a URL without clobbering existing ones. */
+/** Append persisted attribution params to a URL without clobbering existing values. */
 export function withAttribution(targetUrl: string): string {
   try {
     const url = new URL(targetUrl);
     const attr = getAttribution();
-    for (const [k, v] of Object.entries(attr)) {
-      if (v && !url.searchParams.has(k)) url.searchParams.set(k, v);
+    for (const [key, value] of Object.entries(attr)) {
+      if (value && !url.searchParams.has(key)) url.searchParams.set(key, value);
     }
     return url.toString();
   } catch {
