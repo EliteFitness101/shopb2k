@@ -3,7 +3,7 @@
 // Loading remains consent-gated by the root application.
 
 const META_ID = import.meta.env.VITE_META_PIXEL_ID as string | undefined;
-const TIKTOK_ID = (import.meta.env.VITE_TIKTOK_PIXEL_ID as string | undefined) || "D9MAQ0BC77U97D5Q2QJG";
+const TIKTOK_ID = (import.meta.env.VITE_TIKTOK_PIXEL_ID as string | undefined) || "DADLTG3C77U208ULCJJ0";
 const GA4_ID = (import.meta.env.VITE_GA4_ID as string | undefined) || (import.meta.env.VITE_GA4_MEASUREMENT_ID as string | undefined) || "G-QN8CRFZ5TK";
 const METRICOOL_URL = "https://tracker.metricool.com/c3po.jpg?hash=c09fea6a141d18712f0ea923d611846";
 
