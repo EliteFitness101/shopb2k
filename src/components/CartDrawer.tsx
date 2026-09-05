@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useCartStore } from "@/stores/cartStore";
 import { approxUSD, formatMoney } from "@/lib/shopify";
 import { track } from "@/lib/tracking";
+import { getAttribution } from "@/lib/attribution";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "https://vbqjvmnhdtdhmeeudqnn.supabase.co";
 const PAYSTACK_INIT_URL = `${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/paystack-init`;
@@ -78,6 +79,7 @@ export function CartDrawer() {
     setCheckoutBusy(true);
     try {
       localStorage.setItem("resofit-checkout-contact", JSON.stringify({ fullName, email, phone, address }));
+      const attribution = getAttribution();
 
       // Fire the conversion event with the actual commerce fields before leaving for Paystack.
       // The authoritative purchase event is emitted by the payment-success path, not this click.
@@ -95,7 +97,14 @@ export function CartDrawer() {
       const response = await fetch(PAYSTACK_INIT_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sku, email: email.trim(), name: fullName.trim(), phone: phone.trim(), address: address.trim() }),
+        body: JSON.stringify({
+          sku,
+          email: email.trim(),
+          name: fullName.trim(),
+          phone: phone.trim(),
+          address: address.trim(),
+          ...attribution,
+        }),
       });
       const payload = await response.json().catch(() => null);
       const authorizationUrl = extractPaystackAuthorizationUrl(payload);
