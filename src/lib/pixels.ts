@@ -73,7 +73,7 @@ export function initPixels() {
       w.TiktokAnalyticsObject = t;
       const ttq = (w.ttq ?? { push: (..._items: unknown[]) => 0 }) as TikTokQueue;
       w.ttq = ttq;
-      ttq.methods = ["page", "track", "identify", "instances", "debug", "on", "off", "once", "ready", "alias", "group", "enableCookie", "disableCookie"];
+      ttq.methods = ["page", "track", "identify", "instances", "debug", "on", "off", "once", "ready", "alias", "group", "enableCookie", "disableCookie", "holdConsent", "revokeConsent", "grantConsent"];
       ttq.setAndDefer = function (queue: TikTokQueue, method: string) {
         queue[method] = (...args: unknown[]) => queue.push([method, ...args]);
       };
@@ -90,6 +90,8 @@ export function initPixels() {
         ttq._i[id]._u = src;
         ttq._t = ttq._t || {};
         ttq._t[id] = +new Date();
+        ttq._o = ttq._o || {};
+        ttq._o[id] = {};
         const script = d.createElement("script") as HTMLScriptElement;
         script.type = "text/javascript";
         script.async = true;
