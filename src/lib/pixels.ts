@@ -3,7 +3,7 @@
 // Loading remains consent-gated by the root application.
 
 const META_ID = import.meta.env.VITE_META_PIXEL_ID as string | undefined;
-const TIKTOK_ID = (import.meta.env.VITE_TIKTOK_PIXEL_ID as string | undefined) || "DADLTG3C77U208ULCJJ0";
+const TIKTOK_ID = (import.meta.env.VITE_TIKTOK_PIXEL_ID as string | undefined) || "D9MAQ0BC77U97D5Q2QJG";
 const GA4_ID = (import.meta.env.VITE_GA4_ID as string | undefined) || (import.meta.env.VITE_GA4_MEASUREMENT_ID as string | undefined) || "G-QN8CRFZ5TK";
 const METRICOOL_URL = "https://tracker.metricool.com/c3po.jpg?hash=c09fea6a141d18712f0ea923d611846";
 
@@ -157,7 +157,7 @@ const TIKTOK_MAP: Record<string, string> = {
   product_click: "ClickButton",
   add_to_cart: "AddToCart",
   checkout_start: "InitiateCheckout",
-  purchase_success: "CompletePayment",
+  purchase_success: "Purchase",
   identity_started: "SubmitForm",
   identity_created: "SubmitForm",
 };
