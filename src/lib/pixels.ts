@@ -215,3 +215,5 @@ export function pixelEvent(event: string, payload: PixelEventPayload = {}) {
     void 0;
   }
 }
+
+// Deploy trigger: keep this analytics loader pinned to the restored production TikTok pixel.
