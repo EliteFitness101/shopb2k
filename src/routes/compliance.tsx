@@ -28,7 +28,7 @@ function CompliancePage() {
     ],
     [
       "Operational separation",
-      "shop.resofit.fit and store.resofit.fit remain distinct destinations; this navigation change does not merge, redirect or rebind those storefronts.",
+      "shop.resofit.fit is the canonical customer commerce destination. Internal catalog services remain operational infrastructure and are not presented as a public-facing navigation destination.",
     ],
   ];
   return (
