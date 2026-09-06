@@ -2,9 +2,16 @@ const STORE = process.env.SHOPIFY_STORE_DOMAIN!;
 const CLIENT_ID = process.env.SHOPIFY_CLIENT_ID!;
 const CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET!;
 const API = process.env.SHOPIFY_API_VERSION ?? "2026-07";
+const EXPECTED_STORE = "resocart.myshopify.com";
 
 if (!STORE || !CLIENT_ID || !CLIENT_SECRET) {
   throw new Error("SHOPIFY_STORE_DOMAIN, SHOPIFY_CLIENT_ID and SHOPIFY_CLIENT_SECRET are required");
+}
+
+const normalizeStore = (value: string) => value.replace(/^https?:\/\//, "").replace(/\/$/, "").toLowerCase();
+
+if (normalizeStore(STORE) !== EXPECTED_STORE) {
+  throw new Error(`SHOPIFY_STORE_DOMAIN mismatch: expected ${EXPECTED_STORE}, received ${STORE}`);
 }
 
 const WEBHOOKS = [
@@ -52,6 +59,21 @@ async function gql(token: string, query: string, variables: Record<string, unkno
     throw new Error(`Shopify GraphQL ${res.status}: ${JSON.stringify(json.errors ?? json)}`);
   }
   return json.data;
+}
+
+async function verifyStoreIdentity(token: string) {
+  const data = await gql(token, `
+    query {
+      shop { name myshopifyDomain }
+    }
+  `);
+
+  const actual = normalizeStore(data.shop.myshopifyDomain);
+  console.log(`🏪 Shopify API store identity: ${data.shop.name} (${actual})`);
+
+  if (actual !== EXPECTED_STORE) {
+    throw new Error(`Shopify token/store mismatch: expected ${EXPECTED_STORE}, API resolved ${actual}`);
+  }
 }
 
 async function getExisting(token: string): Promise<Webhook[]> {
@@ -117,6 +139,7 @@ async function updateWebhook(token: string, id: string, url: string) {
 
 async function run() {
   const token = await getAccessToken();
+  await verifyStoreIdentity(token);
 
   console.log(`\n🔍 Checking existing webhooks on ${STORE}...\n`);
   const existing = await getExisting(token);
@@ -125,7 +148,6 @@ async function run() {
   const targets = new Map(WEBHOOKS.map((w) => [w.topic, w]));
   const existingByTopic = new Map(existing.map((w) => [w.topic, w]));
 
-  // Only manage the five target topics. Leave unrelated Shopify webhooks untouched.
   for (const [topic, target] of targets) {
     const found = existingByTopic.get(topic);
     if (!found) {
@@ -138,7 +160,6 @@ async function run() {
     }
   }
 
-  // Remove duplicate subscriptions for the five managed topics, keeping the first correct one.
   const afterUpsert = await getExisting(token);
   for (const target of WEBHOOKS) {
     const matches = afterUpsert.filter((w) => w.topic === target.topic && w.url === target.url);
