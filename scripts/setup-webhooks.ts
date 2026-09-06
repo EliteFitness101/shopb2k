@@ -1,9 +1,10 @@
 const STORE = process.env.SHOPIFY_STORE_DOMAIN!;
-const TOKEN = process.env.SHOPIFY_ADMIN_API_TOKEN!;
+const CLIENT_ID = process.env.SHOPIFY_CLIENT_ID!;
+const CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET!;
 const API = process.env.SHOPIFY_API_VERSION ?? "2026-07";
 
-if (!STORE || !TOKEN) {
-  throw new Error("SHOPIFY_STORE_DOMAIN and SHOPIFY_ADMIN_API_TOKEN are required");
+if (!STORE || !CLIENT_ID || !CLIENT_SECRET) {
+  throw new Error("SHOPIFY_STORE_DOMAIN, SHOPIFY_CLIENT_ID and SHOPIFY_CLIENT_SECRET are required");
 }
 
 const WEBHOOKS = [
@@ -16,12 +17,32 @@ const WEBHOOKS = [
 
 type Webhook = { id: string; topic: string; url: string };
 
-async function gql(query: string, variables: Record<string, unknown> = {}) {
+async function getAccessToken(): Promise<string> {
+  const res = await fetch(`https://${STORE}/admin/oauth/access_token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+    }),
+  });
+
+  const json = (await res.json()) as any;
+  if (!res.ok || !json.access_token) {
+    throw new Error(`Shopify OAuth ${res.status}: ${JSON.stringify(json)}`);
+  }
+
+  console.log(`🔐 Shopify client-credentials token acquired (expires in ${json.expires_in}s)`);
+  return json.access_token;
+}
+
+async function gql(token: string, query: string, variables: Record<string, unknown> = {}) {
   const res = await fetch(`https://${STORE}/admin/api/${API}/graphql.json`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-Shopify-Access-Token": TOKEN,
+      "X-Shopify-Access-Token": token,
     },
     body: JSON.stringify({ query, variables }),
   });
@@ -33,8 +54,8 @@ async function gql(query: string, variables: Record<string, unknown> = {}) {
   return json.data;
 }
 
-async function getExisting(): Promise<Webhook[]> {
-  const data = await gql(`
+async function getExisting(token: string): Promise<Webhook[]> {
+  const data = await gql(token, `
     query {
       webhookSubscriptions(first: 100) {
         nodes { id topic uri }
@@ -49,8 +70,8 @@ async function getExisting(): Promise<Webhook[]> {
   }));
 }
 
-async function deleteWebhook(id: string) {
-  const data = await gql(`
+async function deleteWebhook(token: string, id: string) {
+  const data = await gql(token, `
     mutation Delete($id: ID!) {
       webhookSubscriptionDelete(id: $id) {
         deletedWebhookSubscriptionId
@@ -64,8 +85,8 @@ async function deleteWebhook(id: string) {
   console.log(`  🗑 Deleted ${id}`);
 }
 
-async function createWebhook(topic: string, url: string) {
-  const data = await gql(`
+async function createWebhook(token: string, topic: string, url: string) {
+  const data = await gql(token, `
     mutation Create($topic: WebhookSubscriptionTopic!, $webhookSubscription: WebhookSubscriptionInput!) {
       webhookSubscriptionCreate(topic: $topic, webhookSubscription: $webhookSubscription) {
         webhookSubscription { id topic uri }
@@ -79,8 +100,8 @@ async function createWebhook(topic: string, url: string) {
   console.log(`  ✅ ${topic} [${result.webhookSubscription.id}] → ${url}`);
 }
 
-async function updateWebhook(id: string, url: string) {
-  const data = await gql(`
+async function updateWebhook(token: string, id: string, url: string) {
+  const data = await gql(token, `
     mutation Update($id: ID!, $webhookSubscription: WebhookSubscriptionInput!) {
       webhookSubscriptionUpdate(id: $id, webhookSubscription: $webhookSubscription) {
         webhookSubscription { id topic uri }
@@ -95,8 +116,10 @@ async function updateWebhook(id: string, url: string) {
 }
 
 async function run() {
+  const token = await getAccessToken();
+
   console.log(`\n🔍 Checking existing webhooks on ${STORE}...\n`);
-  const existing = await getExisting();
+  const existing = await getExisting(token);
   console.log(`Found ${existing.length} existing webhook(s).`);
 
   const targets = new Map(WEBHOOKS.map((w) => [w.topic, w]));
@@ -106,25 +129,25 @@ async function run() {
   for (const [topic, target] of targets) {
     const found = existingByTopic.get(topic);
     if (!found) {
-      await createWebhook(topic, target.url);
+      await createWebhook(token, topic, target.url);
     } else if (found.url !== target.url) {
       console.log(`  ⚠️ ${topic} has wrong URL: ${found.url} — updating`);
-      await updateWebhook(found.id, target.url);
+      await updateWebhook(token, found.id, target.url);
     } else {
       console.log(`  ✔️ ${topic} already correct [${found.id}]`);
     }
   }
 
   // Remove duplicate subscriptions for the five managed topics, keeping the first correct one.
-  const afterUpsert = await getExisting();
+  const afterUpsert = await getExisting(token);
   for (const target of WEBHOOKS) {
     const matches = afterUpsert.filter((w) => w.topic === target.topic && w.url === target.url);
     for (const duplicate of matches.slice(1)) {
-      await deleteWebhook(duplicate.id);
+      await deleteWebhook(token, duplicate.id);
     }
   }
 
-  const final = await getExisting();
+  const final = await getExisting(token);
   console.log(`\n📋 Final target webhook state:\n`);
 
   let failed = false;
