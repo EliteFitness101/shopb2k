@@ -2,7 +2,6 @@ const STORE = process.env.SHOPIFY_STORE_DOMAIN!;
 const CLIENT_ID = process.env.SHOPIFY_CLIENT_ID!;
 const CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET!;
 const API = process.env.SHOPIFY_API_VERSION ?? "2026-07";
-const EXPECTED_STORE = "resocart.myshopify.com";
 
 if (!STORE || !CLIENT_ID || !CLIENT_SECRET) {
   throw new Error("SHOPIFY_STORE_DOMAIN, SHOPIFY_CLIENT_ID and SHOPIFY_CLIENT_SECRET are required");
@@ -10,8 +9,9 @@ if (!STORE || !CLIENT_ID || !CLIENT_SECRET) {
 
 const normalizeStore = (value: string) => value.replace(/^https?:\/\//, "").replace(/\/$/, "").toLowerCase();
 
-if (normalizeStore(STORE) !== EXPECTED_STORE) {
-  throw new Error(`SHOPIFY_STORE_DOMAIN mismatch: expected ${EXPECTED_STORE}, received ${STORE}`);
+const configuredStore = normalizeStore(STORE);
+if (!configuredStore.endsWith(".myshopify.com")) {
+  throw new Error(`SHOPIFY_STORE_DOMAIN must be the Shopify myshopify domain, received ${STORE}`);
 }
 
 const WEBHOOKS = [
@@ -25,7 +25,7 @@ const WEBHOOKS = [
 type Webhook = { id: string; topic: string; url: string };
 
 async function getAccessToken(): Promise<string> {
-  const res = await fetch(`https://${STORE}/admin/oauth/access_token`, {
+  const res = await fetch(`https://${configuredStore}/admin/oauth/access_token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -45,7 +45,7 @@ async function getAccessToken(): Promise<string> {
 }
 
 async function gql(token: string, query: string, variables: Record<string, unknown> = {}) {
-  const res = await fetch(`https://${STORE}/admin/api/${API}/graphql.json`, {
+  const res = await fetch(`https://${configuredStore}/admin/api/${API}/graphql.json`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -73,8 +73,8 @@ async function verifyIdentity(token: string) {
   console.log(`🏪 Shopify API store identity: ${data.shop.name} (${actualStore})`);
   console.log(`📦 Shopify API app identity: ${data.app.title} (${data.app.handle}) [${data.app.id}]`);
 
-  if (actualStore !== EXPECTED_STORE) {
-    throw new Error(`Shopify token/store mismatch: expected ${EXPECTED_STORE}, API resolved ${actualStore}`);
+  if (actualStore !== configuredStore) {
+    throw new Error(`Shopify token/store mismatch: configured ${configuredStore}, API resolved ${actualStore}`);
   }
 }
 
@@ -143,7 +143,7 @@ async function run() {
   const token = await getAccessToken();
   await verifyIdentity(token);
 
-  console.log(`\n🔍 Checking existing webhooks on ${STORE}...\n`);
+  console.log(`\n🔍 Checking existing webhooks on ${configuredStore}...\n`);
   const existing = await getExisting(token);
   console.log(`Found ${existing.length} existing webhook(s).`);
 
@@ -188,7 +188,7 @@ async function run() {
     throw new Error("Webhook verification failed");
   }
 
-  console.log(`\n✅ All 5 target webhooks verified on ${STORE}\n`);
+  console.log(`\n✅ All 5 target webhooks verified on ${configuredStore}\n`);
 }
 
 run().catch((err) => {
