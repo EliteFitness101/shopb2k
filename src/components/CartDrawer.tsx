@@ -24,6 +24,12 @@ function extractPaystackAuthorizationUrl(payload: unknown): string | null {
   return typeof direct === "string" && /^https:\/\//.test(direct) ? direct : null;
 }
 
+function isDigitalProduct(product: any): boolean {
+  const tags = Array.isArray(product?.tags) ? product.tags.map((tag: unknown) => String(tag).toLowerCase()) : [];
+  const productType = String(product?.productType ?? "").toLowerCase();
+  return tags.includes("digital") || productType.includes("digital");
+}
+
 export function CartDrawer() {
   const [open, setOpen] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -41,6 +47,7 @@ export function CartDrawer() {
   const currency = items[0]?.price.currencyCode ?? "NGN";
   const totalAmount = items.reduce((s, i) => parseFloat(i.price.amount) * i.quantity + s, 0);
   const totalMoney = { amount: totalAmount.toString(), currencyCode: currency };
+  const isDigital = items.length === 1 && items[0].quantity === 1 && isDigitalProduct(items[0].product);
 
   useEffect(() => {
     if (!open) return;
@@ -66,23 +73,22 @@ export function CartDrawer() {
     }
 
     const primary = items[0];
+    const digital = isDigitalProduct(primary.product);
     const sku = primary.product.sku?.trim();
     if (!sku) {
       toast.error("This product is missing its canonical SKU. Please return to the product page and try again.");
       return;
     }
-    if (!fullName.trim() || !email.trim() || !phone.trim() || !address.trim()) {
-      toast.error("Complete your name, email, phone and delivery address first.");
+    if (!fullName.trim() || !email.trim() || !phone.trim() || (!digital && !address.trim())) {
+      toast.error(digital ? "Complete your name, email and phone first." : "Complete your name, email, phone and delivery address first.");
       return;
     }
 
     setCheckoutBusy(true);
     try {
-      localStorage.setItem("resofit-checkout-contact", JSON.stringify({ fullName, email, phone, address }));
+      localStorage.setItem("resofit-checkout-contact", JSON.stringify({ fullName, email, phone, address: digital ? "" : address }));
       const attribution = getAttribution();
 
-      // Fire the conversion event with the actual commerce fields before leaving for Paystack.
-      // The authoritative purchase event is emitted by the payment-success path, not this click.
       track("checkout_start", {
         product_id: primary.product.id,
         product_title: primary.product.title,
@@ -97,15 +103,15 @@ export function CartDrawer() {
       const response = await fetch(PAYSTACK_INIT_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           sku,
           email: email.trim(),
           name: fullName.trim(),
           phone: phone.trim(),
-          address: address.trim(),
+          ...(digital ? {} : { address: address.trim() }),
           ...attribution,
-        }),
-      });
+        },
+      } as RequestInit);
       const payload = await response.json().catch(() => null);
       const authorizationUrl = extractPaystackAuthorizationUrl(payload);
       if (!response.ok || !authorizationUrl) {
@@ -155,7 +161,7 @@ export function CartDrawer() {
               </div></div>
               <div className="flex-shrink-0 space-y-4 border-t border-border/60 bg-background pt-4">
                 <div className="flex items-end justify-between"><div><p className="text-xs uppercase tracking-widest text-muted-foreground">Total</p><p className="font-display text-3xl text-gold">{formatMoney(totalMoney)}</p><p className="text-xs text-muted-foreground">≈ {approxUSD(totalMoney)}</p></div><p className="text-right text-[11px] uppercase tracking-widest text-muted-foreground">Secure Paystack<br />Card · Bank · USSD</p></div>
-                <div className="grid gap-2"><Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full name" autoComplete="name" /><Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" type="email" autoComplete="email" /><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" type="tel" autoComplete="tel" /><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Delivery address" autoComplete="street-address" /></div>
+                <div className="grid gap-2"><Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full name" autoComplete="name" /><Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" type="email" autoComplete="email" /><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" type="tel" autoComplete="tel" />{!isDigital && <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Delivery address" autoComplete="street-address" />}</div>
                 <Button onClick={handleCheckout} className="h-12 w-full rounded-sm bg-gold text-xs font-semibold uppercase tracking-widest text-gold-foreground hover:bg-gold/90" disabled={items.length === 0 || isLoading || checkoutBusy}>{checkoutBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CreditCard className="mr-2 h-4 w-4" />Pay securely with Paystack</>}</Button>
                 <Button variant="ghost" className="w-full text-xs" onClick={clearCart}>Clear cart</Button>
               </div>
