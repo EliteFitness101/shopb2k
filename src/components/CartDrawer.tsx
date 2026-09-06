@@ -103,15 +103,15 @@ export function CartDrawer() {
       const response = await fetch(PAYSTACK_INIT_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: {
+        body: JSON.stringify({
           sku,
           email: email.trim(),
           name: fullName.trim(),
           phone: phone.trim(),
           ...(digital ? {} : { address: address.trim() }),
           ...attribution,
-        },
-      } as RequestInit);
+        }),
+      });
       const payload = await response.json().catch(() => null);
       const authorizationUrl = extractPaystackAuthorizationUrl(payload);
       if (!response.ok || !authorizationUrl) {
