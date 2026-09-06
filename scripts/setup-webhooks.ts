@@ -61,18 +61,20 @@ async function gql(token: string, query: string, variables: Record<string, unkno
   return json.data;
 }
 
-async function verifyStoreIdentity(token: string) {
+async function verifyIdentity(token: string) {
   const data = await gql(token, `
     query {
       shop { name myshopifyDomain }
+      app { id title handle }
     }
   `);
 
-  const actual = normalizeStore(data.shop.myshopifyDomain);
-  console.log(`🏪 Shopify API store identity: ${data.shop.name} (${actual})`);
+  const actualStore = normalizeStore(data.shop.myshopifyDomain);
+  console.log(`🏪 Shopify API store identity: ${data.shop.name} (${actualStore})`);
+  console.log(`📦 Shopify API app identity: ${data.app.title} (${data.app.handle}) [${data.app.id}]`);
 
-  if (actual !== EXPECTED_STORE) {
-    throw new Error(`Shopify token/store mismatch: expected ${EXPECTED_STORE}, API resolved ${actual}`);
+  if (actualStore !== EXPECTED_STORE) {
+    throw new Error(`Shopify token/store mismatch: expected ${EXPECTED_STORE}, API resolved ${actualStore}`);
   }
 }
 
@@ -139,7 +141,7 @@ async function updateWebhook(token: string, id: string, url: string) {
 
 async function run() {
   const token = await getAccessToken();
-  await verifyStoreIdentity(token);
+  await verifyIdentity(token);
 
   console.log(`\n🔍 Checking existing webhooks on ${STORE}...\n`);
   const existing = await getExisting(token);
