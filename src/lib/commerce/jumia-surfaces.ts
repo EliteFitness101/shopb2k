@@ -8,18 +8,14 @@ export type JumiaInventorySurface = {
   authorizedFeedRequired: true;
 };
 
-/**
- * Verified public Jumia Nigeria discovery surfaces.
- * These are source references only; we do not scrape or bypass Jumia controls.
- * A machine-readable authorized feed remains required before automated ingestion.
- */
+/** Verified Jumia Nigeria discovery surfaces currently confirmed live. */
 export const JUMIA_VERIFIED_INVENTORY_SURFACES: readonly JumiaInventorySurface[] = [
   {
     code: "partner-sellers",
     name: "Partner Sellers",
     url: "https://www.jumia.com.ng/slp/partner-sellers",
     verifiedProductCount: 1020,
-    purpose: "Partner-seller discovery and source validation",
+    purpose: "Partner-seller discovery",
     accessMode: "public_web_surface",
     authorizedFeedRequired: true,
   },
@@ -28,7 +24,7 @@ export const JUMIA_VERIFIED_INVENTORY_SURFACES: readonly JumiaInventorySurface[]
     name: "Shopping Feed",
     url: "https://www.jumia.com.ng/slp/shopping-feed",
     verifiedProductCount: 172,
-    purpose: "Shopping-feed discovery surface",
+    purpose: "Shopping-feed discovery",
     accessMode: "public_web_surface",
     authorizedFeedRequired: true,
   },
@@ -56,24 +52,6 @@ export const JUMIA_VERIFIED_INVENTORY_SURFACES: readonly JumiaInventorySurface[]
     url: "https://www.jumia.com.ng/slp/trusted-store-seller",
     verifiedProductCount: 684,
     purpose: "Trusted-store discovery",
-    accessMode: "public_web_surface",
-    authorizedFeedRequired: true,
-  },
-  {
-    code: "seller-network",
-    name: "Seller Network",
-    url: "https://www.jumia.com.ng/slp/seller-network",
-    verifiedProductCount: 5235,
-    purpose: "Broader seller-network discovery",
-    accessMode: "public_web_surface",
-    authorizedFeedRequired: true,
-  },
-  {
-    code: "seller-support",
-    name: "Seller Support",
-    url: "https://www.jumia.com.ng/slp/seller-support",
-    verifiedProductCount: 8541,
-    purpose: "Broader seller/support discovery surface",
     accessMode: "public_web_surface",
     authorizedFeedRequired: true,
   },
