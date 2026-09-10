@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { supabase } from "@/integrations/supabase/client";
 
 export type JumiaOffer = {
   id: string;
@@ -13,7 +13,7 @@ export type JumiaOffer = {
 };
 
 export const getJumiaOffers = createServerFn({ method: "GET" }).handler(async () => {
-  const { data: source, error: sourceError } = await supabaseAdmin
+  const { data: source, error: sourceError } = await supabase
     .from("commerce_sources")
     .select("id,name,enabled,checkout_mode")
     .eq("name", "Jumia Nigeria")
@@ -22,7 +22,7 @@ export const getJumiaOffers = createServerFn({ method: "GET" }).handler(async ()
   if (sourceError) throw new Error(`Jumia source lookup failed: ${sourceError.message}`);
   if (!source?.enabled) return { source: null, offers: [] as JumiaOffer[] };
 
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await supabase
     .from("commerce_offers")
     .select("id,title,price,currency,availability,fulfillment_mode,external_url,verified_at")
     .eq("source_id", source.id)
