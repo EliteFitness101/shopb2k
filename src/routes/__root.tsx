@@ -25,20 +25,26 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ResoFit — Africa's Personalized Wellness Platform" },
-      { name: "description", content: "Africa's Personalized Wellness Platform for clarity, strength, longevity and healthy living." },
-      { name: "author", content: "ResoFit" },
-      { property: "og:title", content: "ResoFit — Africa's Personalized Wellness Platform" },
-      { property: "og:description", content: "Personalized wellness, ResoFlex™ equipment and ChatB2K™ experiences." },
-      { property: "og:type", content: "website" }, { property: "og:url", content: `${CANONICAL_ORIGIN}/` },
-      { property: "og:image", content: MAIN_COVER }, { property: "og:image:width", content: "1200" }, { property: "og:image:height", content: "630" },
-      { name: "twitter:card", content: "summary_large_image" }, { name: "twitter:title", content: "ResoFit — Africa's Personalized Wellness Platform" },
-      { name: "twitter:description", content: "Personalized wellness, ResoFlex™ equipment and ChatB2K™ experiences." }, { name: "twitter:image", content: MAIN_COVER },
-    ], links: [{ rel: "stylesheet", href: appCss }, { rel: "canonical", href: `${CANONICAL_ORIGIN}/` }],
-  }), shellComponent: RootShell, component: RootComponent, notFoundComponent: NotFoundComponent, errorComponent: ErrorComponent,
+  head: ({ matches }) => {
+    const pathname = matches.at(-1)?.pathname || "/";
+    const canonicalUrl = new URL(pathname, CANONICAL_ORIGIN).toString();
+
+    return {
+      meta: [
+        { charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" },
+        { title: "ResoFit — Africa's Personalized Wellness Platform" },
+        { name: "description", content: "Africa's Personalized Wellness Platform for clarity, strength, longevity and healthy living." },
+        { name: "author", content: "ResoFit" },
+        { property: "og:title", content: "ResoFit — Africa's Personalized Wellness Platform" },
+        { property: "og:description", content: "Personalized wellness, ResoFlex™ equipment and ChatB2K™ experiences." },
+        { property: "og:type", content: "website" }, { property: "og:url", content: canonicalUrl },
+        { property: "og:image", content: MAIN_COVER }, { property: "og:image:width", content: "1200" }, { property: "og:image:height", content: "630" },
+        { name: "twitter:card", content: "summary_large_image" }, { name: "twitter:title", content: "ResoFit — Africa's Personalized Wellness Platform" },
+        { name: "twitter:description", content: "Personalized wellness, ResoFlex™ equipment and ChatB2K™ experiences." }, { name: "twitter:image", content: MAIN_COVER },
+      ],
+      links: [{ rel: "stylesheet", href: appCss }, { rel: "canonical", href: canonicalUrl }],
+    };
+  }, shellComponent: RootShell, component: RootComponent, notFoundComponent: NotFoundComponent, errorComponent: ErrorComponent,
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
