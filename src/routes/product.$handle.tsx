@@ -116,7 +116,6 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
   const addItem = useCartStore((s) => s.addItem);
   const isLoading = useCartStore((s) => s.isLoading);
 
-  // Engagement signals + recently viewed.
   useEffect(() => {
     recordEngagement(product.id, "pdp_depth");
     preloadOnIdle(images.slice(1, 4).map((i) => i.url));
@@ -160,7 +159,6 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
       </Link>
 
       <div className="grid gap-12 lg:grid-cols-2">
-        {/* Gallery */}
         <div className="space-y-4">
           <ProductImage
             src={images[activeImg]?.url}
@@ -193,7 +191,6 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
           )}
         </div>
 
-        {/* Info */}
         <div>
           {product.productType && (
             <p className="text-xs uppercase tracking-[0.3em] text-gold">{product.productType}</p>
@@ -222,7 +219,6 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
             <p className="mt-8 whitespace-pre-line text-muted-foreground">{product.description}</p>
           )}
 
-          {/* Variant selection */}
           {variants.length > 1 && variants[0].title !== "Default Title" && (
             <div className="mt-8 border-t border-border/60 pt-6">
               <p className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">Option</p>
@@ -246,7 +242,6 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
             </div>
           )}
 
-          {/* Quantity + Add */}
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <div className="flex h-12 items-center border border-border">
               <button
@@ -283,7 +278,6 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
             </button>
           </div>
 
-          {/* Shipping & delivery */}
           <ul className="mt-10 space-y-3 border-t border-border/60 pt-6 text-sm">
             <li className="flex items-start gap-3">
               <Truck className="mt-0.5 h-4 w-4 text-gold" />
@@ -313,7 +307,7 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
               <span>
                 <strong className="text-foreground">Secure checkout:</strong>{" "}
                 <span className="text-muted-foreground">
-                  Paystack (₦) · Card (USD) · Pay on delivery in Lagos
+                  Shopify checkout · payment options shown at checkout
                 </span>
               </span>
             </li>
