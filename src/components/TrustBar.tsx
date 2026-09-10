@@ -1,7 +1,7 @@
 import { ShieldCheck, Truck, MessageCircle, BadgeCheck } from "lucide-react";
 
 const items = [
-  { Icon: ShieldCheck, label: "Secure Checkout", sub: "Paystack encrypted" },
+  { Icon: ShieldCheck, label: "Secure Checkout", sub: "Shopify checkout" },
   { Icon: Truck, label: "Nationwide Delivery", sub: "Ships across Nigeria" },
   { Icon: MessageCircle, label: "WhatsApp Support", sub: "CoachB2K replies fast" },
   { Icon: BadgeCheck, label: "Verified Results", sub: "Real customer wins" },
