@@ -103,7 +103,7 @@ export function SiteFooter() {
             </div>
           </div>
           <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[10px] uppercase tracking-widest text-muted-foreground/80">
-            <span>Secure checkout · Paystack</span>
+            <span>Secure checkout · Shopify</span>
             <span>Analytics by consent</span>
             <span>Privacy controls available</span>
             <span>Member access protected</span>
