@@ -14,7 +14,8 @@ const NAV = [
     { label: "Success Stories", to: "/success-stories" },
   ] },
   { label: "Shop", items: [
-    { label: "Shop", href: "https://shop.resofit.fit" },
+    { label: "ResoFit Shop", to: "/shop" },
+    { label: "Marketplace", href: "https://shop.resofit.fit" },
   ] },
   { label: "ChatB2K™", items: [
     { label: "Assessment", to: "/me" },
