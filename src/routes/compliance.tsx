@@ -27,8 +27,8 @@ function CompliancePage() {
       "Analytics and advertising pixels are loaded only after analytics consent in this frontend. Essential operational storage remains available where needed to provide requested functionality.",
     ],
     [
-      "Operational separation",
-      "shop.resofit.fit is the canonical customer commerce destination. Internal catalog services remain operational infrastructure and are not presented as a public-facing navigation destination.",
+      "Commerce architecture",
+      "resofit.fit/shop is the primary ResoFit shopping experience for first-party ResoFlex products, ResoFit services, personalized recommendations and native checkout. shop.resofit.fit is the specialized marketplace surface for broader supplier, partner and external offers, including Jumia where applicable.",
     ],
   ];
   return (
