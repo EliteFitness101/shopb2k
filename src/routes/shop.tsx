@@ -18,6 +18,8 @@ import { useCartStore } from "@/stores/cartStore";
 
 type SortKey = "featured" | "newest" | "price_asc" | "price_desc";
 
+const SHOP_URL = "https://www.resofit.fit/shop";
+
 export const Route = createFileRoute("/shop")({
   head: () => ({
     meta: [
@@ -33,7 +35,10 @@ export const Route = createFileRoute("/shop")({
         content:
           "Competition-grade barbells, bumper plates, dumbbells, and power racks. Secure Paystack checkout.",
       },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: SHOP_URL },
     ],
+    links: [{ rel: "canonical", href: SHOP_URL }],
   }),
   validateSearch: (s: { type?: string; vendor?: string; sort?: string }) => ({
     type: typeof s.type === "string" ? (s.type as string) : undefined,
