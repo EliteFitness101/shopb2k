@@ -10,121 +10,47 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { ProductImage } from "@/components/ProductImage";
 import { RecommendedProducts } from "@/components/RecommendedProducts";
 import { RecentlyViewed, recordRecentlyViewed } from "@/components/RecentlyViewed";
-import {
-  PRODUCT_BY_HANDLE_QUERY,
-  approxUSD,
-  formatMoney,
-  storefrontApiRequest,
-  type ShopifyProductNode,
-} from "@/lib/shopify";
+import { PRODUCT_BY_HANDLE_QUERY, approxUSD, formatMoney, storefrontApiRequest, type ShopifyProductNode } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 
 export const Route = createFileRoute("/product/$handle")({
   component: ProductPage,
   errorComponent: function ErrorComponent({ error, reset }) {
     const router = useRouter();
-    return (
-      <div className="min-h-screen bg-background">
-        <SiteHeader />
-        <div className="mx-auto max-w-3xl px-6 py-24 text-center">
-          <p className="text-sm text-muted-foreground">{error.message}</p>
-          <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="mt-6 underline hover:text-gold"
-          >
-            Try again
-          </button>
-        </div>
-      </div>
-    );
+    return <div className="min-h-screen bg-background"><SiteHeader /><div className="mx-auto max-w-3xl px-6 py-24 text-center"><p className="text-sm text-muted-foreground">{error.message}</p><button onClick={() => { router.invalidate(); reset(); }} className="mt-6 underline hover:text-gold">Try again</button></div></div>;
   },
   notFoundComponent: function NotFoundComponent() {
     const { handle } = Route.useParams();
-    return (
-      <div className="min-h-screen bg-background">
-        <SiteHeader />
-        <div className="mx-auto max-w-3xl px-6 py-24 text-center">
-          <h1 className="font-display text-5xl">Product not found</h1>
-          <p className="mt-4 text-muted-foreground">
-            We couldn't find <span className="text-foreground">{handle}</span>.
-          </p>
-          <Link to="/shop" className="mt-8 inline-block text-gold underline">
-            Back to shop →
-          </Link>
-        </div>
-      </div>
-    );
+    return <div className="min-h-screen bg-background"><SiteHeader /><div className="mx-auto max-w-3xl px-6 py-24 text-center"><h1 className="font-display text-5xl">Product not found</h1><p className="mt-4 text-muted-foreground">We couldn't find <span className="text-foreground">{handle}</span>.</p><Link to="/shop" className="mt-8 inline-block text-gold underline">Back to shop →</Link></div></div>;
   },
 });
 
 async function fetchProductByHandle(handle: string): Promise<ShopifyProductNode | null> {
-  const res = await storefrontApiRequest<{ product: ShopifyProductNode | null }>(
-    PRODUCT_BY_HANDLE_QUERY,
-    { handle },
-  );
+  const res = await storefrontApiRequest<{ product: ShopifyProductNode | null }>(PRODUCT_BY_HANDLE_QUERY, { handle });
   return res?.data?.product ?? null;
 }
 
 function ProductPage() {
   const { handle } = Route.useParams();
-  const { data, isLoading } = useQuery({
-    queryKey: ["product", handle],
-    queryFn: async () => {
-      const p = await fetchProductByHandle(handle);
-      if (!p) throw notFound();
-      return p;
-    },
-  });
-
-  if (isLoading || !data) {
-    return (
-      <div className="min-h-screen bg-background">
-        <SiteHeader />
-        <div className="flex justify-center py-32">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <ProductDetail product={data} />
-      <SiteFooter />
-    </div>
-  );
+  const { data, isLoading } = useQuery({ queryKey: ["product", handle], queryFn: async () => { const p = await fetchProductByHandle(handle); if (!p) throw notFound(); return p; } });
+  if (isLoading || !data) return <div className="min-h-screen bg-background"><SiteHeader /><div className="flex justify-center py-32"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div></div>;
+  return <div className="min-h-screen bg-background"><SiteHeader /><ProductDetail product={data} /><SiteFooter /></div>;
 }
 
 function ProductDetail({ product }: { product: ShopifyProductNode }) {
   const images = product.images.edges.map((e) => e.node);
   const variants = product.variants.edges.map((e) => e.node);
-  const [variantId, setVariantId] = useState<string>(
-    (variants.find((v) => v.availableForSale) ?? variants[0])?.id ?? "",
-  );
+  const [variantId, setVariantId] = useState<string>((variants.find((v) => v.availableForSale) ?? variants[0])?.id ?? "");
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
-
-  const selectedVariant = useMemo(
-    () => variants.find((v) => v.id === variantId) ?? variants[0],
-    [variantId, variants],
-  );
-
+  const selectedVariant = useMemo(() => variants.find((v) => v.id === variantId) ?? variants[0], [variantId, variants]);
   const addItem = useCartStore((s) => s.addItem);
   const isLoading = useCartStore((s) => s.isLoading);
 
   useEffect(() => {
     recordEngagement(product.id, "pdp_depth");
     preloadOnIdle(images.slice(1, 4).map((i) => i.url));
-    recordRecentlyViewed({
-      handle: product.handle,
-      title: product.title,
-      image: images[0]?.url,
-      price: formatMoney(variants[0]?.price ?? { amount: "0", currencyCode: "NGN" }),
-    });
+    recordRecentlyViewed({ handle: product.handle, title: product.title, image: images[0]?.url, price: formatMoney(variants[0]?.price ?? { amount: "0", currencyCode: "NGN" }) });
   }, [product.id, product.handle, product.title, images, variants]);
 
   const perf = getCachedPerf(product.id);
@@ -132,191 +58,39 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
 
   const handleAdd = async () => {
     if (!selectedVariant) return;
-    await addItem({
-      product: {
-        id: product.id,
-        title: product.title,
-        handle: product.handle,
-        images: product.images,
-      },
-      variantId: selectedVariant.id,
-      variantTitle: selectedVariant.title,
-      price: selectedVariant.price,
-      quantity: qty,
-      selectedOptions: selectedVariant.selectedOptions,
-    });
+    await addItem({ product: { id: product.id, title: product.title, handle: product.handle, images: product.images }, variantId: selectedVariant.id, variantTitle: selectedVariant.title, price: selectedVariant.price, quantity: qty, selectedOptions: selectedVariant.selectedOptions });
     recordEngagement(product.id, "add_to_cart");
     toast.success(`Added ${qty}× ${product.title} to cart`, { position: "top-center" });
   };
 
-  return (
-    <article className="mx-auto max-w-7xl px-6 py-12">
-      <Link
-        to="/shop"
-        className="mb-8 inline-flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground hover:text-gold"
-      >
-        <ArrowLeft className="h-3 w-3" /> Back to shop
-      </Link>
+  useEffect(() => {
+    if (typeof window === "undefined" || !selectedVariant?.availableForSale) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("assessment") !== "1") return;
+    const numericId = String(selectedVariant.id).match(/(\d+)$/)?.[1];
+    if (!numericId) return;
+    if (sessionStorage.getItem("resofit:assessment_checkout_started") === selectedVariant.id) return;
+    sessionStorage.setItem("resofit:assessment_checkout_started", selectedVariant.id);
+    recordEngagement(product.id, "add_to_cart");
+    window.location.assign(`https://resocart.myshopify.com/cart/${numericId}:1`);
+  }, [product.id, selectedVariant]);
 
-      <div className="grid gap-12 lg:grid-cols-2">
-        <div className="space-y-4">
-          <ProductImage
-            src={images[activeImg]?.url}
-            alt={images[activeImg]?.altText}
-            title={product.title}
-            category={product.productType}
-            productId={product.id}
-            priority
-          />
-          {images.length > 1 && (
-            <div className="grid grid-cols-5 gap-2">
-              {images.map((img, i) => (
-                <button
-                  key={img.url}
-                  type="button"
-                  onClick={() => setActiveImg(i)}
-                  aria-label={`View image ${i + 1}`}
-                  className={`overflow-hidden border ${i === activeImg ? "border-gold" : "border-border/60"}`}
-                >
-                  <ProductImage
-                    src={img.url}
-                    alt={img.altText}
-                    title={`${product.title} view ${i + 1}`}
-                    category={product.productType}
-                    tier={i === 0 ? "medium" : "low"}
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div>
-          {product.productType && (
-            <p className="text-xs uppercase tracking-[0.3em] text-gold">{product.productType}</p>
-          )}
-          <h1 className="mt-3 font-display text-5xl leading-tight md:text-6xl">{product.title}</h1>
-
-          {confident && (
-            <div className="mt-4 inline-flex items-center gap-2 rounded-sm border border-gold/40 bg-gold/10 px-3 py-1 text-[10px] uppercase tracking-widest text-gold">
-              <Sparkles className="h-3 w-3" /> Community pick · high engagement
-            </div>
-          )}
-
-          <div className="mt-6 flex items-baseline gap-4">
-            <p className="font-display text-4xl text-gold">{formatMoney(selectedVariant.price)}</p>
-            <p className="text-sm uppercase tracking-widest text-muted-foreground">
-              ≈ {approxUSD(selectedVariant.price)}
-            </p>
-          </div>
-
-          {product.descriptionHtml ? (
-            <div
-              className="prose prose-invert mt-8 max-w-none text-muted-foreground"
-              dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
-            />
-          ) : (
-            <p className="mt-8 whitespace-pre-line text-muted-foreground">{product.description}</p>
-          )}
-
-          {variants.length > 1 && variants[0].title !== "Default Title" && (
-            <div className="mt-8 border-t border-border/60 pt-6">
-              <p className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">Option</p>
-              <div className="flex flex-wrap gap-2">
-                {variants.map((v) => (
-                  <button
-                    key={v.id}
-                    type="button"
-                    onClick={() => setVariantId(v.id)}
-                    disabled={!v.availableForSale}
-                    className={`rounded-sm border px-4 py-2 text-xs uppercase tracking-widest transition-colors ${
-                      v.id === variantId
-                        ? "border-gold bg-gold/10 text-gold"
-                        : "border-border text-muted-foreground hover:border-gold/60 hover:text-foreground"
-                    } disabled:line-through disabled:opacity-40`}
-                  >
-                    {v.title}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <div className="flex h-12 items-center border border-border">
-              <button
-                type="button"
-                onClick={() => setQty((q) => Math.max(1, q - 1))}
-                className="h-full w-12 text-lg hover:text-gold"
-                aria-label="Decrease quantity"
-              >
-                −
-              </button>
-              <span className="w-10 text-center">{qty}</span>
-              <button
-                type="button"
-                onClick={() => setQty((q) => q + 1)}
-                className="h-full w-12 text-lg hover:text-gold"
-                aria-label="Increase quantity"
-              >
-                +
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={handleAdd}
-              disabled={isLoading || !selectedVariant?.availableForSale}
-              className="inline-flex h-12 flex-1 items-center justify-center rounded-sm bg-gold px-8 text-xs font-semibold uppercase tracking-widest text-gold-foreground hover:bg-gold/90 disabled:opacity-50"
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : selectedVariant?.availableForSale ? (
-                "Add to cart"
-              ) : (
-                "Sold out"
-              )}
-            </button>
-          </div>
-
-          <ul className="mt-10 space-y-3 border-t border-border/60 pt-6 text-sm">
-            <li className="flex items-start gap-3">
-              <Truck className="mt-0.5 h-4 w-4 text-gold" />
-              <span>
-                <strong className="text-foreground">Lagos:</strong>{" "}
-                <span className="text-muted-foreground">2–4 business days · from ₦5,000</span>
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <Package className="mt-0.5 h-4 w-4 text-gold" />
-              <span>
-                <strong className="text-foreground">Nigeria nationwide:</strong>{" "}
-                <span className="text-muted-foreground">
-                  4–7 business days · calculated at checkout
-                </span>
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <Truck className="mt-0.5 h-4 w-4 text-gold" />
-              <span>
-                <strong className="text-foreground">International:</strong>{" "}
-                <span className="text-muted-foreground">7–21 business days · DHL / freight</span>
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <ShieldCheck className="mt-0.5 h-4 w-4 text-gold" />
-              <span>
-                <strong className="text-foreground">Secure checkout:</strong>{" "}
-                <span className="text-muted-foreground">
-                  Shopify checkout · payment options shown at checkout
-                </span>
-              </span>
-            </li>
-          </ul>
-        </div>
+  return <article className="mx-auto max-w-7xl px-6 py-12">
+    <Link to="/shop" className="mb-8 inline-flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground hover:text-gold"><ArrowLeft className="h-3 w-3" /> Back to shop</Link>
+    <div className="grid gap-12 lg:grid-cols-2">
+      <div className="space-y-4"><ProductImage src={images[activeImg]?.url} alt={images[activeImg]?.altText} title={product.title} category={product.productType} productId={product.id} priority />{images.length > 1 && <div className="grid grid-cols-5 gap-2">{images.map((img, i) => <button key={img.url} type="button" onClick={() => setActiveImg(i)} aria-label={`View image ${i + 1}`} className={`overflow-hidden border ${i === activeImg ? "border-gold" : "border-border/60"}`}><ProductImage src={img.url} alt={img.altText} title={`${product.title} view ${i + 1}`} category={product.productType} tier={i === 0 ? "medium" : "low"} /></button>)}</div>}</div>
+      <div>
+        {product.productType && <p className="text-xs uppercase tracking-[0.3em] text-gold">{product.productType}</p>}
+        <h1 className="mt-3 font-display text-5xl leading-tight md:text-6xl">{product.title}</h1>
+        {confident && <div className="mt-4 inline-flex items-center gap-2 rounded-sm border border-gold/40 bg-gold/10 px-3 py-1 text-[10px] uppercase tracking-widest text-gold"><Sparkles className="h-3 w-3" /> Community pick · high engagement</div>}
+        <div className="mt-6 flex items-baseline gap-4"><p className="font-display text-4xl text-gold">{formatMoney(selectedVariant.price)}</p><p className="text-sm uppercase tracking-widest text-muted-foreground">≈ {approxUSD(selectedVariant.price)}</p></div>
+        {product.descriptionHtml ? <div className="prose prose-invert mt-8 max-w-none text-muted-foreground" dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} /> : <p className="mt-8 whitespace-pre-line text-muted-foreground">{product.description}</p>}
+        {variants.length > 1 && variants[0].title !== "Default Title" && <div className="mt-8 border-t border-border/60 pt-6"><p className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">Option</p><div className="flex flex-wrap gap-2">{variants.map((v) => <button key={v.id} type="button" onClick={() => setVariantId(v.id)} disabled={!v.availableForSale} className={`rounded-sm border px-4 py-2 text-xs uppercase tracking-widest transition-colors ${v.id === variantId ? "border-gold bg-gold/10 text-gold" : "border-border text-muted-foreground hover:border-gold/60 hover:text-foreground"} disabled:line-through disabled:opacity-40`}>{v.title}</button>)}</div></div>}
+        <div className="mt-8 flex flex-wrap items-center gap-4"><div className="flex h-12 items-center border border-border"><button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} className="h-full w-12 text-lg hover:text-gold" aria-label="Decrease quantity">−</button><span className="w-10 text-center">{qty}</span><button type="button" onClick={() => setQty((q) => q + 1)} className="h-full w-12 text-lg hover:text-gold" aria-label="Increase quantity">+</button></div><button type="button" onClick={handleAdd} disabled={isLoading || !selectedVariant?.availableForSale} className="inline-flex h-12 flex-1 items-center justify-center rounded-sm bg-gold px-8 text-xs font-semibold uppercase tracking-widest text-gold-foreground hover:bg-gold/90 disabled:opacity-50">{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : selectedVariant?.availableForSale ? "Add to cart" : "Sold out"}</button></div>
+        <ul className="mt-10 space-y-3 border-t border-border/60 pt-6 text-sm"><li className="flex items-start gap-3"><Truck className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">Lagos:</strong> <span className="text-muted-foreground">2–4 business days · from ₦5,000</span></span></li><li className="flex items-start gap-3"><Package className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">Nigeria nationwide:</strong> <span className="text-muted-foreground">4–7 business days · calculated at checkout</span></span></li><li className="flex items-start gap-3"><Truck className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">International:</strong> <span className="text-muted-foreground">7–21 business days · DHL / freight</span></span></li><li className="flex items-start gap-3"><ShieldCheck className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">Secure checkout:</strong> <span className="text-muted-foreground">Shopify checkout · payment options shown at checkout</span></span></li></ul>
       </div>
-
-      <RecommendedProducts currentHandle={product.handle} productType={product.productType} />
-      <RecentlyViewed excludeHandle={product.handle} />
-    </article>
-  );
+    </div>
+    <RecommendedProducts currentHandle={product.handle} productType={product.productType} />
+    <RecentlyViewed excludeHandle={product.handle} />
+  </article>;
 }
