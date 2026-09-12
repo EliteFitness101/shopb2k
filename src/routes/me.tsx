@@ -12,82 +12,46 @@ const EXTERNAL_RESET_URL = "https://reset.resofit.fit";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "https://vbqjvmnhdtdhmeeudqnn.supabase.co";
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const supabase = SUPABASE_ANON_KEY ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
-const CANONICAL_HOSTS = new Set(["resofit.fit", "www.resofit.fit", "shop.resofit.fit", "dashboard.resofit.fit"]);
 type Answers = { goal: string; activity: string; diet: string };
 type Recommendation = { title: string; summary: string; reason: string; url: string; cta: string };
 type Option = { value: string; label: string };
-type CanonicalEntity = { id: string; name: string; description: string | null; metadata: Record<string, unknown> | null };
+type ChatB2KRecommendation = { title: string; summary?: string; rationale?: string; route?: string; handle?: string; sku?: string; price?: number; inventory?: number };
 const GOALS: Option[] = [
   { value: "fat_loss", label: "Lose body fat" }, { value: "muscle", label: "Build lean muscle" },
   { value: "energy", label: "More energy & focus" }, { value: "reset", label: "Full reset & wellness" },
 ];
 const ACTIVITIES: Option[] = [
-  { value: "low", label: "Sedentary (desk work)" }, { value: "moderate", label: "Active 2–4×/week" },
-  { value: "high", label: "Athletic / daily training" },
+  { value: "low", label: "Sedentary (desk work)" }, { value: "moderate", label: "Active 2–4×/week" }, { value: "high", label: "Athletic / daily training" },
 ];
 const DIETS: Option[] = [
-  { value: "omnivore", label: "Omnivore" }, { value: "pescatarian", label: "Pescatarian" },
-  { value: "vegetarian", label: "Vegetarian" }, { value: "vegan", label: "Vegan" },
+  { value: "omnivore", label: "Omnivore" }, { value: "pescatarian", label: "Pescatarian" }, { value: "vegetarian", label: "Vegetarian" }, { value: "vegan", label: "Vegan" },
 ];
 const GOAL_SUMMARIES: Record<string, string> = {
   fat_loss: "A focused starting point for body-composition goals, built around sustainable nutrition, movement and accountability.",
   muscle: "A strength-focused pathway for building lean muscle with progressive training and supportive nutrition.",
   energy: "A practical meal-and-movement pathway designed to support energy, recovery and sustainable wellness habits.",
 };
-const GOAL_TERMS: Record<string, string[]> = {
-  fat_loss: ["fat_loss", "fat loss", "weight loss", "body composition", "body-composition", "slimming", "nutrition", "meal plan", "meal", "reset"],
-  muscle: ["muscle", "strength", "coaching", "training", "resistance", "gym", "recovery"],
-  energy: ["energy", "focus", "meal", "move", "nutrition", "recovery", "wellness", "mobility"],
-};
-const ACTIVITY_TERMS: Record<string, string[]> = {
-  low: ["low", "sedentary", "desk", "beginner"], moderate: ["moderate", "active", "2–4", "2-4", "regular"],
-  high: ["high", "athletic", "daily", "performance", "advanced", "training"],
-};
-const DIET_TERMS: Record<string, string[]> = {
-  omnivore: ["omnivore", "all diet", "mixed diet"], pescatarian: ["pescatarian", "fish-based", "fish"],
-  vegetarian: ["vegetarian", "plant-based", "vegetarian-friendly"], vegan: ["vegan", "plant-based", "vegan-friendly"],
-};
-function safeCanonicalUrl(path: string): string | null {
-  try {
-    const url = new URL(path, "https://resofit.fit");
-    if (url.protocol !== "https:" || !CANONICAL_HOSTS.has(url.hostname)) return null;
-    if (url.hostname === "shop.resofit.fit" && url.pathname.startsWith("/product/")) url.hostname = "www.resofit.fit";
-    url.searchParams.set("assessment", "1");
-    return url.href;
-  } catch { return null; }
-}
 async function canonicalRecommendation(a: Answers): Promise<Recommendation | null> {
   if (a.goal === "reset") return { title: "ResoFit Reset", summary: "Your reset journey is handled by the dedicated ResoFit Reset experience.", reason: "ChatB2K detected reset intent and is routing you to the Reset purchase journey.", url: EXTERNAL_RESET_URL, cta: "Continue to Reset" };
   if (!supabase) return null;
   try {
-    const { data: entities, error } = await supabase.from("resofit_canonical_entities").select("id,name,description,metadata").eq("entity_type", "product").eq("status", "active");
-    if (error || !entities?.length) return null;
-    const goalTerms = GOAL_TERMS[a.goal] ?? [], activityTerms = ACTIVITY_TERMS[a.activity] ?? [], dietTerms = DIET_TERMS[a.diet] ?? [];
-    const scored = (entities as CanonicalEntity[]).map((entity) => {
-      const text = `${entity.name} ${entity.description ?? ""} ${JSON.stringify(entity.metadata ?? {})}`.toLowerCase();
-      const metadata = entity.metadata ?? {}; let score = 0;
-      for (const term of goalTerms) if (text.includes(term)) score += term.length > 5 ? 4 : 2;
-      for (const term of activityTerms) if (text.includes(term)) score += 2;
-      for (const term of dietTerms) if (text.includes(term)) score += 2;
-      score += Number(metadata.priority ?? metadata.recommendation_weight ?? 0) / 1000;
-      return { entity, score };
-    }).sort((x, y) => y.score - x.score);
-    const winner = scored.find((x) => x.score > 0)?.entity;
-    if (!winner) return null;
-    const { data: routes, error: routeError } = await supabase.from("resofit_canonical_routes").select("path,destination_type,action,metadata").eq("entity_id", winner.id).eq("is_primary", true).eq("status", "active").limit(1);
-    if (routeError || !routes?.[0]) return null;
-    const canonicalUrl = safeCanonicalUrl(routes[0].path); if (!canonicalUrl) return null;
-    return { title: winner.name, summary: winner.description || GOAL_SUMMARIES[a.goal] || "A personalized ResoFit pathway selected for you.", reason: "ChatB2K matched your goal, activity and diet to the strongest active ResoFit offer currently registered in the canonical catalog.", url: canonicalUrl, cta: "Continue to checkout" };
+    const sessionId = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `assessment-${Date.now()}`;
+    const query = a.goal === "fat_loss" ? "fat loss body composition nutrition" : a.goal === "muscle" ? "lean muscle strength resistance training" : "energy focus nutrition recovery wellness";
+    const { data, error } = await supabase.functions.invoke("chatb2k-recommend", { body: { query, goal: a.goal, interests: `${a.activity} ${a.diet}`, session_id: sessionId, limit: 1 } });
+    if (error || !data?.recommendations?.length) return null;
+    const winner = data.recommendations[0] as ChatB2KRecommendation;
+    if (!winner.handle || !winner.sku || Number(winner.inventory ?? 0) <= 0) return null;
+    return { title: winner.title, summary: winner.summary || GOAL_SUMMARIES[a.goal] || "A personalized ResoFit pathway selected for you.", reason: winner.rationale || "ChatB2K matched your goal, activity and lifestyle against the live ResoFit product catalog and availability.", url: `/product/${encodeURIComponent(winner.handle)}?assessment=1&sku=${encodeURIComponent(winner.sku)}`, cta: "Continue to checkout" };
   } catch { return null; }
 }
-function resetAnswers() { return { goal: "", activity: "", diet: "" }; }
+function resetAnswers(): Answers { return { goal: "", activity: "", diet: "" }; }
 function MePage() {
   const [step, setStep] = useState(0); const [answers, setAnswers] = useState<Answers>(resetAnswers()); const [curating, setCurating] = useState(false); const [result, setResult] = useState<Recommendation | null>(null);
   const restart = () => { setStep(0); setResult(null); setAnswers(resetAnswers()); };
   async function submit(next: Answers) { setCurating(true); trackEvent("assessment_click"); const recommendation = await canonicalRecommendation(next); window.setTimeout(() => { setResult(recommendation); setStep(3); setCurating(false); trackEvent("assessment_complete"); }, 900); }
   return <div className="min-h-screen bg-background"><SiteHeader /><main className="mx-auto max-w-3xl px-5 py-10 md:px-6 md:py-12"><header className="mb-8 text-center"><p className="text-xs uppercase tracking-[0.3em] text-gold">ChatB2K Assessment</p><h1 className="mt-3 font-display text-4xl leading-tight md:text-5xl">Your personalized <span className="text-gold">ResoFit</span> pathway</h1><p className="mt-3 text-sm text-muted-foreground">3 questions · about 60 seconds · your next step is curated for you</p></header>{step < 3 && <div className="mb-6 h-1 w-full overflow-hidden rounded-full bg-border/40"><div className="h-full bg-gold transition-all duration-500" style={{ width: `${(step / 3) * 100}%` }} /></div>}{step === 0 && <StepCard title="What's your primary goal?" options={GOALS} onSelect={(v) => { setAnswers((a) => ({ ...a, goal: v })); setStep(1); }} />}{step === 1 && <StepCard title="How active are you right now?" options={ACTIVITIES} onBack={() => setStep(0)} onSelect={(v) => { setAnswers((a) => ({ ...a, activity: v })); setStep(2); }} />}{step === 2 && <StepCard title="Which best describes your diet?" options={DIETS} loading={curating} onBack={() => setStep(1)} onSelect={(v) => { const next = { ...answers, diet: v }; setAnswers(next); submit(next); }} />}{curating && <CurationState />}{step === 3 && !result && <NoMatchView answers={answers} onRestart={restart} />}{step === 3 && result && <ResultView result={result} answers={answers} onRestart={restart} />}</main><SiteFooter /></div>;
 }
-function CurationState() { return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6 backdrop-blur-xl"><div className="w-full max-w-md rounded-[2rem] border border-gold/30 bg-black/80 p-8 text-center shadow-2xl shadow-gold/10"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-gold/40 bg-gold/10"><Loader2 className="h-6 w-6 animate-spin text-gold" /></div><p className="mt-6 text-[10px] uppercase tracking-[0.3em] text-gold">ChatB2K™</p><h2 className="mt-2 font-display text-3xl">Curating your recommendation…</h2><p className="mt-3 text-sm leading-relaxed text-muted-foreground">Matching your goal, activity and lifestyle so you can go directly to the right ResoFit pathway.</p><div className="mt-6 h-1 overflow-hidden rounded-full bg-white/10"><div className="h-full w-2/3 animate-pulse bg-gold" /></div></div></div>; }
+function CurationState() { return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6 backdrop-blur-xl"><div className="w-full max-w-md rounded-[2rem] border border-gold/30 bg-black/80 p-8 text-center shadow-2xl shadow-gold/10"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-gold/40 bg-gold/10"><Loader2 className="h-6 w-6 animate-spin text-gold" /></div><p className="mt-6 text-[10px] uppercase tracking-[0.3em] text-gold">ChatB2K™</p><h2 className="mt-2 font-display text-3xl">Curating your recommendation…</h2><p className="mt-3 text-sm leading-relaxed text-muted-foreground">Matching your goal, activity and lifestyle against the live ResoFit catalog.</p><div className="mt-6 h-1 overflow-hidden rounded-full bg-white/10"><div className="h-full w-2/3 animate-pulse bg-gold" /></div></div></div>; }
 function StepCard({ title, options, onSelect, onBack, loading = false }: { title: string; options: Option[]; onSelect: (v: string) => void; onBack?: () => void; loading?: boolean }) { return <section className="rounded-[2rem] border border-gold/20 bg-white/[0.04] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-8"><h2 className="font-display text-2xl md:text-3xl">{title}</h2><div className="mt-6 grid gap-3">{options.map((o) => <button key={o.value} disabled={loading} onClick={() => onSelect(o.value)} className="group flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 text-left transition-all hover:border-gold/50 hover:bg-gold/[0.06] disabled:opacity-50"><span>{o.label}</span><ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-gold" /></button>)}</div><div className="mt-6 flex justify-between">{onBack ? <button onClick={onBack} disabled={loading} className="text-xs uppercase tracking-widest text-muted-foreground">← Back</button> : <span />}</div></section>; }
 function NoMatchView({ answers, onRestart }: { answers: Answers; onRestart: () => void }) { const goal = GOALS.find((x) => x.value === answers.goal)?.label ?? answers.goal; const helpUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi ResoFit, I completed my assessment. My goal is ${goal}. I need help with my recommended ResoFit pathway.`)}`; return <article className="rounded-[2rem] border border-gold/30 bg-black/70 p-6 text-center shadow-2xl shadow-gold/10 backdrop-blur-2xl md:p-10"><Sparkles className="mx-auto h-7 w-7 text-gold" /><h2 className="mt-4 font-display text-3xl">We need a specialist to complete your match</h2><p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">We could not safely identify an active purchase-ready offer for this exact profile, so we will not send you to a generic shop search.</p><a href={helpUrl} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex min-h-12 items-center justify-center rounded-xl bg-gold px-6 py-3 text-xs font-bold uppercase tracking-widest text-gold-foreground">Talk to a specialist</a><button onClick={onRestart} className="mt-5 block w-full text-xs uppercase tracking-widest text-muted-foreground">Retake assessment</button></article>; }
 function ResultView({ result, answers, onRestart }: { result: Recommendation; answers: Answers; onRestart: () => void }) { const goal = GOALS.find((x) => x.value === answers.goal)?.label ?? answers.goal; const helpUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi ResoFit, I completed my 60-second assessment. My goal is ${goal}. I need help with my recommended ResoFit pathway.`)}`; return <article className="overflow-hidden rounded-[2rem] border border-gold/30 bg-black/70 p-5 shadow-2xl shadow-gold/10 backdrop-blur-2xl md:p-10"><p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-gold"><Sparkles className="h-3 w-3" /> Your ResoFit match</p><h2 className="mt-2 font-display text-3xl text-gold md:text-4xl">{result.title}</h2><div className="mt-6 grid gap-3 sm:grid-cols-3">{[["Primary goal", goal],["Current activity", ACTIVITIES.find((x) => x.value === answers.activity)?.label ?? answers.activity],["Lifestyle fit", DIETS.find((x) => x.value === answers.diet)?.label ?? answers.diet]].map(([k,v]) => <div key={k} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"><Check className="h-4 w-4 text-gold" /><p className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground">{k}</p><p className="mt-1 text-sm">{v}</p></div>)}</div><div className="mt-6 rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/10 to-transparent p-6"><div className="flex items-center gap-2 text-gold"><Sparkles className="h-4 w-4" /><span className="text-xs font-semibold uppercase tracking-widest">Why this fits you</span></div><p className="mt-3 text-sm leading-relaxed text-muted-foreground">{result.reason}</p><p className="mt-3 text-sm leading-relaxed text-foreground/90">{result.summary}</p></div><div className="mt-8 rounded-[1.5rem] border border-gold/60 bg-gradient-to-br from-gold/15 to-transparent p-6 text-center"><p className="text-xs uppercase tracking-[0.25em] text-gold">Your next move</p><h3 className="mt-2 font-display text-2xl">Ready for your next step</h3><p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">Your recommended offer is ready. Continue without restarting your shopping journey.</p><a href={result.url} onClick={() => trackEvent("assessment_result_cta")} className="mt-5 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-gold px-6 py-4 text-xs font-bold uppercase tracking-widest text-gold-foreground md:w-auto">{result.cta} <ArrowRight className="h-4 w-4" /></a><div><a href={helpUrl} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block text-xs uppercase tracking-widest text-muted-foreground underline underline-offset-4">Need a specialist?</a></div></div><button onClick={onRestart} className="mt-6 w-full text-xs uppercase tracking-widest text-muted-foreground">Retake assessment</button></article>; }
