@@ -72,7 +72,9 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
     if (sessionStorage.getItem("resofit:assessment_checkout_started") === selectedVariant.id) return;
     sessionStorage.setItem("resofit:assessment_checkout_started", selectedVariant.id);
     recordEngagement(product.id, "add_to_cart");
-    window.location.assign(`https://resocart.myshopify.com/cart/${numericId}:1`);
+    const configuredDomain = String(import.meta.env.VITE_SHOPIFY_PRIMARY_DOMAIN ?? "resocart.myshopify.com").trim().replace(/^https?:\/\//, "").replace(/\/+$/, "");
+    const checkoutOrigin = configuredDomain ? `https://${configuredDomain}` : "https://store.resofit.fit";
+    window.location.assign(`${checkoutOrigin}/cart/${numericId}:1`);
   }, [product.id, selectedVariant]);
 
   return <article className="mx-auto max-w-7xl px-6 py-12">
