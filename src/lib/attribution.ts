@@ -1,10 +1,11 @@
-// Attribution capture — rsid, UTM params and TikTok click ID.
+// Attribution capture — rsid, UTM params, funnel origin and TikTok click ID.
 // Persisted in localStorage so paid attribution survives SPA navigation and checkout.
 
 const STORAGE_KEY = "resofit:attribution:v2";
 const TRACKED_PARAMS = [
   "rsid",
   "ttclid",
+  "funnel_origin",
   "utm_source",
   "utm_campaign",
   "utm_medium",

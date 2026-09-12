@@ -20,7 +20,7 @@ function CompliancePage() {
     ],
     [
       "Member onboarding",
-      "Assessment, member authentication and future ecosystem services are routed through explicit entry points so onboarding can evolve without replacing the commerce storefront.",
+      "Assessment, member authentication and ecosystem services are routed through explicit entry points so onboarding can evolve without replacing the commerce experience.",
     ],
     [
       "Measurement governance",
@@ -28,7 +28,7 @@ function CompliancePage() {
     ],
     [
       "Commerce architecture",
-      "resofit.fit/shop is the primary ResoFit shopping experience for first-party ResoFlex products, ResoFit services, personalized recommendations and native checkout. shop.resofit.fit is the specialized marketplace surface for broader supplier, partner and external offers, including Jumia where applicable.",
+      "resofit.fit/shop is the primary ResoFit customer shopping experience. Commerce execution is resolved separately: shop.resofit.fit is the current verified ResoFlex/Shopify-facing Vercel surface, while store.resofit.fit is the verified ResoFit-owned fallback/native commerce surface. The active Shopify primary domain is configuration state and must be verified from Shopify Admin rather than inferred from the Vercel domain.",
     ],
   ];
   return (

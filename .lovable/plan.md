@@ -1,65 +1,84 @@
-## ResoFit™ Production Optimization Patch v2.1 — Plan
+# ResoFit™ Ecosystem Production Plan — Canonical v3.0
 
-This is a **refinement pass**. No existing working feature will be rebuilt, duplicated, or removed. All Shopify, cart, checkout, tracking, attribution, Product Intelligence, Smart Image Priority, and Make.com wiring stays intact — only presentation, copy, structure, and missing surfaces are added.
+**Updated:** 2026-09-12
+**Repository:** `EliteFitness101/shopb2k`
+**Canonical architecture:** `docs/ECOSYSTEM_ARCHITECTURE.md`
 
-### 1. Copy & Brand Repositioning (customer-facing only)
-- Global find/replace of user-visible "AI …" strings → **ChatB2K™** variants (`ChatB2K™ Wellness Assessment`, `Personalized by ChatB2K™`, `Chat with CoachB2K™`).
-- Reframe hero + section copy on `index.tsx`, `personalize.tsx`, `shop.tsx`, header/footer away from weight-loss/fitness-only toward **Africa's Personalized Wellness Platform** (longevity, mobility, recovery, nutrition, confidence, strength).
-- Backend files, env vars, webhook names, internal identifiers untouched.
+## Objective
 
-### 2. Shared Navigation & Footer (consolidation)
-- Refactor `SiteHeader.tsx` to the canonical nav: Home · Programs · Assessment · Shop · Blog · Success Stories · About · Contact, with primary CTA **Start My Personalized Plan** → `/personalize`.
-- Add `SiteFooter` usage across every route that currently lacks it; single source of truth (Programs, Assessment, Shop, Blog, Knowledge Hub, Support, Privacy, Terms, Newsletter stub, socials).
-- Standardize CTA labels via a small `src/lib/ctas.ts` constants module — reused everywhere, no new button component.
+Operate ResoFit as one evidence-driven personalized wellness-commerce ecosystem:
 
-### 3. Reusable Ecosystem Carousel (one component, one data source)
-- New `src/components/EcosystemCarousel.tsx` (single implementation): swipe, auto-scroll (respects `prefers-reduced-motion`), keyboard arrows, lazy `ProductImage`, analytics via existing `track()`.
-- Data lives in `src/lib/ecosystem.ts` (shared cards: Programs, Assessment, Shop, Blog, Knowledge Hub, Success Stories, Elite, Candera, ResoLuxe Privé, Personalize).
-- Dropped into Home + new Programs / Blog / Knowledge Hub / Success Stories / About pages. Reuses existing image pipeline.
+`Traffic → Personalized assessment/conversation → Canonical Supabase truth → ChatB2K recommendation → exact offer/SKU/variant → premium contextual page → checkout → verified payment → fulfillment/entitlement → retention.`
 
-### 4. New lightweight routes (only where absent)
-Reusing existing layout primitives, `ProductImage`, `TrustBar`, tokens — no new design system:
-- `/programs` + `/programs/$slug` (Overview, Benefits, Who it's for, Outcomes, FAQs, Related equipment/articles/assessments, final CTA).
-- `/blog` + `/blog/$slug` (categories, featured, search filter, related products/programs; each article ends with **Start My Personalized Plan**).
-- `/knowledge` (Knowledge Hub grid: Nutrition, Healthy Living, Healthy Ageing, Movement, Strength, Mobility, Recovery, Body Confidence, Recipes, Equipment Guides).
-- `/success-stories`, `/about`, `/contact` (light content pages).
-Content seeded from a local `src/content/*.ts` static source — no CMS, no backend.
+## Non-negotiable rules
 
-### 5. Homepage hierarchy refinement (no rebuild)
-Reorder existing sections of `index.tsx` into: Hero → Trust → Who We Help → How It Works → Programs (carousel) → Featured Equipment (existing Shopify grid) → Knowledge Hub (carousel) → Success Stories (carousel) → Final CTA. All existing Shopify fetches, A/B test hero, preload logic preserved.
+- Additive-only changes unless a removal is explicitly authorized.
+- Do not rename/remove existing routes, tables, APIs or event contracts.
+- Do not create a competing catalog/payment/business-data source.
+- Supabase production `vbqjvmnhdtdhmeeudqnn` remains canonical business truth.
+- ChatB2K recommends; it does not own truth.
+- External APIs are verified supply fallbacks, not recommendation authority.
+- Resolve the active Shopify commerce domain dynamically; do not hard-code a migration target.
+- `store.resofit.fit` remains the ResoFit-owned fallback/native commerce surface.
+- Preserve RSID, session, UTM, funnel-origin, identity, SKU/variant and payment-reference context wherever the path supports it.
+- Never claim LIVE/VERIFIED/READY without current evidence.
+- Preview/development/unfinished expansions do not reduce production readiness.
+- No invented seller, price, inventory, URL or verification status.
 
-### 6. Shop enhancements (Storefront API preserved)
-- Add **Related products** + **Recently viewed** rails on PDP (`product.$handle.tsx`) using existing Storefront client and `ProductImage`.
-- Add **Continue shopping** and **Wellness bundles** rails on `/shop` — pure presentation over existing product fetch.
-- No cart/checkout change.
+## Current production surface
 
-### 7. SEO / Head metadata
-- Per-route `head()` on every new + existing leaf: unique title, description, canonical, og:title/description/type, twitter:card. Leaf-only `og:image` (never root).
-- JSON-LD: `WebSite`/`Organization` sitewide (root already has meta), `Article` on blog leaves, `Product` on PDP, `BreadcrumbList` on deep routes.
-- Add `public/robots.txt` if missing and `src/routes/sitemap[.]xml.ts` server route enumerating public routes + Shopify handles.
+### Main experience
+`https://resofit.fit` / `https://www.resofit.fit`
 
-### 8. Performance & accessibility polish
-- Ensure lazy-load remains default; verify no duplicate `preload` for the same hero.
-- Add `prefers-reduced-motion` guard to carousel + hero motion.
-- Focus-visible rings, ARIA labels on icon buttons (WhatsApp float, cart trigger, carousel arrows), semantic `<main>` per route, `h-dvh` for full-height sections.
-- Consolidate: remove any duplicate analytics call sites discovered during audit; keep single `track()` path.
+Owns public experience, assessment, personalization, content, product presentation, wellness discovery, first-party conversion and backend API ingress.
 
-### 9. Analytics preserved
-Existing events (`landing_view`, `product_view`, `product_click`, `product_score_update`, `hero_promoted`, `demoted`, `assessment_click`, `checkout_start`) stay wired through `src/lib/tracking.ts` and `productIntelligence.ts`. New carousel/CTA clicks reuse the same `track()` — no new pipeline.
+### Commerce surfaces
+- `shop.resofit.fit` — current live Vercel `reso-flex` surface; Shopify domain migration is an external configuration state and must be verified from Shopify Admin before calling it the Shopify primary domain.
+- `store.resofit.fit` — current live Vercel `shop-resoflex` surface; native/fallback commerce channel.
+- `catalog.resofit.fit` — current live Vercel `resocatalog` surface; catalog/commerce access layer.
 
-### 10. Validation report (delivered at end)
-- **Verified in-repo:** SEO metadata coverage, route existence, analytics call sites, image priority tiers, Shopify client usage, WhatsApp float presence.
-- **Configuration Verified — Manual Production Test Required:** Shopify live checkout, Make.com webhook receipt, WhatsApp deep-link, published domain HTTPS/DNS.
-- **Unable to verify from current environment:** Vercel deploy, analytics dashboard ingestion.
-Manual steps listed for each.
+### Operations
+- `dashboard.resofit.fit` — current live `reso-dash`.
+- `reset.resofit.fit` — current live `joy-funnel-ai-u5vw`; production checkout fix is on commit `0964db2e50fd2eccf302b3724201345fe40c5a11` and deployment `dpl_3EAK5MWcevMB9FjSFaEw5CJEKsdw`.
+- `martial.resofit.fit` — current live `redzone-recruit`.
+- `chatb2k.resofit.fit` — separate standalone project; do not route current core revenue flow through it until its development work is explicitly accepted.
 
-### Files touched (net)
-Edit: `SiteHeader.tsx`, `SiteFooter.tsx`, `TrustBar.tsx`, `WhatsAppFloat.tsx`, `index.tsx`, `shop.tsx`, `product.$handle.tsx`, `personalize.tsx`, `__root.tsx`, `tracking.ts` (types only).
-Create: `EcosystemCarousel.tsx`, `ctas.ts`, `ecosystem.ts`, `content/programs.ts`, `content/blog.ts`, `content/knowledge.ts`, `content/successStories.ts`, routes `programs.tsx`, `programs.$slug.tsx`, `blog.tsx`, `blog.$slug.tsx`, `knowledge.tsx`, `success-stories.tsx`, `about.tsx`, `contact.tsx`, `sitemap[.]xml.ts`, `public/robots.txt`.
-No file deletions. No dependency additions.
+## Main route contract
 
-### Out of scope (explicitly)
-Supabase, custom checkout, CMS, auth, monorepo, Next.js, image regeneration, price mutation, backend edits.
+Customer/public routes remain under `resofit.fit`, including `/`, `/me`, `/programs`, `/programs/:slug`, `/shop`, `/product/:handle`, `/recommendation/:handle`, `/blog`, `/blog/:slug`, `/knowledge`, `/success-stories`, `/stories`, `/about`, `/contact`, `/content`, `/network`, `/network/:entityType/:slug`, `/jumia`, `/community/play`, `/community/play/:game`, Martial-X routes, auth/compliance routes, and the complete wellness/Makaveli/Resonance route family.
 
-### Confirm before I proceed
-This is a broad pass (~15–20 file edits + ~10 new files). Reply **"go"** to execute end-to-end, or tell me which subset to ship first (e.g. "just nav + copy + SEO" or "just Blog + Programs").
+Server ingress remains on the main origin for content publishing, Shopify webhooks, Makaveli/Resonance booking and checkout, media verification and related APIs.
+
+## Recommendation contract
+
+Assessment/conversation produces intent/profile context. ChatB2K recommendation queries canonical production catalog/intelligence, excludes unavailable products, returns the exact offer identity, and opens `/recommendation/:handle`.
+
+The recommendation page must show the exact product/service context, live commercial metadata, premium hero/media, details/features and direct checkout action without sending the customer back through a generic shop or second assessment.
+
+## Commerce contract
+
+`Recommendation → exact offer → commerce resolver → active Shopify/native channel → Paystack where applicable → verified webhook → Supabase payment/revenue/event state → fulfillment/entitlement → next action.`
+
+## Attribution contract
+
+Persist/carry `rsid`, `session_id`, UTM parameters, `ttclid`, funnel origin, user identity, exact SKU/variant and payment reference when available. Browser persistence is useful for navigation continuity; end-to-end propagation is only certified after a live trace.
+
+## Content contract
+
+`resofit-content-engine → content_queue → approved distribution → buffer-publisher → destination channels → publish log.`
+
+Content Engine/Buffer are distribution infrastructure and never become canonical business truth.
+
+## Wellness contract
+
+`states → cities → hubs → services → locator/discovery → booking/checkout → canonical event/payment state`.
+
+External partner discovery remains separate from verified ResoFit hubs; discovery never equals verification.
+
+## Verification gate
+
+Every production change follows:
+
+`Audit → additive patch → build/deployment verification → route/runtime verification → database/transaction verification where applicable → report.`
+
+Historical documentation remains historical evidence. Current runtime/deployment/database evidence overrides stale plan text when they conflict; the architecture document is then updated to reflect the verified state.

@@ -1,6 +1,6 @@
 // Lightweight identity capture — email / phone / telegram / google-hint.
 // No backend rebuild: persists a `user_id` locally, pairs it with existing RSID
-// attribution, and pushes to Make.com via the shared tracking pipeline.
+// attribution, and emits identity events through the canonical tracking pipeline.
 
 import { track } from "./tracking";
 import { getAttribution } from "./attribution";
