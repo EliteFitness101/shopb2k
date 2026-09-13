@@ -28,6 +28,7 @@ Deno.serve(async (req) => {
       if (error) throw error; return json({ state: stateRow, cities: data ?? [] });
     }
     const lat = Number(url.searchParams.get("lat")), lng = Number(url.searchParams.get("lng"));
+    const hasUserLocation = Number.isFinite(lat) && Number.isFinite(lng);
     const state = url.searchParams.get("state"), city = url.searchParams.get("city");
     const service = (url.searchParams.get("service") ?? "").trim().toLowerCase(), q = (url.searchParams.get("q") ?? "").trim().toLowerCase();
     const radius = Math.min(Math.max(Number(url.searchParams.get("radius_km") ?? 25) || 25, 1), 100);
@@ -46,19 +47,20 @@ Deno.serve(async (req) => {
     type Result = Record<string, unknown> & { distance_km: number | null; services: Array<Record<string, unknown>> };
     const results: Result[] = []; const seen = new Set<string>();
     for (const item of network ?? []) {
-      const searchable = [item.name,item.tagline,item.description,item.state,item.city,...(item.services ?? []),...(item.capabilities ?? [])].filter(Boolean).join(" ").toLowerCase();
+      const searchable = [item.name,item.tagline,item.description,item.state,item.city,item.public_location_label,...(item.services ?? []),...(item.capabilities ?? [])].filter(Boolean).join(" ").toLowerCase();
       const locationMatch = (!state || String(item.state ?? "").toLowerCase() === state.toLowerCase() || String(item.public_location_label ?? "").toLowerCase().includes(state.toLowerCase())) && (!city || String(item.city ?? "").toLowerCase() === city.toLowerCase() || String(item.public_location_label ?? "").toLowerCase().includes(city.toLowerCase()));
       if (!locationMatch || (q && !searchable.includes(q)) || (service && !searchable.includes(service))) continue;
-      const distance = Number.isFinite(lat) && Number.isFinite(lng) && Number.isFinite(Number(item.latitude)) && Number.isFinite(Number(item.longitude)) ? haversineKm(lat,lng,Number(item.latitude),Number(item.longitude)) : null;
+      const distance = hasUserLocation && Number.isFinite(Number(item.latitude)) && Number.isFinite(Number(item.longitude)) ? haversineKm(lat,lng,Number(item.latitude),Number(item.longitude)) : null;
+      if (hasUserLocation && distance === null) continue;
       if (distance !== null && distance > radius) continue;
       seen.add(String(item.id));
       results.push({ id:item.id, hub_code:item.slug, slug:item.slug, name:item.name, description:item.description ?? item.tagline ?? null, address:item.public_location_label ?? null, phone:item.phone, whatsapp:item.whatsapp, website:item.website, email:item.email, distance_km:distance, services:(item.services ?? []).map((name:string)=>({id:`${item.id}:${name}`,service_name:name,price:null,currency:"NGN",booking_method:"external"})), entity_type:item.entity_type, discovery_status:item.verification_status === "verified" ? "verified" : "discovered", verification_status:item.verification_status, contract_status:item.contract_status, discovery_source:item.discovery_source, source_url:item.source_url });
     }
     for (const hub of wellness ?? []) {
       if (seen.has(String(hub.id))) continue;
-      const searchable = [hub.name,hub.description].filter(Boolean).join(" ").toLowerCase();
+      const searchable = [hub.name,hub.description,hub.address].filter(Boolean).join(" ").toLowerCase();
       if ((q && !searchable.includes(q)) || (service && !(servicesByLegacyHub.get(hub.id) ?? []).some(s => String(s.service_name).toLowerCase().includes(service)))) continue;
-      const distance = Number.isFinite(lat) && Number.isFinite(lng) ? haversineKm(lat,lng,hub.latitude,hub.longitude) : null;
+      const distance = hasUserLocation ? haversineKm(lat,lng,hub.latitude,hub.longitude) : null;
       if (distance !== null && distance > radius) continue;
       results.push({ id:hub.id, hub_code:hub.hub_code, slug:hub.slug, name:hub.name, description:hub.description, address:hub.address, phone:hub.phone, whatsapp:hub.whatsapp, website:hub.website, email:null, distance_km:distance, services:servicesByLegacyHub.get(hub.id) ?? [], entity_type:"wellness_hub", discovery_status:"verified", verification_status:"verified", contract_status:"active", discovery_source:"resofit_wellness_registry", source_url:null });
     }
