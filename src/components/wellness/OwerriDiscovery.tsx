@@ -1,0 +1,69 @@
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight, LocateFixed, MapPin, Search } from "lucide-react";
+import { SiteFooter } from "@/components/SiteFooter";
+import { SiteHeader } from "@/components/SiteHeader";
+import { findWellnessHubs, type WellnessHubResult } from "@/lib/wellness/findWellnessHubs";
+
+export const OWERRI_CATEGORIES = [
+  ["discover", "Discover", "Explore the Owerri wellness network.", undefined],
+  ["near-me", "Near Me", "Use your device location to rank nearby hubs.", undefined],
+  ["gyms", "Gyms", "Strength, conditioning and gym facilities.", "fitness"],
+  ["spas", "Spas", "Spa, relaxation and body-care experiences.", "spa"],
+  ["massage", "Massage", "Massage and recovery-focused providers.", "massage"],
+  ["fitness", "Fitness", "Training, coaching and movement services.", "fitness"],
+  ["recovery", "Recovery", "Recovery, mobility and restorative services.", "recovery"],
+  ["nutrition", "Nutrition", "Nutrition and dietary wellness services.", "nutrition"],
+  ["aesthetics", "Aesthetics", "Aesthetic and appearance-focused wellness.", "aesthetics"],
+  ["sports", "Sports", "Sports and active-lifestyle experiences.", "sports"],
+  ["wellness-centres", "Wellness Centres", "Broader wellness and health-support hubs.", "wellness"],
+] as const;
+
+export const OWERRI_AREAS = [
+  ["new-owerri", "New Owerri"], ["ikenegbu", "Ikenegbu"], ["aladinma", "Aladinma"],
+  ["world-bank", "World Bank"], ["nekede", "Nekede"], ["okigwe-road", "Okigwe Road"],
+  ["ugwu-orji", "Ugwu Orji"], ["uratta", "Uratta"], ["mcc", "MCC"], ["douglas-road", "Douglas Road"],
+] as const;
+
+export function OwerriDiscoveryPage({ mode, area }: { mode: string; area?: string }) {
+  const [results, setResults] = useState<WellnessHubResult[]>([]);
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("Loading the ResoFit discovery layer…");
+  const [locating, setLocating] = useState(mode === "near-me");
+  const category = useMemo(() => OWERRI_CATEGORIES.find(([slug]) => slug === mode), [mode]);
+  const title = area ? `${area} Wellness Hubs` : category?.[1] ?? "Owerri Wellness Discovery";
+  const description = area ? `Discover fitness, spa, massage, recovery, nutrition, aesthetics, sports and wellness hubs around ${area}, Owerri.` : category?.[2] ?? "Discover wellness services and hubs across Owerri through ResoFit.";
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async (latitude?: number, longitude?: number) => {
+      try {
+        setStatus("Searching current ResoFit wellness discovery records…");
+        const data = await findWellnessHubs({ state: "Imo", city: "Owerri", service: area ? undefined : category?.[3], query: area ? area : undefined, latitude, longitude, radiusKm: latitude !== undefined ? 25 : undefined });
+        if (!cancelled) { setResults(data.results ?? []); setStatus(data.count ? `${data.count} discoverable hub${data.count === 1 ? "" : "s"} found.` : "No matching hubs are currently published."); }
+      } catch { if (!cancelled) setStatus("Wellness discovery is temporarily unavailable."); }
+      finally { if (!cancelled) setLocating(false); }
+    };
+    if (mode === "near-me") {
+      if (!navigator.geolocation) { setLocating(false); setStatus("Location services are unavailable. Browse Owerri by category or area instead."); return; }
+      navigator.geolocation.getCurrentPosition(({ coords }) => load(coords.latitude, coords.longitude), () => { setLocating(false); setStatus("Location permission was not granted. Showing the Owerri discovery network instead."); load(); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 });
+    } else load();
+    return () => { cancelled = true; };
+  }, [mode, area, category]);
+
+  const filtered = query.trim() ? results.filter((hub) => `${hub.name} ${hub.description ?? ""} ${hub.address ?? ""} ${(hub.services ?? []).map((s) => s.service_name).join(" ")}`.toLowerCase().includes(query.toLowerCase())) : results;
+
+  return <div className="min-h-screen bg-background"><SiteHeader /><main>
+    <section className="border-b border-border/60"><div className="mx-auto max-w-7xl px-6 py-16 md:py-24">
+      <Link to="/wellness" className="text-xs uppercase tracking-widest text-muted-foreground hover:text-gold">← ResoFit Wellness</Link>
+      <p className="mt-8 text-xs uppercase tracking-[0.35em] text-gold">Imo · Owerri · Wellness Discovery</p><h1 className="mt-3 font-display text-5xl md:text-7xl">{title}.</h1>
+      <p className="mt-5 max-w-2xl text-lg text-muted-foreground">{description}</p><div className="mt-8 flex flex-wrap gap-3"><Link to="/wellness/imo/owerri/discover" className="border border-border px-4 py-3 text-xs uppercase tracking-widest hover:text-gold">All Discovery</Link><Link to="/wellness/imo/owerri/near-me" className="inline-flex items-center gap-2 border border-border px-4 py-3 text-xs uppercase tracking-widest hover:text-gold"><LocateFixed className="h-4 w-4" /> Near Me</Link></div>
+    </div></section>
+    <section className="border-b border-border/60 py-6"><div className="mx-auto max-w-7xl px-6"><div className="flex flex-wrap gap-2">{OWERRI_CATEGORIES.map(([slug, label]) => <Link key={slug} to={`/wellness/imo/owerri/${slug}`} className={`border px-3 py-2 text-[10px] uppercase tracking-widest ${slug === mode ? "border-gold text-gold" : "border-border text-muted-foreground hover:text-gold"}`}>{label}</Link>)}</div></div></section>
+    <section className="py-16"><div className="mx-auto max-w-7xl px-6">{area && <p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold">Area locator · {area}</p>}
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"><p className="text-sm text-muted-foreground">{locating ? "Locating…" : status}</p><div className="flex items-center gap-2 border border-border px-3 py-2"><Search className="h-4 w-4 text-muted-foreground" /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Filter discovered hubs…" aria-label="Filter wellness hubs" className="w-56 bg-transparent text-sm outline-none" /></div></div>
+      {filtered.length === 0 ? <div className="border border-border/60 p-8"><MapPin className="h-5 w-5 text-gold" /><h2 className="mt-4 font-display text-2xl">No matching published hubs.</h2><p className="mt-2 max-w-2xl text-sm text-muted-foreground">ResoFit does not invent providers, services, prices or availability. New discoveries enter the network as clearly labelled external/discovered records until verified.</p></div> : <div className="grid gap-px bg-border/60 md:grid-cols-2 lg:grid-cols-3">{filtered.map((hub) => <article key={hub.id} className="bg-background p-6 hover:bg-card"><div className="flex items-start justify-between gap-4"><div><p className="text-[10px] uppercase tracking-[0.2em] text-gold">{hub.discovery_status === "verified" ? "Verified" : "Discovered"}</p><h2 className="mt-2 font-display text-2xl">{hub.name}</h2></div>{hub.distance_km !== null && <span className="shrink-0 text-xs text-muted-foreground">{hub.distance_km.toFixed(1)} km</span>}</div><p className="mt-3 text-sm text-muted-foreground">{hub.description || "Wellness provider in the ResoFit discovery network."}</p><p className="mt-4 text-xs text-muted-foreground">{hub.address || "Owerri, Imo State"}</p><div className="mt-4 flex flex-wrap gap-2">{(hub.services ?? []).slice(0, 5).map((service) => <span key={service.id} className="border border-border px-2 py-1 text-[9px] uppercase tracking-wider text-muted-foreground">{service.service_name}</span>)}</div>{(hub.website || hub.phone || hub.whatsapp) && <div className="mt-6 flex flex-wrap gap-4 text-xs uppercase tracking-widest"><a href={hub.website || `tel:${hub.phone}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-gold">Open hub <ArrowRight className="h-3 w-3" /></a></div>}</article>)}</div>}
+    </div></section>
+    {mode === "discover" && <section className="border-t border-border/60 py-16"><div className="mx-auto max-w-7xl px-6"><p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold">Explore by area</p><div className="grid gap-px bg-border/60 sm:grid-cols-2 lg:grid-cols-5">{OWERRI_AREAS.map(([slug, label]) => <Link key={slug} to={`/wellness/imo/owerri/areas/${slug}`} className="bg-background p-5 hover:bg-card hover:text-gold"><span className="block text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Owerri</span><span className="mt-2 block font-medium">{label}</span><span className="mt-2 block text-[10px] uppercase tracking-widest text-muted-foreground">Discover →</span></Link>)}</div></div></section>}
+  </main><SiteFooter /></div>;
+}
