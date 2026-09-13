@@ -12,6 +12,14 @@ const DEFAULT_POSTER = MEDIA.communityPoster;
 const DEFAULT_VIDEO = MEDIA.communityVideo;
 const DEFAULT_CAPTIONS = MEDIA.communityCaptions;
 
+// Production cinematic hero carousel. Each video plays to completion before
+// the next Blob asset is mounted. No Blob token is required in the client.
+const HERO_VIDEO_CAROUSEL = [
+  "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/shop/Athletic_model_wearing_performan%E2%80%A6_20260913181729.mp4",
+  "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/shop/Couple_experiencing_wellness_adv%E2%80%A6_20260911183919.mp4",
+  "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/shop/Couples_getting_foot_soak_and_20260912210821.mp4",
+] as const;
+
 // Four cinematic phases — 0–2 / 2–4 / 4–6 / 6–8 seconds.
 // Poster-first (no LCP hit); optional muted video enhancement on idle.
 const PHASES = [
@@ -195,7 +203,7 @@ function IdentityGate({ open, onClose, onComplete }: IdentityGateProps) {
 }
 
 interface Props {
-  /** Optional video enhancement URL (mp4/webm). Loaded on idle only. */
+  /** Optional single video override. If omitted, the production Blob carousel is used. */
   videoSrc?: string | null;
   posterSrc?: string | null;
   /** Optional captions track (WebVTT). If absent, a caption fallback message is provided for AT. */
@@ -203,7 +211,7 @@ interface Props {
 }
 
 export function CinematicWellnessExperience({
-  videoSrc = DEFAULT_VIDEO,
+  videoSrc,
   posterSrc = DEFAULT_POSTER,
   captionsSrc = DEFAULT_CAPTIONS,
 }: Props) {
@@ -216,10 +224,15 @@ export function CinematicWellnessExperience({
   const [playing, setPlaying] = useState(false);
   const [captionsAvailable, setCaptionsAvailable] = useState(false);
   const [posterAvailable, setPosterAvailable] = useState(false);
-  const [videoAvailable, setVideoAvailable] = useState(false);
+  const [availableVideos, setAvailableVideos] = useState<boolean[]>([]);
+  const [videoIndex, setVideoIndex] = useState(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
   const viewFiredRef = useRef(false);
+
+  const videoSources = videoSrc ? [videoSrc] : [...HERO_VIDEO_CAROUSEL];
+  const currentVideoSrc = videoSources[videoIndex] ?? videoSources[0] ?? null;
+  const currentVideoAvailable = Boolean(currentVideoSrc && availableVideos[videoIndex]);
 
   // View tracking + phase progression
   useEffect(() => {
@@ -257,24 +270,30 @@ export function CinematicWellnessExperience({
     return () => window.clearInterval(id);
   }, [reducedMotion]);
 
-  // Probe media availability (HEAD) so we never render a broken <video>/poster.
+  // Probe the poster and every configured Blob video so a failed asset is skipped.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [poster, video] = await Promise.all([mediaExists(posterSrc), mediaExists(videoSrc)]);
+      const [poster, videos] = await Promise.all([
+        mediaExists(posterSrc),
+        Promise.all(videoSources.map((source) => mediaExists(source))),
+      ]);
       if (cancelled) return;
       setPosterAvailable(poster);
-      setVideoAvailable(video);
-      if (video) setCaptionsAvailable(await mediaExists(captionsSrc));
+      setAvailableVideos(videos);
+      const firstAvailable = videos.findIndex(Boolean);
+      setVideoIndex(firstAvailable >= 0 ? firstAvailable : 0);
+      if (videoSrc && videos[0]) setCaptionsAvailable(await mediaExists(captionsSrc));
+      else setCaptionsAvailable(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [posterSrc, videoSrc, captionsSrc]);
+  }, [videoSrc, posterSrc, captionsSrc]);
 
-  // Idle-load video enhancement — never blocks LCP, and only when the file exists.
+  // Idle-load video enhancement — never blocks LCP, and only when a verified file exists.
   useEffect(() => {
-    if (!videoSrc || !videoAvailable || reducedMotion) return;
+    if (!currentVideoSrc || !currentVideoAvailable || reducedMotion) return;
     type IdleCallback = (callback: () => void) => number;
     type IdleCancel = (handle: number) => void;
     const idleWindow = window as Window & {
@@ -291,7 +310,7 @@ export function CinematicWellnessExperience({
         : (timeout) => window.clearTimeout(timeout);
       cancel(handle);
     };
-  }, [videoSrc, videoAvailable, reducedMotion]);
+  }, [currentVideoSrc, currentVideoAvailable, reducedMotion]);
 
   useEffect(() => {
     if (videoReady && videoRef.current) {
@@ -299,11 +318,27 @@ export function CinematicWellnessExperience({
         .play()
         .then(() => {
           setPlaying(true);
-          track("cinematic_play");
+          track("cinematic_play", { video_index: videoIndex });
         })
         .catch(() => {});
     }
-  }, [videoReady]);
+  }, [videoReady, videoIndex]);
+
+  const advanceVideo = () => {
+    if (videoSources.length <= 1) {
+      track("cinematic_complete", { video_index: videoIndex });
+      return;
+    }
+    const nextIndex = (videoIndex + 1) % videoSources.length;
+    setPlaying(false);
+    setVideoReady(false);
+    setVideoIndex(nextIndex);
+    track("cinematic_video_change", {
+      from_index: videoIndex,
+      to_index: nextIndex,
+      total_videos: videoSources.length,
+    });
+  };
 
   const toggleMute = () => {
     const v = videoRef.current;
@@ -356,19 +391,20 @@ export function CinematicWellnessExperience({
           decoding="async"
           className="h-full w-full object-cover opacity-60"
         />
-        {videoReady && videoAvailable && videoSrc && (
+        {videoReady && currentVideoAvailable && currentVideoSrc && (
           <video
+            key={currentVideoSrc}
             ref={videoRef}
-            src={videoSrc}
+            src={currentVideoSrc}
             poster={posterAvailable && posterSrc ? posterSrc : undefined}
             muted={muted}
             playsInline
-            loop
+            loop={videoSources.length === 1}
             autoPlay
             preload="none"
-            aria-label="ResoFit community wellness intro video"
+            aria-label={`ResoFit cinematic wellness video ${videoIndex + 1}`}
             className="absolute inset-0 h-full w-full object-cover opacity-70"
-            onEnded={() => track("cinematic_complete")}
+            onEnded={advanceVideo}
             onPlay={() => setPlaying(true)}
             onPause={() => setPlaying(false)}
           >
@@ -383,7 +419,7 @@ export function CinematicWellnessExperience({
             )}
           </video>
         )}
-        {!captionsAvailable && videoReady && videoAvailable && videoSrc && (
+        {!captionsAvailable && videoReady && currentVideoAvailable && currentVideoSrc && (
           <p className="sr-only" aria-live="polite">
             Captions unavailable for this intro video. Full transcript available on request.
           </p>
@@ -393,7 +429,7 @@ export function CinematicWellnessExperience({
       </div>
 
       {/* Accessible video controls (visible only when video is loaded) */}
-      {videoReady && videoAvailable && videoSrc && (
+      {videoReady && currentVideoAvailable && currentVideoSrc && (
         <div className="absolute right-4 top-4 z-10 flex gap-2">
           <button
             type="button"
