@@ -64,20 +64,14 @@ export function scoreRecommendation(candidate: RecommendationCandidate): number 
   const ratingSignal = rating * 8;
   const codSignal = candidate.codEligible ? 20 : 0;
   const mediaSignal = candidate.imageUrl ? 8 : 0;
-  const rightsSignal = ["authorized", "licensed", "owned"].includes(candidate.imageRightsStatus ?? "unknown") ? 8 : 0;
-  const resaleSignal = candidate.resaleStatus === "authorized" ? 10 : 0;
   const stockSignal = Math.min(8, Math.log10(candidate.stockQty + 1) * 4);
 
-  return Number((codSignal + ratingSignal + reviewSignal + mediaSignal + rightsSignal + resaleSignal + stockSignal).toFixed(2));
+  return Number((codSignal + ratingSignal + reviewSignal + mediaSignal + stockSignal).toFixed(2));
 }
 
+/** Recommendation qualification contains operational product signals only. */
 export function isRecommendationQualified(candidate: RecommendationCandidate): boolean {
-  return candidate.stockQty > 0 &&
-    candidate.priceNgn > 0 &&
-    candidate.codEligible &&
-    Boolean(candidate.imageUrl) &&
-    ["authorized", "licensed", "owned"].includes(candidate.imageRightsStatus ?? "unknown") &&
-    candidate.resaleStatus === "authorized";
+  return candidate.stockQty > 0 && candidate.priceNgn > 0;
 }
 
 export function selectTop1000(candidates: RecommendationCandidate[]): RecommendationCandidate[] {
