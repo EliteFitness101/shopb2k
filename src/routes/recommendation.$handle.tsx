@@ -1,7 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { ArrowRight, Check, Loader2, ShieldCheck, Sparkles, Truck, Package, Tag } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { PRODUCT_BY_HANDLE_QUERY, formatMoney, storefrontApiRequest, type ShopifyProductNode } from "@/lib/shopify";
+import { PRODUCT_BY_HANDLE_QUERY, formatMoney, storefrontApiRequest, RESOFIT_SUPABASE_URL, type ShopifyProductNode } from "@/lib/shopify";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ProductImage } from "@/components/ProductImage";
@@ -25,9 +25,6 @@ function PremiumRecommendation({ product }: { product: ShopifyProductNode }) {
   const image = product.images.edges[0]?.node;
   const images = product.images.edges.map((edge) => edge.node).filter((item) => item.url);
   const variant = product.variants.edges.find((v) => v.node.availableForSale)?.node ?? product.variants.edges[0]?.node;
-  const numericVariantId = String(variant?.id ?? "").match(/(\d+)$/)?.[1] ?? "";
-  const configuredDomain = String(import.meta.env.VITE_SHOPIFY_PRIMARY_DOMAIN ?? "resocart.myshopify.com").trim().replace(/^https?:\/\//, "").replace(/\/+$/, "");
-  const directCheckout = numericVariantId ? `https://${configuredDomain}/cart/${numericVariantId}:1` : `/product/${encodeURIComponent(product.handle)}`;
   const tags = (product.tags ?? []).filter(Boolean).slice(0, 8);
   const details = product.description?.trim() || product.descriptionHtml?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() || "";
   const derivedFeatures = [
@@ -38,9 +35,38 @@ function PremiumRecommendation({ product }: { product: ShopifyProductNode }) {
     tags.length ? `Catalog tags: ${tags.slice(0, 4).join(" · ")}` : null,
   ].filter(Boolean) as string[];
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     trackEvent("assessment_result_cta");
-    window.location.assign(directCheckout);
+    if (!product.sku || !variant?.availableForSale) return;
+    const saved = localStorage.getItem("resofit-checkout-contact");
+    if (!saved) {
+      window.location.assign(`/product/${encodeURIComponent(product.handle)}?assessment=1`);
+      return;
+    }
+    let contact: { fullName?: string; email?: string; phone?: string; address?: string };
+    try { contact = JSON.parse(saved); } catch { window.location.assign(`/product/${encodeURIComponent(product.handle)}?assessment=1`); return; }
+    if (!contact.fullName?.trim() || !contact.email?.trim() || !contact.phone?.trim()) {
+      window.location.assign(`/product/${encodeURIComponent(product.handle)}?assessment=1`);
+      return;
+    }
+    try {
+      const response = await fetch(`${RESOFIT_SUPABASE_URL}/functions/v1/paystack-init`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: [{ sku: product.sku, quantity: 1 }],
+          name: contact.fullName.trim(),
+          email: contact.email.trim().toLowerCase(),
+          phone: contact.phone.trim(),
+          address: contact.address?.trim() ?? "",
+        }),
+      });
+      const payload = await response.json().catch(() => null) as { authorization_url?: string; error?: string } | null;
+      if (!response.ok || !payload?.authorization_url) throw new Error(payload?.error ?? "Unable to start secure checkout");
+      window.location.assign(payload.authorization_url);
+    } catch (error) {
+      window.location.assign(`/product/${encodeURIComponent(product.handle)}?assessment=1`);
+    }
   };
 
   return <div className="min-h-screen bg-black text-white"><SiteHeader /><main>
@@ -54,7 +80,7 @@ function PremiumRecommendation({ product }: { product: ShopifyProductNode }) {
           <h1 className="mt-4 font-display text-5xl leading-[0.95] md:text-7xl">{product.title}</h1>
           <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/75 md:text-lg">This is your matched ResoFit offer—opened directly from your assessment, with no return to the shop and no second assessment.</p>
           <div className="mt-7 flex flex-wrap items-center gap-4"><span className="font-display text-4xl text-gold">{variant ? formatMoney(variant.price) : ""}</span>{product.productType && <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[10px] uppercase tracking-widest text-white/75">{product.productType}</span>}</div>
-          <button type="button" onClick={handleCheckout} disabled={!variant?.availableForSale} className="mt-8 inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-xl bg-gold px-7 py-4 text-xs font-bold uppercase tracking-widest text-gold-foreground shadow-2xl shadow-gold/20 transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50 md:w-auto">{variant?.availableForSale ? "Continue to checkout" : "Currently unavailable"}<ArrowRight className="h-4 w-4" /></button>
+          <button type="button" onClick={() => void handleCheckout()} disabled={!variant?.availableForSale} className="mt-8 inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-xl bg-gold px-7 py-4 text-xs font-bold uppercase tracking-widest text-gold-foreground shadow-2xl shadow-gold/20 transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50">{variant?.availableForSale ? "Continue to checkout" : "Currently unavailable"}<ArrowRight className="h-4 w-4" /></button>
         </div>
       </div>
     </section>
