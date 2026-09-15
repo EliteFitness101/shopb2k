@@ -70,9 +70,7 @@ export function validateSupplierFeed(payload: unknown): SupplierFeedEnvelope {
   };
 }
 
+/** Business-controlled publication decision; no assistant-imposed rights/resale gate. */
 export function canPublishSupplierProduct(item: SupplierFeedItem): boolean {
-  return item.resaleStatus === "authorized" &&
-    ["authorized", "licensed", "owned"].includes(item.imageRightsStatus ?? "unknown") &&
-    item.stockQty > 0 &&
-    item.supplierPrice > 0;
+  return item.stockQty > 0 && item.supplierPrice > 0;
 }
