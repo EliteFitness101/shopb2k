@@ -57,7 +57,15 @@ type StorefrontProduct = {
   sku: string | null;
 };
 
-function mapProduct(p: StorefrontProduct): ShopifyProductNode {
+type CatalogAsset = {
+  sku: string;
+  role: string;
+  filename: string;
+  canonical_url: string;
+  image_position: number | null;
+};
+
+function mapProduct(p: StorefrontProduct, assets: CatalogAsset[] = []): ShopifyProductNode {
   const price = { amount: String(p.variant_price ?? 0), currencyCode: "NGN" };
   const variant: ShopifyVariant = {
     id: p.id,
@@ -66,6 +74,16 @@ function mapProduct(p: StorefrontProduct): ShopifyProductNode {
     availableForSale: (p.variant_inventory_qty ?? 0) > 0,
     selectedOptions: [],
   };
+  const registryImages = assets
+    .filter((asset) => asset.canonical_url)
+    .sort((a, b) => (a.image_position ?? Number.MAX_SAFE_INTEGER) - (b.image_position ?? Number.MAX_SAFE_INTEGER))
+    .map((asset) => ({ url: asset.canonical_url, altText: `${p.title} ${asset.role.replace(/[-_]/g, " ")}`.trim() }));
+  const images = registryImages.length
+    ? registryImages
+    : p.image_src
+      ? [{ url: p.image_src, altText: p.title }]
+      : [];
+
   return {
     id: p.id,
     title: p.title,
@@ -81,7 +99,7 @@ function mapProduct(p: StorefrontProduct): ShopifyProductNode {
     vendor: p.vendor ?? "ResoFlex",
     tags: p.tags ?? [],
     priceRange: { minVariantPrice: price },
-    images: { edges: p.image_src ? [{ node: { url: p.image_src, altText: p.title } }] : [] },
+    images: { edges: images.map((node) => ({ node })) },
     variants: { edges: [{ node: variant }] },
     options: [],
   };
@@ -90,7 +108,7 @@ function mapProduct(p: StorefrontProduct): ShopifyProductNode {
 async function fetchStorefrontProducts(handle: string | null): Promise<StorefrontProduct[]> {
   const url = new URL(RESOFIT_STOREFRONT_URL);
   if (handle) url.searchParams.set("handle", handle);
-  const response = await fetch(url.toString(), { method: "GET" });
+  const response = await fetch(url.toString(), { method: "GET", cache: "no-store" });
   if (!response.ok) throw new Error(`ResoFit storefront HTTP ${response.status}`);
   const payload = (await response.json()) as { products?: StorefrontProduct[]; error?: string };
   if (payload.error) throw new Error(payload.error);
@@ -101,11 +119,23 @@ async function fetchCanonicalCatalog(handle: string | null): Promise<StorefrontP
   const url = new URL(handle ? `${RESOFIT_CATALOG_URL}/product` : RESOFIT_CATALOG_URL);
   if (handle) url.searchParams.set("handle", handle);
   else url.searchParams.set("limit", "100");
-  const response = await fetch(url.toString(), { method: "GET" });
+  const response = await fetch(url.toString(), { method: "GET", cache: "no-store" });
   if (!response.ok) throw new Error(`ResoFit canonical catalog HTTP ${response.status}`);
   const payload = (await response.json()) as { data?: StorefrontProduct | StorefrontProduct[]; error?: string };
   if (payload.error) throw new Error(payload.error);
   if (handle) return payload.data ? [payload.data as StorefrontProduct] : [];
+  return Array.isArray(payload.data) ? payload.data : [];
+}
+
+async function fetchCanonicalAssets(sku: string): Promise<CatalogAsset[]> {
+  if (!sku) return [];
+  const url = new URL(`${RESOFIT_CATALOG_URL}/assets`);
+  url.searchParams.set("sku", sku);
+  url.searchParams.set("limit", "50");
+  const response = await fetch(url.toString(), { method: "GET", cache: "no-store" });
+  if (!response.ok) throw new Error(`ResoFit catalog assets HTTP ${response.status}`);
+  const payload = (await response.json()) as { data?: CatalogAsset[]; error?: string };
+  if (payload.error) throw new Error(payload.error);
   return Array.isArray(payload.data) ? payload.data : [];
 }
 
@@ -116,29 +146,28 @@ export async function storefrontApiRequest<T = unknown>(
   const handle = typeof variables.handle === "string" ? variables.handle : null;
   let products: StorefrontProduct[] = [];
 
+  // Canonical catalog is authoritative. The legacy storefront-products function
+  // remains only as a compatibility fallback for transient catalog failures.
   try {
-    products = await fetchStorefrontProducts(handle);
-  } catch (primaryError) {
-    console.warn("Primary ResoFit storefront unavailable; using canonical catalog fallback", primaryError);
-  }
-
-  if (products.length === 0) {
     products = await fetchCanonicalCatalog(handle);
+  } catch (canonicalError) {
+    console.warn("Canonical catalog unavailable; using storefront compatibility fallback", canonicalError);
+    products = await fetchStorefrontProducts(handle);
   }
 
-  const nodes = products.map(mapProduct);
   const isHandleQuery = /product\s*\(handle/i.test(query);
+  const assets = isHandleQuery && products[0]?.sku
+    ? await fetchCanonicalAssets(products[0].sku).catch((error) => {
+        console.warn("Canonical product asset registry unavailable; using product image fallback", error);
+        return [];
+      })
+    : [];
+  const nodes = products.map((product) => mapProduct(product, product === products[0] ? assets : []));
   const mappedProducts = isHandleQuery ? (nodes[0] ?? null) : { edges: nodes.map((node) => ({ node })) };
 
-  if (isHandleQuery) {
-    return { data: { product: mappedProducts } as T };
-  }
-  if (/products\s*\(/i.test(query)) {
-    return { data: { products: mappedProducts } as T };
-  }
-  if (/query\s+cart/i.test(query)) {
-    return { data: { cart: null } as T };
-  }
+  if (isHandleQuery) return { data: { product: mappedProducts } as T };
+  if (/products\s*\(/i.test(query)) return { data: { products: mappedProducts } as T };
+  if (/query\s+cart/i.test(query)) return { data: { cart: null } as T };
   throw new Error("Unsupported storefront operation");
 }
 
