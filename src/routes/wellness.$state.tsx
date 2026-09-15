@@ -26,13 +26,18 @@ export const Route = createFileRoute("/wellness/$state")({
     if (!state) throw notFound();
     return state;
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `${loaderData.name} Wellness Network — ResoFit` },
-      { name: "description", content: `Discover ResoFit Wellness locations and services in ${loaderData.name}.` },
-    ],
-    links: [{ rel: "canonical", href: `https://resofit.fit/wellness/${loaderData.slug}` }],
-  }),
+  head: ({ loaderData }) => {
+    const state = loaderData;
+    const name = state?.name ?? "Wellness";
+    const slug = state?.slug ?? "";
+    return {
+      meta: [
+        { title: `${name} Wellness Network — ResoFit` },
+        { name: "description", content: `Discover ResoFit Wellness locations and services in ${name}.` },
+      ],
+      links: slug ? [{ rel: "canonical", href: `https://resofit.fit/wellness/${slug}` }] : [],
+    };
+  },
   component: StateWellness,
   notFoundComponent: () => <div className="min-h-screen bg-background"><SiteHeader /><main className="mx-auto max-w-3xl px-6 py-24 text-center"><h1 className="font-display text-5xl">Wellness location not found</h1><Link to="/wellness" className="mt-6 inline-block text-gold underline">Back to Wellness →</Link></main><SiteFooter /></div>,
 });
