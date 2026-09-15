@@ -20,7 +20,8 @@ const cart = await fs.readFile("src/components/CartDrawer.tsx", "utf8");
 const revenue = await fs.readFile("scripts/revenue-intelligence.mjs", "utf8");
 
 const checks = [
-  ["Shopify checkout is the current cart destination", cart.includes("resocart.myshopify.com/cart/")],
+  ["Shopify checkout domain is configured", cart.includes("resocart.myshopify.com")],
+  ["Shopify cart checkout path is constructed", cart.includes("/cart/${lines.join")],
   ["Checkout uses numeric Shopify variant identity", cart.includes("variantNumericId")],
   ["Checkout-start attribution is emitted", cart.includes('track("checkout_start"')],
   ["Checkout preserves canonical SKU attribution", cart.includes("items[0]?.product.sku")],
