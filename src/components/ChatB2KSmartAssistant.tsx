@@ -67,7 +67,7 @@ export function ChatB2KSmartAssistant() {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 pb-[max(1rem,env(safe-area-inset-bottom))]" aria-live="polite">
       <div className="mx-auto flex max-w-7xl items-end justify-end px-4 sm:px-6">
-        <div className="pointer-events-auto flex flex-col items-end gap-2">
+        <div className="pointer-events-auto relative right-24 sm:right-48 flex flex-col items-end gap-2">
           {tipVisible && !tipSuppressed && !open && (
             <div className="max-w-[19rem] rounded-2xl border border-gold/20 bg-black/80 p-3 text-xs shadow-2xl backdrop-blur-xl">
               <div className="flex items-start gap-2">
