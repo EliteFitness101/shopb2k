@@ -6,16 +6,11 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { ShoppingCart, Minus, Plus, Trash2, Loader2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { useCartStore } from "@/stores/cartStore";
-import { approxUSD, formatMoney } from "@/lib/shopify";
+import { approxUSD, formatMoney, RESOFIT_SUPABASE_URL } from "@/lib/shopify";
 import { track } from "@/lib/tracking";
 import { getAttribution } from "@/lib/attribution";
 
-const SHOPIFY_STORE_DOMAIN = "resocart.myshopify.com";
-
-function variantNumericId(variantId: string): string | null {
-  const match = String(variantId).match(/(\d+)$/);
-  return match?.[1] ?? null;
-}
+const PAYSTACK_INIT_URL = `${RESOFIT_SUPABASE_URL}/functions/v1/paystack-init`;
 
 export function CartDrawer() {
   const [open, setOpen] = useState(false);
@@ -57,33 +52,48 @@ export function CartDrawer() {
       toast.error("Complete your name, email and phone first.");
       return;
     }
+    const checkoutItems = items.map((item) => ({ sku: String(item.product.sku ?? "").trim(), quantity: item.quantity }));
+    if (checkoutItems.some((item) => !item.sku)) {
+      toast.error("One or more cart items are missing a canonical SKU. Please refresh the product and try again.");
+      return;
+    }
 
     try {
-      const lines = items.map((item) => {
-        const id = variantNumericId(item.variantId);
-        if (!id) throw new Error(`Invalid Shopify variant for ${item.product.title}`);
-        return `${id}:${item.quantity}`;
-      });
-
       setCheckoutBusy(true);
       localStorage.setItem("resofit-checkout-contact", JSON.stringify({ fullName, email, phone, address }));
       const attribution = getAttribution();
       track("checkout_start", {
         product_id: items[0]?.product.id,
-        product_title: items.length === 1 ? items[0]?.product.title : "Shopify cart",
-        sku: items.length === 1 ? items[0]?.product.sku : undefined,
+        product_title: items.length === 1 ? items[0]?.product.title : "ResoFit cart",
+        sku: items.length === 1 ? checkoutItems[0]?.sku : undefined,
         quantity: totalItems,
         value: totalAmount,
         currency,
         item_count: items.length,
-        source: "shopify_checkout",
+        source: "resofit_paystack_checkout",
         ...attribution,
       });
 
-      window.location.assign(`https://${SHOPIFY_STORE_DOMAIN}/cart/${lines.join(",")}`);
+      const response = await fetch(PAYSTACK_INIT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: checkoutItems,
+          name: fullName.trim(),
+          email: email.trim().toLowerCase(),
+          phone: phone.trim(),
+          address: address.trim(),
+          ...attribution,
+        }),
+      });
+      const payload = (await response.json().catch(() => null)) as { authorization_url?: string; error?: string } | null;
+      if (!response.ok || !payload?.authorization_url) {
+        throw new Error(payload?.error === "insufficient_inventory" ? "One or more items are no longer available in the requested quantity." : payload?.error ?? "Unable to start secure checkout");
+      }
+      window.location.assign(payload.authorization_url);
     } catch (error) {
-      console.error("Shopify checkout:", error);
-      toast.error(error instanceof Error ? error.message : "Unable to start Shopify checkout");
+      console.error("ResoFit Paystack checkout:", error);
+      toast.error(error instanceof Error ? error.message : "Unable to start secure checkout");
       setCheckoutBusy(false);
     }
   };
@@ -99,7 +109,7 @@ export function CartDrawer() {
       <SheetContent className="flex h-full w-full flex-col bg-background sm:max-w-lg">
         <SheetHeader className="flex-shrink-0">
           <SheetTitle className="font-display text-2xl">Your Cart</SheetTitle>
-          <SheetDescription>{totalItems === 0 ? "No products in your cart yet." : `${totalItems} item${totalItems !== 1 ? "s" : ""} ready for secure Shopify checkout`}</SheetDescription>
+          <SheetDescription>{totalItems === 0 ? "No products in your cart yet." : `${totalItems} item${totalItems !== 1 ? "s" : ""} ready for secure checkout`}</SheetDescription>
         </SheetHeader>
         <div className="flex min-h-0 flex-1 flex-col pt-6">
           {items.length === 0 ? (
@@ -117,9 +127,9 @@ export function CartDrawer() {
                 })}
               </div></div>
               <div className="flex-shrink-0 space-y-4 border-t border-border/60 bg-background pt-4">
-                <div className="flex items-end justify-between"><div><p className="text-xs uppercase tracking-widest text-muted-foreground">Total</p><p className="font-display text-3xl text-gold">{formatMoney(totalMoney)}</p><p className="text-xs text-muted-foreground">≈ {approxUSD(totalMoney)}</p></div><p className="text-right text-[11px] uppercase tracking-widest text-muted-foreground">Secure Shopify Checkout<br />Payment · Order · Fulfillment</p></div>
+                <div className="flex items-end justify-between"><div><p className="text-xs uppercase tracking-widest text-muted-foreground">Total</p><p className="font-display text-3xl text-gold">{formatMoney(totalMoney)}</p><p className="text-xs text-muted-foreground">≈ {approxUSD(totalMoney)}</p></div><p className="text-right text-[11px] uppercase tracking-widest text-muted-foreground">Secure ResoFit Checkout<br />Payment · Order · Fulfillment</p></div>
                 <div className="grid gap-2"><Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full name" autoComplete="name" /><Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" type="email" autoComplete="email" /><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" type="tel" autoComplete="tel" /><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Delivery address (if required)" autoComplete="street-address" /></div>
-                <Button onClick={handleCheckout} className="h-12 w-full rounded-sm bg-gold text-xs font-semibold uppercase tracking-widest text-gold-foreground hover:bg-gold/90" disabled={items.length === 0 || isLoading || checkoutBusy}>{checkoutBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CreditCard className="mr-2 h-4 w-4" />Continue to Shopify Checkout</>}</Button>
+                <Button onClick={handleCheckout} className="h-12 w-full rounded-sm bg-gold text-xs font-semibold uppercase tracking-widest text-gold-foreground hover:bg-gold/90" disabled={items.length === 0 || isLoading || checkoutBusy}>{checkoutBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CreditCard className="mr-2 h-4 w-4" />Continue to Secure Checkout</>}</Button>
                 <Button variant="ghost" className="w-full text-xs" onClick={clearCart}>Clear cart</Button>
               </div>
             </>
