@@ -24,7 +24,8 @@ const revenue = await fs.readFile("scripts/revenue-intelligence.mjs", "utf8");
 
 const checks = [
   ["Paystack initialization route", cart.includes("/functions/v1/paystack-init")],
-  ["Canonical SKU required before checkout", cart.includes("primary.product.sku")],
+  ["Canonical SKU is collected for every checkout item", cart.includes("const checkoutItems = items.map") && cart.includes("item.product.sku")],
+  ["Checkout blocks missing canonical SKU", cart.includes("checkoutItems.some((item) => !item.sku)")],
   ["Checkout-start attribution", cart.includes('track("checkout_start"')],
   ["Revenue intelligence ranks paid orders", revenue.includes("paidOrders")],
   ["Revenue intelligence protects against hardcoded economics", revenue.includes("noHardcodedOfferAmount")],
