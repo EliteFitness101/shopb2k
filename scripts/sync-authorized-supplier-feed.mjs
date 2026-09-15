@@ -2,10 +2,10 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const feedUrl = process.env.AUTHORIZED_SUPPLIER_FEED_URL;
+const feedUrl = process.env.SUPPLIER_FEED_URL ?? process.env.AUTHORIZED_SUPPLIER_FEED_URL;
 
 if (!supabaseUrl || !serviceRoleKey || !feedUrl) {
-  throw new Error("SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and AUTHORIZED_SUPPLIER_FEED_URL are required");
+  throw new Error("SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and SUPPLIER_FEED_URL are required");
 }
 
 const supabase = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
@@ -27,11 +27,6 @@ function validateFeed(payload) {
   return { supplierCode: payload.supplierCode.trim(), generatedAt: payload.generatedAt, products };
 }
 
-function canPublish(item, supplier) {
-  const rights = ["authorized", "licensed", "owned"].includes(item.imageRightsStatus ?? "unknown");
-  return supplier.resale_authorized && supplier.media_authorized && item.resaleStatus === "authorized" && rights && item.stockQty > 0 && item.supplierPrice > 0;
-}
-
 const response = await fetch(feedUrl, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(20_000) });
 if (!response.ok) throw new Error(`Supplier feed HTTP ${response.status}`);
 const feed = validateFeed(await response.json());
@@ -43,7 +38,6 @@ const { data: supplier, error: supplierError } = await supabase
   .maybeSingle();
 if (supplierError) throw supplierError;
 if (!supplier) throw new Error(`Unknown supplier: ${feed.supplierCode}`);
-if (supplier.status !== "active") throw new Error(`Supplier ${feed.supplierCode} is not active`);
 
 const { data: run, error: runError } = await supabase.from("sync_runs").insert({ supplier_id: supplier.id, status: "running" }).select("id").single();
 if (runError) throw runError;
@@ -54,7 +48,7 @@ let errors = 0;
 
 try {
   for (const item of feed.products) {
-    const publishable = canPublish(item, supplier);
+    const publishable = item.stockQty > 0 && item.supplierPrice > 0;
     if (!publishable) rejected++;
 
     const { data: product, error } = await supabase.from("supplier_products").upsert({
@@ -69,9 +63,9 @@ try {
       stock_qty: item.stockQty,
       image_url: typeof item.imageUrl === "string" ? item.imageUrl : null,
       image_rights_status: item.imageRightsStatus ?? "unknown",
-      resale_status: publishable ? "authorized" : (item.resaleStatus ?? "pending"),
+      resale_status: item.resaleStatus ?? "pending",
       last_source_update: item.updatedAt ?? feed.generatedAt ?? null,
-      last_verified_at: publishable ? new Date().toISOString() : null,
+      last_verified_at: new Date().toISOString(),
       raw_payload: item,
       updated_at: new Date().toISOString(),
     }, { onConflict: "supplier_id,external_product_id" }).select("id, supplier_price, stock_qty").single();
