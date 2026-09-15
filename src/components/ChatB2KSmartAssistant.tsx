@@ -73,7 +73,7 @@ export function ChatB2KSmartAssistant() {
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-gold" aria-hidden />
                 <p className="leading-5 text-muted-foreground">Not sure where to start? ChatB2K™ can guide your next step without making you browse everything.</p>
-                <button type="button" aria-label="Dismiss tip" onClick={() => { setTipVisible(false); try { localStorage.setItem(TIP_KEY, "1"); } catch {} }} className="ml-auto rounded-full p-1 text-muted-foreground hover:text-foreground"><X className="h-3.5 w-3.5" /></button>
+                <button type="button" aria-label="Dismiss tip" onClick={() => { setTipVisible(false); try { localStorage.setItem(TIP_KEY, "1"); } catch { /* Storage may be unavailable. */ } }} className="ml-auto rounded-full p-1 text-muted-foreground hover:text-foreground"><X className="h-3.5 w-3.5" /></button>
               </div>
             </div>
           )}
