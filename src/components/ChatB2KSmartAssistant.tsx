@@ -96,7 +96,7 @@ export function ChatB2KSmartAssistant() {
             </div>
           )}
 
-          <button type="button" aria-label={open ? "Close ChatB2K assistant" : "Open ChatB2K assistant"} aria-expanded={open} onClick={() => setOpen((v) => !v)} className="group flex h-12 items-center gap-2 rounded-full border border-gold/30 bg-black/80 px-4 text-xs font-semibold uppercase tracking-widest text-foreground shadow-xl backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-gold/60 focus-visible:outline-2 focus-visible:outline-gold motion-reduce:transition-none">
+          <button type="button" aria-label={open ? "Close ChatB2K assistant" : "Open ChatB2K assistant"} aria-expanded={open} onClick={() => setOpen((v) => !v)} className="group relative right-24 sm:right-48 flex h-12 items-center gap-2 rounded-full border border-gold/30 bg-black/80 px-4 text-xs font-semibold uppercase tracking-widest text-foreground shadow-xl backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-gold/60 focus-visible:outline-2 focus-visible:outline-gold motion-reduce:transition-none">
             <MessageCircle className="h-4 w-4 text-gold" aria-hidden /><span className="hidden sm:inline">ChatB2K™</span><span className="sm:hidden">Help</span>
           </button>
         </div>
