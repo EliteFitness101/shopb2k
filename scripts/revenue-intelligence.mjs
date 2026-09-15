@@ -56,7 +56,7 @@ for (const event of events) {
   if (type === "assessment_completed") row.assessments += 1;
   if (type === "recommendation_generated" || type === "recommendation.created")
     row.recommendations += 1;
-  if (type === "checkout_started" || type === "checkout.started") row.checkouts += 1;
+  if (type === "checkout_start" || type === "checkout_started" || type === "checkout.started") row.checkouts += 1;
   if (type === "payment_success" || type === "payment.succeeded" || type === "order.created")
     row.paidOrders += 1;
   if (Number.isFinite(Number(event.revenue))) row.revenue += Number(event.revenue);
@@ -79,7 +79,6 @@ const ranked = [...byContent.values()]
     const checkoutRate = rate(row.checkouts, Math.max(row.recommendations, 1));
     const revenueSignal = Math.min(row.revenue / 100000, 1);
 
-    // Revenue dominates vanity metrics; engagement is only a supporting signal.
     const score =
       0.35 * Math.min(qualifiedRate, 1) +
       0.2 * Math.min(checkoutRate, 1) +
