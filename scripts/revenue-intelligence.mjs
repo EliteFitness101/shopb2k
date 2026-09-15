@@ -56,7 +56,7 @@ for (const event of events) {
   if (type === "assessment_completed") row.assessments += 1;
   if (type === "recommendation_generated" || type === "recommendation.created")
     row.recommendations += 1;
-  if (type === "checkout_started" || type === "checkout.started") row.checkouts += 1;
+  if (type === "checkout_start" || type === "checkout_started" || type === "checkout.started") row.checkouts += 1;
   if (type === "payment_success" || type === "payment.succeeded" || type === "order.created")
     row.paidOrders += 1;
   if (Number.isFinite(Number(event.revenue))) row.revenue += Number(event.revenue);
