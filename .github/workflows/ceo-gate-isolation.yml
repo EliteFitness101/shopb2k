@@ -31,6 +31,30 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm run revenue:smoke
 
+  revenue-smoke-diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - name: Capture revenue smoke output
+        run: |
+          set +e
+          npm run revenue:smoke > revenue-smoke-output.txt 2>&1
+          status=$?
+          echo "EXIT_STATUS=$status" >> revenue-smoke-output.txt
+          cat revenue-smoke-output.txt
+          exit 0
+      - name: Upload revenue smoke output
+        uses: actions/upload-artifact@v4
+        with:
+          name: revenue-smoke-output
+          path: revenue-smoke-output.txt
+          if-no-files-found: error
+
   products-seo-smoke:
     runs-on: ubuntu-latest
     steps:
