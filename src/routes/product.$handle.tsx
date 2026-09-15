@@ -10,7 +10,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { ProductImage } from "@/components/ProductImage";
 import { RecommendedProducts } from "@/components/RecommendedProducts";
 import { RecentlyViewed, recordRecentlyViewed } from "@/components/RecentlyViewed";
-import { PRODUCT_BY_HANDLE_QUERY, approxUSD, formatMoney, storefrontApiRequest, type ShopifyProductNode } from "@/lib/shopify";
+import { PRODUCT_BY_HANDLE_QUERY, approxUSD, formatMoney, storefrontApiRequest, RESOFIT_SUPABASE_URL, type ShopifyProductNode } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 
 export const Route = createFileRoute("/product/$handle")({
@@ -58,7 +58,7 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
 
   const handleAdd = async () => {
     if (!selectedVariant) return;
-    await addItem({ product: { id: product.id, title: product.title, handle: product.handle, images: product.images }, variantId: selectedVariant.id, variantTitle: selectedVariant.title, price: selectedVariant.price, quantity: qty, selectedOptions: selectedVariant.selectedOptions });
+    await addItem({ product: { id: product.id, title: product.title, handle: product.handle, sku: product.sku, images: product.images }, variantId: selectedVariant.id, variantTitle: selectedVariant.title, price: selectedVariant.price, quantity: qty, selectedOptions: selectedVariant.selectedOptions });
     recordEngagement(product.id, "add_to_cart");
     toast.success(`Added ${qty}× ${product.title} to cart`, { position: "top-center" });
   };
@@ -67,15 +67,34 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
     if (typeof window === "undefined" || !selectedVariant?.availableForSale) return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("assessment") !== "1") return;
-    const numericId = String(selectedVariant.id).match(/(\d+)$/)?.[1];
-    if (!numericId) return;
+    if (!product.sku) return;
     if (sessionStorage.getItem("resofit:assessment_checkout_started") === selectedVariant.id) return;
+    const saved = localStorage.getItem("resofit-checkout-contact");
+    if (!saved) return;
+    let contact: { fullName?: string; email?: string; phone?: string; address?: string };
+    try { contact = JSON.parse(saved); } catch { return; }
+    if (!contact.fullName?.trim() || !contact.email?.trim() || !contact.phone?.trim()) return;
     sessionStorage.setItem("resofit:assessment_checkout_started", selectedVariant.id);
     recordEngagement(product.id, "add_to_cart");
-    const configuredDomain = String(import.meta.env.VITE_SHOPIFY_PRIMARY_DOMAIN ?? "resocart.myshopify.com").trim().replace(/^https?:\/\//, "").replace(/\/+$/, "");
-    const checkoutOrigin = configuredDomain ? `https://${configuredDomain}` : "https://store.resofit.fit";
-    window.location.assign(`${checkoutOrigin}/cart/${numericId}:1`);
-  }, [product.id, selectedVariant]);
+    void fetch(`${RESOFIT_SUPABASE_URL}/functions/v1/paystack-init`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: [{ sku: product.sku, quantity: 1 }],
+        name: contact.fullName.trim(),
+        email: contact.email.trim().toLowerCase(),
+        phone: contact.phone.trim(),
+        address: contact.address?.trim() ?? "",
+      }),
+    }).then(async (response) => {
+      const payload = await response.json().catch(() => null) as { authorization_url?: string; error?: string } | null;
+      if (!response.ok || !payload?.authorization_url) throw new Error(payload?.error ?? "Unable to start secure checkout");
+      window.location.assign(payload.authorization_url);
+    }).catch((error) => {
+      sessionStorage.removeItem("resofit:assessment_checkout_started");
+      toast.error(error instanceof Error ? error.message : "Unable to start secure checkout");
+    });
+  }, [product.id, product.sku, selectedVariant]);
 
   return <article className="mx-auto max-w-7xl px-6 py-12">
     <Link to="/shop" className="mb-8 inline-flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground hover:text-gold"><ArrowLeft className="h-3 w-3" /> Back to shop</Link>
@@ -89,7 +108,7 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
         {product.descriptionHtml ? <div className="prose prose-invert mt-8 max-w-none text-muted-foreground" dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} /> : <p className="mt-8 whitespace-pre-line text-muted-foreground">{product.description}</p>}
         {variants.length > 1 && variants[0].title !== "Default Title" && <div className="mt-8 border-t border-border/60 pt-6"><p className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">Option</p><div className="flex flex-wrap gap-2">{variants.map((v) => <button key={v.id} type="button" onClick={() => setVariantId(v.id)} disabled={!v.availableForSale} className={`rounded-sm border px-4 py-2 text-xs uppercase tracking-widest transition-colors ${v.id === variantId ? "border-gold bg-gold/10 text-gold" : "border-border text-muted-foreground hover:border-gold/60 hover:text-foreground"} disabled:line-through disabled:opacity-40`}>{v.title}</button>)}</div></div>}
         <div className="mt-8 flex flex-wrap items-center gap-4"><div className="flex h-12 items-center border border-border"><button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} className="h-full w-12 text-lg hover:text-gold" aria-label="Decrease quantity">−</button><span className="w-10 text-center">{qty}</span><button type="button" onClick={() => setQty((q) => q + 1)} className="h-full w-12 text-lg hover:text-gold" aria-label="Increase quantity">+</button></div><button type="button" onClick={handleAdd} disabled={isLoading || !selectedVariant?.availableForSale} className="inline-flex h-12 flex-1 items-center justify-center rounded-sm bg-gold px-8 text-xs font-semibold uppercase tracking-widest text-gold-foreground hover:bg-gold/90 disabled:opacity-50">{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : selectedVariant?.availableForSale ? "Add to cart" : "Sold out"}</button></div>
-        <ul className="mt-10 space-y-3 border-t border-border/60 pt-6 text-sm"><li className="flex items-start gap-3"><Truck className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">Lagos:</strong> <span className="text-muted-foreground">2–4 business days · from ₦5,000</span></span></li><li className="flex items-start gap-3"><Package className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">Nigeria nationwide:</strong> <span className="text-muted-foreground">4–7 business days · calculated at checkout</span></span></li><li className="flex items-start gap-3"><Truck className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">International:</strong> <span className="text-muted-foreground">7–21 business days · DHL / freight</span></span></li><li className="flex items-start gap-3"><ShieldCheck className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">Secure checkout:</strong> <span className="text-muted-foreground">Shopify checkout · payment options shown at checkout</span></span></li></ul>
+        <ul className="mt-10 space-y-3 border-t border-border/60 pt-6 text-sm"><li className="flex items-start gap-3"><Truck className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">Lagos:</strong> <span className="text-muted-foreground">2–4 business days · from ₦5,000</span></span></li><li className="flex items-start gap-3"><Package className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">Nigeria nationwide:</strong> <span className="text-muted-foreground">4–7 business days · calculated at checkout</span></span></li><li className="flex items-start gap-3"><Truck className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">International:</strong> <span className="text-muted-foreground">7–21 business days · DHL / freight</span></span></li><li className="flex items-start gap-3"><ShieldCheck className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">Secure checkout:</strong> <span className="text-muted-foreground">ResoFit Paystack checkout · payment options shown at checkout</span></span></li></ul>
       </div>
     </div>
     <RecommendedProducts currentHandle={product.handle} productType={product.productType} />
