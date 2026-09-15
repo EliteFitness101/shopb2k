@@ -1,0 +1,33 @@
+name: ResoFit Revenue Smoke v2
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  revenue-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - name: Capture revenue smoke output
+        run: |
+          set +e
+          npm run revenue:smoke > revenue-smoke-v2.txt 2>&1
+          status=$?
+          echo "EXIT_STATUS=$status" >> revenue-smoke-v2.txt
+          cat revenue-smoke-v2.txt
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: revenue-smoke-v2-output
+          path: revenue-smoke-v2.txt
+          if-no-files-found: error
