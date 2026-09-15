@@ -1,0 +1,33 @@
+name: ResoFit Full Lint Diagnostic v2
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - name: Capture lint output
+        run: |
+          set +e
+          npm run lint > full-lint-output.txt 2>&1
+          status=$?
+          echo "EXIT_STATUS=$status" >> full-lint-output.txt
+          cat full-lint-output.txt
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: full-lint-output-v2
+          path: full-lint-output.txt
+          if-no-files-found: error
