@@ -55,6 +55,8 @@ const PRICE_OVERRIDES: Record<string, number> = {
   "yoga-mobility-classes": 5000,
 };
 
+export const formatNGN = (amount: number) => `₦${new Intl.NumberFormat("en-NG", { maximumFractionDigits: 0 }).format(amount)}`;
+
 export const MAKAVELI_RESET_TICKET: MakaveliService = {
   slug: "reset-wellness-smoothie-ticket",
   name: "Reset Wellness Smoothie + Ticket",
