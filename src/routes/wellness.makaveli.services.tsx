@@ -29,11 +29,41 @@ const tierStyles: Record<string, string> = {
 
 const badges: Record<string, string> = {
   "wellness-reset": "Campaign Special",
-  "private-couples-relaxation": "Couples Experience",
+  "private-couples-relaxation": "Signature Couples",
   "romantic-wellness-experience": "Premium Experience",
-  "executive-guest-wellness": "Executive Tier",
-  "corporate-wellness-day": "Group Activation",
+  "executive-guest-wellness": "Executive Hospitality",
+  "corporate-wellness-day": "Corporate Activation",
+  "executive-wellness-package": "Executive Group",
+  "executive-package": "Executive Membership",
   "vip-private-wellness-membership": "VIP Access",
+};
+
+const premiumCardCopy: Record<string, { eyebrow: string; valueProp: string; cta: string }> = {
+  "private-couples-relaxation": {
+    eyebrow: "Couples & Private",
+    valueProp: "A private, premium relaxation experience designed for two.",
+    cta: "Book & Pay ₦18,000",
+  },
+  "executive-guest-wellness": {
+    eyebrow: "Hospitality",
+    valueProp: "Premium wellness designed around executive and hospitality stays.",
+    cta: "Book & Pay ₦20,000",
+  },
+  "executive-wellness-package": {
+    eyebrow: "Corporate & Group",
+    valueProp: "Executive group wellness with scheduling built around your organization.",
+    cta: "Request Executive Booking",
+  },
+  "corporate-wellness-day": {
+    eyebrow: "Corporate & Group",
+    valueProp: "A flexible group activation for corporate massage and wellness days.",
+    cta: "Request Event Quote",
+  },
+  "executive-package": {
+    eyebrow: "Packages & Membership",
+    valueProp: "A premium individual wellness pathway with membership-style benefits.",
+    cta: "Select ₦40,000 Package",
+  },
 };
 
 function MakaveliServices() {
@@ -60,14 +90,15 @@ function MakaveliServices() {
           const isCampaign = service.slug === "wellness-reset";
           const isFuture = service.status === "coming_soon";
           const isRequest = service.booking === "request";
+          const premium = premiumCardCopy[service.slug];
           const price = service.priceMode === "fixed" && service.price ? formatNGN(service.price) : service.priceLabel ?? (service.priceMode === "referral" ? "Referral" : "Custom quote");
           const whatsappText = `Inquiring about ${service.name}`;
-          const primaryLabel = isFuture ? "View / Request" : isRequest ? "Request Booking" : isCampaign ? "Book & Pay ₦1,000" : selectedCategory === "Packages & Membership" ? "Select Package" : "Book Now";
+          const primaryLabel = isFuture ? "View / Request" : premium?.cta ?? (isRequest ? "Request Booking" : isCampaign ? "Book & Pay ₦1,000" : selectedCategory === "Packages & Membership" ? "Select Package" : "Book Now");
           return <article key={service.slug} className={`group flex min-h-[440px] flex-col rounded-2xl border p-6 transition-all duration-300 hover:-translate-y-1 hover:border-gold/60 ${tierStyles[selectedCategory] ?? "border-border/70 bg-card/30"}`}>
             <div className="flex min-h-6 items-start justify-between gap-4">{badges[service.slug] ? <span className="inline-flex items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-[9px] font-semibold uppercase tracking-widest text-gold"><Sparkles className="h-3 w-3"/>{badges[service.slug]}</span> : <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{isFuture ? "Coming soon" : isRequest ? "Request" : "Book & pay"}</span>}<span className="text-right font-display text-xl text-gold">{price}</span></div>
-            <div className="mt-5"><span className="text-[10px] uppercase tracking-widest text-muted-foreground">{selectedCategory}</span><h3 className="mt-2 font-display text-2xl leading-tight">{service.name}</h3></div>
-            {isCampaign && <p className="mt-3 text-sm font-medium text-gold">Purpose: Make Makaveli Wellness easy to try.</p>}
-            {!isCampaign && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{service.description}</p>}
+            <div className="mt-5"><span className="text-[10px] uppercase tracking-widest text-muted-foreground">{premium?.eyebrow ?? selectedCategory}</span><h3 className="mt-2 font-display text-2xl leading-tight">{service.name}</h3></div>
+            {premium ? <p className="mt-3 text-sm font-medium leading-relaxed text-foreground/90">{premium.valueProp}</p> : isCampaign ? <p className="mt-3 text-sm font-medium text-gold">Purpose: Make Makaveli Wellness easy to try.</p> : <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{service.description}</p>}
+            {premium && <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{service.description}</p>}
             <ul className="mt-5 space-y-2">{service.features.slice(0,4).map(feature => <li key={feature} className="flex gap-2 text-xs leading-relaxed text-muted-foreground"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold"/>{feature}</li>)}</ul>
             <div className="mt-auto pt-5"><div className="border-t border-border/50 pt-4"><p className="text-[11px] text-muted-foreground">{isCampaign ? "Ideal for: New customers and campaign traffic" : `Best for: ${service.suitableFor}`}</p>{service.duration && <p className="mt-1 text-[11px] text-muted-foreground">Typical duration: {service.duration} min</p>}</div>
               <div className="mt-5 grid gap-2 sm:grid-cols-2"><Link to="/wellness/makaveli/book" search={{ service: service.slug }} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-3 text-[10px] font-semibold uppercase tracking-widest ${isFuture ? "border border-border text-muted-foreground" : "bg-gold/90 text-gold-foreground"}`}>{primaryLabel}<ArrowRight className="h-3.5 w-3.5"/></Link><a href={`https://wa.me/2349032712393?text=${encodeURIComponent(whatsappText)}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border px-4 py-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground hover:border-gold hover:text-gold"><MessageCircle className="h-3.5 w-3.5"/>WhatsApp Us</a></div>
