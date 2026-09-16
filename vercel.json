@@ -11,11 +11,5 @@
       "destination": "https://martial.resofit.fit/:path*",
       "permanent": true
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/content/publish-cron",
-      "schedule": "*/5 * * * *"
-    }
   ]
 }
