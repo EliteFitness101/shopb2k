@@ -1,4 +1,5 @@
-import { MAKAVELI_SERVICES as BASE, type MakaveliService } from "./makaveliCatalog";
+import { MAKAVELI_SERVICES as BASE, formatNGN, type MakaveliService } from "./makaveliCatalog";
+export { formatNGN } from "./makaveliCatalog";
 
 const PRICE_OVERRIDES: Record<string, number> = {
   "express-relaxation-massage": 7000,
