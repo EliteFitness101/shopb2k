@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Search } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -36,6 +36,9 @@ export const Route = createFileRoute("/shop")({
           "Competition-grade barbells, bumper plates, dumbbells, and power racks. Secure Paystack checkout.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_001.jpeg" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_001.jpeg" },
       { property: "og:url", content: SHOP_URL },
     ],
     links: [{ rel: "canonical", href: SHOP_URL }],
@@ -56,25 +59,46 @@ async function fetchProducts(): Promise<ShopifyProduct[]> {
   return res?.data?.products?.edges ?? [];
 }
 
+const SHOP_HERO_IMAGES = [
+  "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_001.jpeg",
+  "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_002.jpeg",
+  "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_003.jpeg",
+  "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_004.jpeg",
+  "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_005.jpeg",
+  "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_006.jpeg",
+  "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_007.png",
+  "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_008.png",
+];
+
+function ShopHero() {
+  const [active, setActive] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setActive((v) => (v + 1) % SHOP_HERO_IMAGES.length), 5000);
+    return () => window.clearInterval(id);
+  }, []);
+  return <section className="relative min-h-[620px] overflow-hidden border-b border-amber-300/15 bg-black">
+    {SHOP_HERO_IMAGES.map((src, i) => <img key={src} src={src} alt="" aria-hidden={i !== active} className="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000" style={{ opacity: i === active ? 1 : 0 }} />)}
+    <div className="absolute inset-0 bg-black/70" />
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_30%,rgba(212,175,55,.24),transparent_34%),linear-gradient(90deg,rgba(0,0,0,.94),rgba(0,0,0,.45),rgba(0,0,0,.82))]" />
+    <div className="relative z-10 mx-auto flex min-h-[620px] max-w-7xl items-end px-6 py-16 md:items-center">
+      <div className="max-w-3xl">
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-black/45 px-4 py-2 text-[10px] font-semibold uppercase tracking-[.28em] text-amber-300 backdrop-blur-xl">ResoFlex™ · Powered by Resonance Fitness · Made in Nigeria</div>
+        <p className="mb-4 text-xs uppercase tracking-[0.35em] text-amber-400">The Shop</p>
+        <h1 className="font-display text-6xl leading-[0.92] md:text-8xl">Performance,<br/><span className="text-gradient-gold">with authority.</span></h1>
+        <p className="mt-6 max-w-xl text-lg leading-8 text-zinc-200">Premium training equipment and wellness products, presented with the confidence of a serious performance brand.</p>
+        <div className="mt-8 flex flex-wrap gap-3 text-[10px] uppercase tracking-[.2em] text-zinc-300"><span className="rounded-full border border-white/15 bg-black/35 px-4 py-2 backdrop-blur">Secure Paystack checkout</span><span className="rounded-full border border-white/15 bg-black/35 px-4 py-2 backdrop-blur">Nigeria-wide delivery</span><span className="rounded-full border border-white/15 bg-black/35 px-4 py-2 backdrop-blur">ChatB2K™ guidance</span></div>
+        <div className="mt-9 flex items-center gap-2">{SHOP_HERO_IMAGES.map((_, i) => <button key={i} type="button" onClick={() => setActive(i)} aria-label={`Show shop hero ${i + 1}`} className={`h-1.5 rounded-full transition-all ${i === active ? "w-12 bg-amber-300" : "w-5 bg-white/30"}`} />)}</div>
+      </div>
+    </div>
+  </section>;
+}
+
 function Shop() {
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
 
-      <section className="border-b border-border/60">
-        <div className="mx-auto max-w-7xl px-6 py-20">
-          <p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold">The Shop</p>
-          <h1 className="font-display text-6xl leading-[0.95] md:text-8xl">
-            Hardware,
-            <br />
-            <span className="text-gradient-gold">no compromise.</span>
-          </h1>
-          <p className="mt-6 max-w-xl text-muted-foreground">
-            Every piece spec'd, tested, and shipped from our Lagos workshop. Prices in ₦ with ≈USD
-            shown. Shipping calculated at secure checkout.
-          </p>
-        </div>
-      </section>
+      <ShopHero />
 
       <ShopGrid />
 
