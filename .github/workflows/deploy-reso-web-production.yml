@@ -1,4 +1,5 @@
 name: Deploy reso-web production
+# Live storefront trigger: Coach B2K premium pull-up product
 
 on:
   push:
