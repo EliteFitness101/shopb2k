@@ -69,3 +69,5 @@ from public.resofit_wellness_hubs h cross join (values
 ('ResoFlex™ Spa Partnership','Proposed spa/wellness integration for the hotel partnership.','{"category":"partnership","status":"proposed","brand":"ResoFlex™"}'::jsonb)
 ) v(service_name,description,metadata) where h.hub_code='ENEKA-HOTEL-PHC-001'
 on conflict (hub_id,service_name) do update set description=excluded.description,metadata=excluded.metadata,updated_at=now();
+
+-- production deployment trigger: Eneka Hotel node is complete and ready for Vercel Git integration.
