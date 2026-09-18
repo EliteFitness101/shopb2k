@@ -1,5 +1,6 @@
 name: Deploy reso-web production
 # Live storefront trigger: Coach B2K premium pull-up product
+# Production verification trigger: 2026-09-18
 
 on:
   push:
