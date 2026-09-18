@@ -71,3 +71,5 @@ from public.resofit_wellness_hubs h cross join (values
 on conflict (hub_id,service_name) do update set description=excluded.description,metadata=excluded.metadata,updated_at=now();
 
 -- production deployment trigger: Eneka Hotel node is complete and ready for Vercel Git integration.
+
+-- deploy/eneka-production verification trigger
