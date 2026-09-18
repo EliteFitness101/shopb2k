@@ -28,7 +28,7 @@ async function fetchStorefrontProducts(handle: string | null): Promise<Storefron
 }
 
 async function fetchCanonicalCatalog(handle: string | null): Promise<StorefrontProduct[]> {
-  const url = new URL(handle ? `${RESOFIT_CATALOG_URL}/product` : RESOFIT_CATALOG_URL); if (handle) url.searchParams.set("handle", handle); else url.searchParams.set("limit", "100");
+  const url = new URL(handle ? `${RESOFIT_CATALOG_URL}/product` : RESOFIT_CATALOG_URL); if (handle) url.searchParams.set("handle", handle); else url.searchParams.set("limit", "200");
   const response = await fetch(url.toString(), { method: "GET", cache: "no-store" }); if (!response.ok) throw new Error(`ResoFit canonical catalog HTTP ${response.status}`);
   const payload = (await response.json()) as { data?: StorefrontProduct | StorefrontProduct[]; error?: string }; if (payload.error) throw new Error(payload.error); if (handle) return payload.data ? [payload.data as StorefrontProduct] : []; return Array.isArray(payload.data) ? payload.data : [];
 }
