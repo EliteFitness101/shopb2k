@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ProductImage } from "@/components/ProductImage";
@@ -85,6 +85,7 @@ function Shop() {
 
 function ShopGrid() {
   const search = Route.useSearch();
+  const [catalogQuery, setCatalogQuery] = useState("");
   const navigate = Route.useNavigate();
   const { data, isLoading, isError } = useQuery({
     queryKey: ["products", "all"],
@@ -105,9 +106,11 @@ function ShopGrid() {
   }, [data]);
 
   const filtered = useMemo(() => {
+    const q = catalogQuery.trim().toLowerCase();
     let list = data ?? [];
     if (search.type) list = list.filter((p) => p.node.productType === search.type);
     if (search.vendor) list = list.filter((p) => p.node.vendor === search.vendor);
+    if (q) list = list.filter((p) => [p.node.title, p.node.handle, p.node.sku, p.node.description, p.node.productType, p.node.vendor, ...(p.node.tags ?? [])].filter(Boolean).join(" ").toLowerCase().includes(q));
     const sorted = [...list];
     switch (search.sort) {
       case "price_asc":
@@ -131,7 +134,7 @@ function ShopGrid() {
         break;
     }
     return sorted;
-  }, [data, search.type, search.vendor, search.sort]);
+  }, [catalogQuery, data, search.type, search.vendor, search.sort]);
 
   const updateSearch = (patch: Partial<typeof search>) =>
     navigate({ search: (prev: typeof search) => ({ ...prev, ...patch }), replace: true });
@@ -139,6 +142,14 @@ function ShopGrid() {
   return (
     <section className="py-16">
       <div className="mx-auto max-w-7xl px-6">
+        {data && data.length > 0 && (
+          <form onSubmit={(e) => e.preventDefault()} role="search" className="mb-6 flex items-center gap-3 border border-border bg-card/40 p-2 focus-within:border-gold">
+            <Search className="ml-3 h-4 w-4 text-muted-foreground" aria-hidden />
+            <input type="search" value={catalogQuery} onChange={(e) => setCatalogQuery(e.target.value)} placeholder="Search products, ResoFlex, SKU…" aria-label="Search products" className="min-w-0 flex-1 bg-transparent px-2 py-3 text-sm outline-none" />
+            {catalogQuery && <button type="button" onClick={() => setCatalogQuery("")} className="px-3 text-xs uppercase tracking-widest text-muted-foreground hover:text-gold">Clear</button>}
+          </form>
+        )}
+
         {data && data.length > 0 && (
           <div className="mb-10 flex flex-wrap items-end gap-4 border-b border-border/60 pb-6">
             {productTypes.length > 0 && (
