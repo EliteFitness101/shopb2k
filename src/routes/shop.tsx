@@ -107,7 +107,7 @@ function Shop() {
   );
 }
 
-function ShopGrid() {
+export function ShopGrid() {
   const search = Route.useSearch();
   const [catalogQuery, setCatalogQuery] = useState("");
   const navigate = Route.useNavigate();
