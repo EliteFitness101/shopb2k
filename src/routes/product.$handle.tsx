@@ -43,66 +43,64 @@ function CoachB2KPullUpLuxury({ product }: { product: ShopifyProductNode }) {
   const addItem = useCartStore((s) => s.addItem);
   const isLoading = useCartStore((s) => s.isLoading);
   const [qty, setQty] = useState(1);
-  const heroImage = product.images.edges[0]?.node.url;
+  const [activeHero, setActiveHero] = useState(0);
+  const heroImages = [
+    "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_001.jpeg",
+    "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_002.jpeg",
+    "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_003.jpeg",
+    "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_004.jpeg",
+    "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_005.jpeg",
+    "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_006.jpeg",
+    "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_007.png",
+    "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_008.png",
+  ];
+  const bufferVideos = [
+    "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/ResoFlex_Vault/ResoFlex_Buchi_Power_commercial_202608151451.mp4",
+    "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/ResoFlex_Vault/ResoFlex_wall-mounted_station_pr%E2%80%A6_20260918141303.mp4",
+    "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/ResoFlex_Vault/Athlete_performing_pull-up_comme%E2%80%A6_20260918120251.mp4",
+  ];
   const buy = async () => {
     if (!variant) return;
     await addItem({ product: { id: product.id, title: product.title, handle: product.handle, sku: product.sku, images: product.images }, variantId: variant.id, variantTitle: variant.title, price: variant.price, quantity: qty, selectedOptions: variant.selectedOptions });
     recordEngagement(product.id, "add_to_cart");
     toast.success("Added to your ResoFit cart. Open the cart above to continue to secure checkout.", { position: "top-center" });
   };
+  useEffect(() => {
+    const id = window.setInterval(() => setActiveHero((v) => (v + 1) % heroImages.length), 4500);
+    return () => window.clearInterval(id);
+  }, []);
+  const hero = heroImages[activeHero];
   return <main className="overflow-hidden">
-    <section className="relative border-b border-white/10 bg-[radial-gradient(circle_at_70%_25%,rgba(212,175,55,.16),transparent_32%),linear-gradient(135deg,#09090b,#11100d_55%,#09090b)]">
-      <div className="mx-auto grid max-w-7xl gap-12 px-6 py-14 lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:py-20">
+    <section className="relative min-h-[760px] border-b border-white/10 bg-black">
+      {heroImages.map((src, i) => <img key={src} src={src} alt="" aria-hidden={i !== activeHero} className="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000" style={{ opacity: i === activeHero ? 1 : 0 }} />)}
+      <div className="absolute inset-0 bg-black/65" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(212,175,55,.22),transparent_35%),linear-gradient(90deg,rgba(0,0,0,.9),rgba(0,0,0,.35),rgba(0,0,0,.82))]" />
+      <div className="relative z-10 mx-auto grid min-h-[760px] max-w-7xl items-end gap-10 px-6 py-16 lg:grid-cols-[1.15fr_.85fr] lg:items-center lg:py-20">
         <div>
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/10 px-4 py-2 text-[10px] font-semibold uppercase tracking-[.28em] text-amber-300">🇳🇬 Engineered in Nigeria · First Production Run</div>
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-black/45 px-4 py-2 text-[10px] font-semibold uppercase tracking-[.28em] text-amber-300 backdrop-blur-xl">🇳🇬 Engineered in Nigeria · First Production Run</div>
           <p className="text-xs uppercase tracking-[.35em] text-amber-400">ResoFlex™ · Coach B2K</p>
           <h1 className="mt-4 max-w-3xl font-display text-5xl leading-[.95] md:text-7xl">Heavy-Duty Strength.<br/><span className="text-gradient-gold">Zero Compromise.</span></h1>
-          <p className="mt-7 max-w-2xl text-lg leading-8 text-zinc-300">Your wall is already there. Now put it to work. A serious wall-mounted training station for pull-ups, chin-ups, dips and hanging core work — locally fabricated for the first ResoFlex production run.</p>
+          <p className="mt-7 max-w-2xl text-lg leading-8 text-zinc-200">Your wall is already there. Now put it to work. A serious wall-mounted training station for pull-ups, chin-ups, dips and hanging core work — locally fabricated for the first ResoFlex production run.</p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
             <button onClick={buy} disabled={isLoading || !variant?.availableForSale} className="inline-flex h-14 items-center justify-center rounded-sm bg-amber-400 px-7 text-sm font-extrabold uppercase tracking-widest text-black shadow-[0_12px_50px_rgba(212,175,55,.18)] transition hover:bg-amber-300 disabled:opacity-50">Pre-order · ₦65,000</button>
-            <Link to="/shop" className="inline-flex h-14 items-center justify-center rounded-sm border border-white/15 px-7 text-sm font-semibold uppercase tracking-widest text-white transition hover:border-amber-400/50 hover:text-amber-300">Back to Shop</Link>
+            <Link to="/shop" className="inline-flex h-14 items-center justify-center rounded-sm border border-white/20 bg-black/30 px-7 text-sm font-semibold uppercase tracking-widest text-white backdrop-blur-xl transition hover:border-amber-400/50 hover:text-amber-300">Back to Shop</Link>
           </div>
-          <p className="mt-4 text-xs uppercase tracking-[.18em] text-zinc-500">Secure checkout · Paystack · Card · Bank · USSD · Nationwide delivery</p>
+          <p className="mt-4 text-xs uppercase tracking-[.18em] text-zinc-300">Secure checkout · Paystack · Card · Bank · USSD · Nationwide delivery</p>
+          <div className="mt-8 flex flex-wrap gap-2">{heroImages.map((_, i) => <button key={i} onClick={() => setActiveHero(i)} aria-label={`Show hero image ${i + 1}`} className={`h-1.5 rounded-full transition-all ${i === activeHero ? "w-10 bg-amber-300" : "w-5 bg-white/30"}`} />)}</div>
         </div>
-        <div className="relative">
-          <div className="absolute -inset-8 rounded-full bg-amber-400/10 blur-3xl"/>
-          <div className="relative overflow-hidden rounded-2xl border border-amber-300/20 bg-black/40 p-2 shadow-2xl">
-            <img src={heroImage} alt="Coach B2K ResoFlex wall-mounted pull-up bar" className="aspect-[4/3] w-full rounded-xl object-cover" />
-            <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between rounded-xl border border-white/10 bg-black/70 px-4 py-3 backdrop-blur-xl">
-              <span className="text-xs uppercase tracking-[.22em] text-zinc-300">Made in Nigeria</span><span className="font-display text-xl text-amber-300">₦65K</span>
-            </div>
-          </div>
+        <div className="rounded-2xl border border-amber-300/20 bg-black/35 p-2 shadow-2xl backdrop-blur-xl">
+          <img src={hero} alt="Coach B2K ResoFlex wall-mounted pull-up bar" className="aspect-[4/3] w-full rounded-xl object-cover" />
+          <div className="flex items-center justify-between px-3 py-4"><span className="text-xs uppercase tracking-[.22em] text-zinc-300">Made in Nigeria</span><span className="font-display text-xl text-amber-300">₦65K</span></div>
         </div>
       </div>
     </section>
-    <section className="border-b border-white/10 bg-[#0c0c0e]">
-      <div className="mx-auto grid max-w-7xl gap-px px-6 py-8 sm:grid-cols-3">
-        {[["02 MM","Structural steel profile"],["2″ × 2″","Square steel pipe"],["1″","Round pull-up handles"]].map(([a,b]) => <div key={a} className="border border-white/10 bg-white/[.02] p-6"><p className="font-display text-3xl text-amber-300">{a}</p><p className="mt-2 text-xs uppercase tracking-[.2em] text-zinc-500">{b}</p></div>)}
-      </div>
-    </section>
-    <section className="mx-auto max-w-7xl px-6 py-20">
-      <div className="grid gap-12 lg:grid-cols-[1fr_1.1fr]">
-        <div><p className="text-xs uppercase tracking-[.3em] text-amber-400">Why this bar</p><h2 className="mt-3 font-display text-4xl md:text-5xl">One bar.<br/><span className="text-gradient-gold">Serious training.</span></h2><p className="mt-6 max-w-xl leading-8 text-zinc-400">No gym membership. No waiting for equipment. Just a properly installed station, your bodyweight and a training system you can actually repeat.</p></div>
-        <div className="grid gap-4 sm:grid-cols-2">{[["01","Wide-grip pull-ups","Build pulling strength and control."],["02","Neutral chin-ups","Train your back, arms and grip."],["03","Tricep dips","Add pushing work to the same station."],["04","Hanging core work","Use vertical knee raises and controlled holds."]].map(([n,t,d]) => <div key={n} className="rounded-xl border border-white/10 bg-white/[.025] p-6"><span className="text-xs tracking-[.25em] text-amber-400">{n}</span><h3 className="mt-5 font-display text-2xl">{t}</h3><p className="mt-2 text-sm leading-6 text-zinc-400">{d}</p></div>)}</div>
-      </div>
-    </section>
-    <section className="border-y border-amber-400/15 bg-[radial-gradient(circle_at_20%_50%,rgba(212,175,55,.12),transparent_35%),#0b0b0d]">
-      <div className="mx-auto max-w-7xl px-6 py-20">
-        <div className="max-w-3xl"><p className="text-xs uppercase tracking-[.3em] text-amber-400">Pre-order package</p><h2 className="mt-3 font-display text-4xl md:text-5xl">₦65,000.<br/><span className="text-gradient-gold">More than the bar.</span></h2><p className="mt-5 text-zinc-400">Your pre-order includes the equipment plus the supplied ₦10,000-value 90-Day Metabolic Transformation Journey and ChatB2K™ coaching access.</p></div>
-        <div className="mt-10 grid gap-4 md:grid-cols-3">{[["THE HARDWARE","Coach B2K wall-mounted station","2 mm structural steel · locally fabricated"],["THE JOURNEY","90-Day Metabolic Transformation","Daily customized nutrition guidance"],["THE INTELLIGENCE","ChatB2K™ coaching access","Guidance, form checks and routine tracking"]].map(([k,t,d]) => <div key={k} className="rounded-2xl border border-white/10 bg-black/30 p-7"><p className="text-[10px] font-bold tracking-[.25em] text-amber-400">{k}</p><h3 className="mt-4 font-display text-2xl">{t}</h3><p className="mt-3 text-sm leading-6 text-zinc-400">{d}</p></div>)}</div>
-      </div>
-    </section>
-    <section className="mx-auto max-w-5xl px-6 py-20 text-center">
-      <p className="text-xs uppercase tracking-[.3em] text-amber-400">First batch</p><h2 className="mt-4 font-display text-4xl md:text-6xl">Build your home gym<br/><span className="text-gradient-gold">one serious piece at a time.</span></h2>
-      <div className="mx-auto mt-8 flex max-w-md items-center gap-3 rounded-xl border border-white/10 bg-white/[.03] p-2">
-        <button onClick={() => setQty((q) => Math.max(1,q-1))} className="h-12 w-12 rounded-lg border border-white/10 text-xl hover:text-amber-300">−</button><span className="flex-1 font-semibold">{qty} × ₦65,000</span><button onClick={() => setQty((q) => q+1)} className="h-12 w-12 rounded-lg border border-white/10 text-xl hover:text-amber-300">+</button>
-      </div>
-      <button onClick={buy} disabled={isLoading || !variant?.availableForSale} className="mt-5 h-14 w-full max-w-md rounded-sm bg-amber-400 px-8 text-sm font-extrabold uppercase tracking-widest text-black hover:bg-amber-300 disabled:opacity-50">Secure Pre-order · ₦{(65000*qty).toLocaleString("en-NG")}</button>
-      <p className="mt-4 text-xs text-zinc-500">Add to cart first. Your existing ResoFit cart then handles secure Paystack checkout, order persistence and fulfillment.</p>
-    </section>
+    <section className="border-b border-white/10 bg-[#0c0c0e]"><div className="mx-auto grid max-w-7xl gap-px px-6 py-8 sm:grid-cols-3">{[["02 MM","Structural steel profile"],["2″ × 2″","Square steel pipe"],["1″","Round pull-up handles"]].map(([a,b]) => <div key={a} className="border border-white/10 bg-white/[.02] p-6"><p className="font-display text-3xl text-amber-300">{a}</p><p className="mt-2 text-xs uppercase tracking-[.2em] text-zinc-500">{b}</p></div>)}</div></section>
+    <section className="mx-auto max-w-7xl px-6 py-20"><div className="grid gap-12 lg:grid-cols-[1fr_1.1fr]"><div><p className="text-xs uppercase tracking-[.3em] text-amber-400">Why this bar</p><h2 className="mt-3 font-display text-4xl md:text-5xl">One bar.<br/><span className="text-gradient-gold">Serious training.</span></h2><p className="mt-6 max-w-xl leading-8 text-zinc-400">No gym membership. No waiting for equipment. Just a properly installed station, your bodyweight and a training system you can actually repeat.</p></div><div className="grid gap-4 sm:grid-cols-2">{[["01","Wide-grip pull-ups","Build pulling strength and control."],["02","Neutral chin-ups","Train your back, arms and grip."],["03","Tricep dips","Add pushing work to the same station."],["04","Hanging core work","Use vertical knee raises and controlled holds."]].map(([n,t,d]) => <div key={n} className="rounded-xl border border-white/10 bg-white/[.025] p-6"><span className="text-xs tracking-[.25em] text-amber-400">{n}</span><h3 className="mt-5 font-display text-2xl">{t}</h3><p className="mt-2 text-sm leading-6 text-zinc-400">{d}</p></div>)}</div></div></section>
+    <section className="border-y border-amber-400/15 bg-[radial-gradient(circle_at_20%_50%,rgba(212,175,55,.12),transparent_35%),#0b0b0d]"><div className="mx-auto max-w-7xl px-6 py-20"><div className="max-w-3xl"><p className="text-xs uppercase tracking-[.3em] text-amber-400">Buffer content vault</p><h2 className="mt-3 font-display text-4xl md:text-5xl">Built to move.<br/><span className="text-gradient-gold">Built to be seen.</span></h2><p className="mt-5 text-zinc-400">The production page is wired to the existing ResoFit content asset pattern, keeping campaign media close to the product experience without changing checkout.</p></div><div className="mt-10 grid gap-5 lg:grid-cols-3">{bufferVideos.map((src,i) => <video key={src} src={src} controls muted playsInline preload="metadata" className="aspect-video w-full rounded-2xl border border-white/10 bg-black object-cover" aria-label={`ResoFlex pull-up content video ${i+1}`} />)}</div></div></section>
+    <section className="border-y border-white/10 bg-[#0c0c0e]"><div className="mx-auto max-w-7xl px-6 py-20"><div className="max-w-3xl"><p className="text-xs uppercase tracking-[.3em] text-amber-400">Pre-order package</p><h2 className="mt-3 font-display text-4xl md:text-5xl">₦65,000.<br/><span className="text-gradient-gold">More than the bar.</span></h2><p className="mt-5 text-zinc-400">Your pre-order includes the equipment plus the supplied ₦10,000-value 90-Day Metabolic Transformation Journey and ChatB2K™ coaching access.</p></div><div className="mt-10 grid gap-4 md:grid-cols-3">{[["THE HARDWARE","Coach B2K wall-mounted station","2 mm structural steel · locally fabricated"],["THE JOURNEY","90-Day Metabolic Transformation","Daily customized nutrition guidance"],["THE INTELLIGENCE","ChatB2K™ coaching access","Guidance, form checks and routine tracking"]].map(([k,t,d]) => <div key={k} className="rounded-2xl border border-white/10 bg-black/30 p-7"><p className="text-[10px] font-bold tracking-[.25em] text-amber-400">{k}</p><h3 className="mt-4 font-display text-2xl">{t}</h3><p className="mt-3 text-sm leading-6 text-zinc-400">{d}</p></div>)}</div></div></section>
+    <section className="mx-auto max-w-5xl px-6 py-20 text-center"><p className="text-xs uppercase tracking-[.3em] text-amber-400">First batch</p><h2 className="mt-4 font-display text-4xl md:text-6xl">Build your home gym<br/><span className="text-gradient-gold">one serious piece at a time.</span></h2><div className="mx-auto mt-8 flex max-w-md items-center gap-3 rounded-xl border border-white/10 bg-white/[.03] p-2"><button onClick={() => setQty((q) => Math.max(1,q-1))} className="h-12 w-12 rounded-lg border border-white/10 text-xl hover:text-amber-300">−</button><span className="flex-1 font-semibold">{qty} × ₦65,000</span><button onClick={() => setQty((q) => q+1)} className="h-12 w-12 rounded-lg border border-white/10 text-xl hover:text-amber-300">+</button></div><button onClick={buy} disabled={isLoading || !variant?.availableForSale} className="mt-5 h-14 w-full max-w-md rounded-sm bg-amber-400 px-8 text-sm font-extrabold uppercase tracking-widest text-black hover:bg-amber-300 disabled:opacity-50">Secure Pre-order · ₦{(65000*qty).toLocaleString("en-NG")}</button><p className="mt-4 text-xs text-zinc-500">Add to cart first. Your existing ResoFit cart then handles secure Paystack checkout, order persistence and fulfillment.</p></section>
   </main>;
 }
-
 function ProductDetail({ product }: { product: ShopifyProductNode }) {
   const images = product.images.edges.map((e) => e.node);
   const variants = product.variants.edges.map((e) => e.node);
