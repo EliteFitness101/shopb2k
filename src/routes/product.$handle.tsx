@@ -44,7 +44,8 @@ function CoachB2KPullUpLuxury({ product }: { product: ShopifyProductNode }) {
   const isLoading = useCartStore((s) => s.isLoading);
   const [qty, setQty] = useState(1);
   const [activeHero, setActiveHero] = useState(0);
-  const heroImages = [
+  const registryImages = product.images.edges.map((edge) => edge.node.url).filter(Boolean);
+  const heroImages = registryImages.length ? registryImages : [
     "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_001.jpeg",
     "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_002.jpeg",
     "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/hero/pull_up_003.jpeg",
