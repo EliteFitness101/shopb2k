@@ -30,7 +30,7 @@ export const Route = createFileRoute("/api/content/assets")({
         try {
           const url = new URL(request.url);
           const prefix = url.searchParams.get("prefix") || PREFIX;
-          if (!prefix.startsWith("buffer/assets/")) {
+          if (!prefix.startsWith(PREFIX)) {
             return Response.json({ ok: false, error: "Invalid prefix" }, { status: 400 });
           }
 
