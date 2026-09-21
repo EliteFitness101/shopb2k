@@ -1,6 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { list } from "@vercel/blob";
-
 const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN ?? "";
 const CRON_SECRET = process.env.CONTENT_CRON_SECRET ?? process.env.BUFFER_CRON_SECRET ?? "";
 const HOST = "ab2ttlkn9no0tuoa.public.blob.vercel-storage.com";
@@ -38,7 +36,7 @@ export const Route = createFileRoute("/api/content/assets")({
           let cursor: string | undefined;
 
           do {
-            const page = await list({ prefix, cursor, limit: 1000, token: BLOB_TOKEN });
+            const q = new URL("https://blob.vercel-storage.com/");\n            q.searchParams.set("prefix", prefix); q.searchParams.set("limit", "1000"); if (cursor) q.searchParams.set("cursor", cursor);\n            const response = await fetch(q, { headers: { Authorization: `Bearer ${BLOB_TOKEN}` }, cache: "no-store" });\n            if (!response.ok) throw new Error(`Vercel Blob API returned ${response.status}`);\n            const page = await response.json();
             for (const blob of page.blobs) {
               if (!validPublicUrl(blob.url)) continue;
               const pathname = new URL(blob.url).pathname.replace(/^\//, "");
