@@ -21,13 +21,25 @@ function gqlString(value: unknown) {
   return JSON.stringify(String(value ?? ""));
 }
 
+const BUFFER_MEDIA_HOST = "ab2ttlkn9no0tuoa.public.blob.vercel-storage.com";
+const BUFFER_MEDIA_PREFIX = "/buffer/assets/";
+
+function assertBufferMediaUrl(mediaUrl: string) {
+  let parsed: URL;
+  try { parsed = new URL(mediaUrl); } catch { throw new Error("Media URL must be a valid HTTPS Buffer asset URL"); }
+  if (parsed.protocol !== "https:" || parsed.hostname !== BUFFER_MEDIA_HOST || !parsed.pathname.startsWith(BUFFER_MEDIA_PREFIX)) {
+    throw new Error("Only public Vercel Blob URLs under /buffer/assets/ are allowed for content media");
+  }
+  return parsed.toString();
+}
+
 async function publishDirectToBuffer(input: {
   mediaUrl: string;
   title: string;
   caption: string;
   platform: BufferChannel;
 }) {
-  const key = process.env.BUFFER_API_KEY;
+  const mediaUrl = assertBufferMediaUrl(input.mediaUrl);\n  const key = process.env.BUFFER_API_KEY;
   if (!key) throw new Error("BUFFER_API_KEY is not configured server-side");
 
   const channelId = BUFFER_CHANNELS[input.platform];
@@ -41,7 +53,7 @@ async function publishDirectToBuffer(input: {
       channelId: ${gqlString(channelId)}
       schedulingType: automatic
       mode: addToQueue
-      assets: [{ video: { url: ${gqlString(input.mediaUrl)} } }]
+      assets: [{ video: { url: ${gqlString(mediaUrl)} } }]
       source: "resofit-content-engine"
       aiAssisted: true
       metadata: { }
