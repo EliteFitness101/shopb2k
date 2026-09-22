@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/content/assets")({
           let cursor: string | undefined;
 
           do {
-            const q = new URL("https://blob.vercel-storage.com/");
+            const q = new URL("https://vercel.com/api/blob");
             q.searchParams.set("prefix", prefix);
             q.searchParams.set("limit", "1000");
             if (cursor) q.searchParams.set("cursor", cursor);
