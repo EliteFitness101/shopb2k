@@ -12,11 +12,5 @@
       "permanent": true
     }
   ],
-  "crons": [
-    {
-      "path": "/api/content/publish-cron",
-      "schedule": "*/5 * * * *"
-    }
-  ],
   "installCommand": "npm install --production=false"
 }
