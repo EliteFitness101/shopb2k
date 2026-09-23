@@ -3,7 +3,7 @@ import type {} from "@tanstack/react-start";
 import { PROGRAMS } from "@/content/programs";
 import { ARTICLES } from "@/content/blog";
 
-const BASE_URL = "https://resofit.fit";
+const BASE_URL = "https://www.resofit.fit";
 const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
