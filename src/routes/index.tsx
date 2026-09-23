@@ -95,6 +95,7 @@ function Index() {
       <TrustStories compact />
       <EcosystemCarousel surface="home" />
       <section className="border-t border-border/60 py-24"><div className="mx-auto max-w-3xl px-6 text-center"><p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold">Start Today</p><h2 className="font-display text-4xl leading-tight md:text-6xl">Your body,<br /><span className="text-gradient-gold">personalized for life.</span></h2><div className="mt-10 flex flex-wrap justify-center gap-4"><Link to="/me" onClick={handlePrimaryCta} className="inline-flex h-14 items-center justify-center gap-3 rounded-sm bg-gold px-8 text-sm font-semibold uppercase tracking-widest text-gold-foreground shadow-gold transition-transform hover:-translate-y-0.5">{CTA.primary}<span>→</span></Link><Link to="/programs" onClick={handleAssessment} className="inline-flex h-14 items-center justify-center rounded-sm border border-border px-8 text-sm font-semibold uppercase tracking-widest text-foreground transition-colors hover:border-gold hover:text-gold">Explore Programs</Link></div></div></section>
+      </main>
       <SiteFooter />
     </div>
   );
