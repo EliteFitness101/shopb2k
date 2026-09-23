@@ -16,7 +16,9 @@ type CatalogAsset = { sku: string; role: string; filename: string; canonical_url
 function mapProduct(p: StorefrontProduct, assets: CatalogAsset[] = []): ShopifyProductNode {
   const price = { amount: String(p.variant_price ?? 0), currencyCode: "NGN" };
   const variant: ShopifyVariant = { id: p.id, title: "Default Title", price, availableForSale: (p.variant_inventory_qty ?? 0) > 0, selectedOptions: [] };
-  const registryImages = assets.filter((asset) => asset.canonical_url).sort((a, b) => (a.image_position ?? Number.MAX_SAFE_INTEGER) - (b.image_position ?? Number.MAX_SAFE_INTEGER)).map((asset) => ({ url: asset.canonical_url, altText: `${p.title} ${asset.role.replace(/[-_]/g, " ")}`.trim() }));
+  const approved = assets.filter((asset) => { try { const host = new URL(asset.canonical_url).hostname.toLowerCase(); return host.endsWith("imagekit.io") || host.endsWith("public.blob.vercel-storage.com"); } catch { return false; } });
+  const ordered = (approved.length ? approved : assets).filter((asset) => asset.canonical_url).sort((a, b) => (a.image_position ?? Number.MAX_SAFE_INTEGER) - (b.image_position ?? Number.MAX_SAFE_INTEGER));
+  const registryImages = ordered.slice(0, 6).map((asset) => ({ url: asset.canonical_url, altText: `${p.title} ${asset.role.replace(/[-_]/g, " ")}`.trim() }));
   const images = registryImages.length ? registryImages : p.image_src ? [{ url: p.image_src, altText: p.title }] : [];
   return { id: p.id, title: p.title, description: p.body_html?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ?? "", descriptionHtml: p.body_html ?? undefined, handle: p.handle, sku: p.sku, productType: p.product_type, vendor: p.vendor ?? "ResoFlex", tags: p.tags ?? [], priceRange: { minVariantPrice: price }, images: { edges: images.map((node) => ({ node })) }, variants: { edges: [{ node: variant }] }, options: [] };
 }
@@ -28,7 +30,7 @@ async function fetchStorefrontProducts(handle: string | null): Promise<Storefron
 }
 
 async function fetchCanonicalCatalog(handle: string | null): Promise<StorefrontProduct[]> {
-  const url = new URL(handle ? `${RESOFIT_CATALOG_URL}/product` : RESOFIT_CATALOG_URL); if (handle) url.searchParams.set("handle", handle); else url.searchParams.set("limit", "100");
+  const url = new URL(handle ? `${RESOFIT_CATALOG_URL}/product` : RESOFIT_CATALOG_URL); if (handle) url.searchParams.set("handle", handle); else url.searchParams.set("limit", "200");
   const response = await fetch(url.toString(), { method: "GET", cache: "no-store" }); if (!response.ok) throw new Error(`ResoFit canonical catalog HTTP ${response.status}`);
   const payload = (await response.json()) as { data?: StorefrontProduct | StorefrontProduct[]; error?: string }; if (payload.error) throw new Error(payload.error); if (handle) return payload.data ? [payload.data as StorefrontProduct] : []; return Array.isArray(payload.data) ? payload.data : [];
 }
