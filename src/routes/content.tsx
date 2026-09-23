@@ -39,7 +39,8 @@ async function publishDirectToBuffer(input: {
   caption: string;
   platform: BufferChannel;
 }) {
-  const mediaUrl = assertBufferMediaUrl(input.mediaUrl);\n  const key = process.env.BUFFER_API_KEY;
+  const mediaUrl = assertBufferMediaUrl(input.mediaUrl);
+  const key = process.env.BUFFER_API_KEY;
   if (!key) throw new Error("BUFFER_API_KEY is not configured server-side");
 
   const channelId = BUFFER_CHANNELS[input.platform];
