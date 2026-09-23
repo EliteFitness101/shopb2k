@@ -9,9 +9,8 @@ const NAV = [
   { label: "Coach Buchi", items: [
     { label: "Coach Buchi HQ", purpose: "LordB2K · Founder vision and philosophy", to: "/coach-buchi" },
     { label: "The State", purpose: "Body, mind, food, movement and purpose", to: "/coach-buchi" },
-    { label: "AI-SI Academy", purpose: "Human capability and intelligent systems", to: "/coach-buchi" },
-    { label: "Community XP", purpose: "Learning, participation and stewardship", to: "/coach-buchi" },
-    { label: "Resilience Lab", purpose: "Bunker, jungle, city and luxury readiness", to: "/coach-buchi" },\n    { label: "Opportunity Centre", purpose: "Train, work, create, earn, partner and lead", to: "/network" },
+    { label: "AI-SI Productivity", purpose: "Human capability and intelligent systems", to: "/coach-buchi" },
+    { label: "Community Leadership", purpose: "Learning, opportunity and stewardship", to: "/coach-buchi" },
   ] },
   { label: "Wellness", items: [
     { label: "Wellness Network", purpose: "Discover wellness options", to: "/wellness" },
@@ -19,7 +18,7 @@ const NAV = [
     { label: "Programs", purpose: "Choose a structured goal", to: "/programs" },
     { label: "Assessment", purpose: "Get your personalized next step", to: "/me" },
     { label: "Knowledge Hub", purpose: "Learn before you decide", to: "/knowledge" },
-    { label: "Success Stories", purpose: "See real journeys", to: "/stories" },
+    { label: "Success Stories", purpose: "See real journeys", to: "/success-stories" },
   ] },
   { label: "Shop", items: [
     { label: "ResoFit Shop", purpose: "Shop personalized products", to: "/shop" },
