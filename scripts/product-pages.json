@@ -1,5 +1,5 @@
 {
-  "baseUrl": "https://resofit.fit",
+  "baseUrl": "https://www.resofit.fit",
   "routePrefix": "/product/",
   "products": [
     {"sku":"RESO-DIG-BUTT-001","handle":"butt-and-curves-guide"},
