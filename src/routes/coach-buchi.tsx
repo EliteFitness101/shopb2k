@@ -40,17 +40,17 @@ export const Route = createFileRoute("/coach-buchi")({
 
 function CoachBuchi() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="rf-luxury-hero min-h-screen bg-background text-foreground">
       <SiteHeader />
 
       <main>
-        <section className="relative isolate min-h-[88vh] overflow-hidden border-b border-border/60">
+        <section className="rf-luxury-hero relative isolate min-h-[88vh] overflow-hidden border-b border-border/60">
           <img src={heroImg} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover opacity-40" />
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/35" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/20" />
 
           <div className="relative mx-auto flex min-h-[88vh] max-w-7xl items-end px-6 py-20 sm:py-28">
-            <div className="max-w-4xl">
+            <div className="max-w-4xl rf-reveal">
               <div className="mb-7 flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.32em] text-gold">
                 <span className="inline-flex items-center gap-2"><Sparkles className="h-3.5 w-3.5" /> LordB2K</span>
                 <span className="h-px w-8 bg-gold/60" />
