@@ -160,6 +160,11 @@ export function ShopGrid() {
     return sorted;
   }, [catalogQuery, data, search.type, search.vendor, search.sort]);
 
+  useEffect(() => {
+    if (!search.type || search.vendor || catalogQuery.trim() || filtered.length !== 1) return;
+    navigate({ to: "/product/$handle", params: { handle: filtered[0].node.handle }, replace: true });
+  }, [catalogQuery, filtered, navigate, search.type, search.vendor]);
+
   const updateSearch = (patch: Partial<typeof search>) =>
     navigate({ search: (prev: typeof search) => ({ ...prev, ...patch }), replace: true });
 
