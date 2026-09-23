@@ -6,6 +6,12 @@ import { ChatB2KSmartAssistant } from "@/components/ChatB2KSmartAssistant";
 import { CTA } from "@/lib/ctas";
 
 const NAV = [
+  { label: "Coach Buchi", items: [
+    { label: "Coach Buchi HQ", purpose: "LordB2K · Founder vision and philosophy", to: "/coach-buchi" },
+    { label: "The State", purpose: "Body, mind, food, movement and purpose", to: "/coach-buchi" },
+    { label: "AI-SI Productivity", purpose: "Human capability and intelligent systems", to: "/coach-buchi" },
+    { label: "Community Leadership", purpose: "Learning, opportunity and stewardship", to: "/coach-buchi" },
+  ] },
   { label: "Wellness", items: [
     { label: "Wellness Network", purpose: "Discover wellness options", to: "/wellness" },
     { label: "Find a Wellness Hub", purpose: "Explore nearby hubs", to: "/wellness/states/cities/hubs/geo-locator" },
