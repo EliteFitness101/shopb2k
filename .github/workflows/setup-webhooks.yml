@@ -1,5 +1,7 @@
 name: ResoFit Webhook Setup
 
+# Production recovery/verification workflow: keeps the canonical Shopify webhook subscriptions reconciled.
+
 on:
   workflow_dispatch:
     inputs:
