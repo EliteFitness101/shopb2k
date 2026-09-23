@@ -14,10 +14,13 @@ const STATE = [
 ];
 
 const PATHS = [
-  { title: "Reset", text: "Start with a structured assessment and your next practical action.", to: "/me" },
-  { title: "ResoFlex™", text: "Train across home, gym, bunker, jungle, travel and community environments.", to: "/programs" },
-  { title: "Knowledge", text: "Learn wellness, lifestyle and AI-SI productivity at your own pace.", to: "/knowledge" },
-  { title: "Community", text: "Move from personal progress into participation, contribution and stewardship.", to: "/community/play" },
+  { title: "Reset", text: "Discover → Assess → Personalize → Act → Track → Adapt → Resonate.", to: "/me" },
+  { title: "ResoFlex™", text: "Train across home, gym, bunker, jungle, travel, hotel and community environments.", to: "/programs" },
+  { title: "Resilience Lab", text: "Build practical capacity for bunker, jungle, city, travel and premium-life conditions.", to: "/coach-buchi" },
+  { title: "AI-SI Academy", text: "Progress from AI literacy and prompting into research, content, automation and intelligent systems.", to: "/knowledge" },
+  { title: "Community XP", text: "Turn learning, habits, participation and contribution into visible progression and rewards.", to: "/community/play" },
+  { title: "Stories", text: "Explore journeys through starting state, reset, action, change and next state.", to: "/stories" },
+  { title: "Opportunities", text: "Find pathways to train, work, create, earn, volunteer, partner and lead.", to: "/network" },
 ];
 
 export const Route = createFileRoute("/coach-buchi")({
@@ -152,6 +155,68 @@ function CoachBuchi() {
                   <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">{path.text}</p>
                 </Link>
               ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="resilience" className="border-b border-border/60 py-20 sm:py-28">
+          <div className="mx-auto max-w-7xl px-6">
+            <p className="text-xs uppercase tracking-[0.3em] text-gold">Resilience Lab</p>
+            <div className="mt-4 grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
+              <h2 className="font-display text-5xl leading-none sm:text-7xl">Train for real life.</h2>
+              <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+                Resilience is practiced across contexts: bunker, jungle, city and luxury. The system
+                adapts movement, food, recovery and decision-making to the environment rather than
+                requiring one fixed lifestyle.
+              </p>
+            </div>
+            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                ["Bunker", "Minimal-space strength, conditioning and discipline."],
+                ["Jungle", "Resource-aware movement, endurance and adaptability."],
+                ["City", "Efficient routines for work, commuting and pressure."],
+                ["Luxury", "Travel, hotel and private-jet routines without losing the state."],
+              ].map(([title, text]) => <div key={title} className="rounded-2xl border border-border/60 bg-card/20 p-6"><h3 className="font-display text-2xl">{title}</h3><p className="mt-3 text-sm leading-relaxed text-muted-foreground">{text}</p></div>)}
+            </div>
+          </div>
+        </section>
+
+        <section id="ai-si" className="border-b border-border/60 py-20 sm:py-28">
+          <div className="mx-auto max-w-7xl px-6">
+            <p className="text-xs uppercase tracking-[0.3em] text-gold">AI-SI Academy</p>
+            <h2 className="mt-4 font-display text-5xl leading-none sm:text-7xl">Learn. Build. Automate. Lead.</h2>
+            <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {["AI Literacy", "Prompting & Research", "Content & Automation", "Agents & Intelligent Systems"].map((title, i) =>
+                <div key={title} className="rounded-2xl border border-border/60 bg-card/20 p-6"><span className="text-xs text-gold">0{i+1}</span><h3 className="mt-8 font-display text-2xl">{title}</h3><p className="mt-3 text-sm text-muted-foreground">Progressive capability building connected to practical wellness, work and business use.</p></div>
+              )}
+            </div>
+            <Link to="/knowledge" className="mt-8 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-gold">Enter Knowledge Hub <ArrowRight className="h-4 w-4" /></Link>
+          </div>
+        </section>
+
+        <section id="community-xp" className="border-b border-border/60 bg-card/20 py-20 sm:py-28">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="grid gap-12 lg:grid-cols-[1fr_0.9fr]">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-gold">Community XP</p>
+                <h2 className="mt-4 font-display text-5xl leading-none sm:text-7xl">Progress becomes participation.</h2>
+                <p className="mt-7 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">XP is designed as a participation layer: assessments, workouts, habits, learning, challenges, referrals, events, contributions, youth training and stewardship can become measurable activity.</p>
+              </div>
+              <div className="space-y-3">
+                {["Explorer", "Starter", "Builder", "ResoFlex Member", "Community Builder", "Ambassador"].map((level, i) =>
+                  <div key={level} className="flex items-center gap-4 rounded-xl border border-border/60 bg-background p-4"><span className="text-xs text-gold">0{i+1}</span><span className="font-medium">{level}</span><span className="ml-auto text-xs text-muted-foreground">XP progression</span></div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="opportunities" className="border-b border-border/60 py-20 sm:py-28">
+          <div className="mx-auto max-w-7xl px-6">
+            <p className="text-xs uppercase tracking-[0.3em] text-gold">Opportunity Centre</p>
+            <h2 className="mt-4 font-display text-5xl leading-none sm:text-7xl">Capability should open doors.</h2>
+            <div className="mt-10 flex flex-wrap gap-3">
+              {["Train", "Work", "Create", "Earn", "Volunteer", "Partner", "Lead"].map(item => <Link key={item} to="/network" className="rounded-full border border-border/70 px-5 py-3 text-xs uppercase tracking-widest transition-colors hover:border-gold hover:text-gold">{item}</Link>)}
             </div>
           </div>
         </section>
