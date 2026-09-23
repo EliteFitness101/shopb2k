@@ -49,8 +49,11 @@ export async function storefrontApiRequest<T = unknown>(query: string, variables
   let products: StorefrontProduct[] = [];
   try { products = await fetchCanonicalCatalog(handle); } catch (canonicalError) { console.warn("Canonical catalog unavailable; using storefront compatibility fallback", canonicalError); products = await fetchStorefrontProducts(handle); }
   const isHandleQuery = /product\s*\(handle/i.test(query);
-  const assets = isHandleQuery && products[0]?.handle ? await fetchCanonicalAssets(products[0].handle).catch((error) => { console.warn("Canonical product asset registry unavailable; using product image fallback", error); return []; }) : [];
-  const nodes = products.map((product) => mapProduct(product, product === products[0] ? assets : []));
+  const assetEntries = isHandleQuery && products[0]?.handle
+    ? [[products[0].handle, await fetchCanonicalAssets(products[0].handle).catch((error) => { console.warn("Canonical product asset registry unavailable; using product image fallback", error); return []; })] as const]
+    : await Promise.all(products.map(async (product) => [product.handle, await fetchCanonicalAssets(product.handle).catch((error) => { console.warn(`Canonical product asset registry unavailable for ${product.handle}; using product image fallback`, error); return []; })] as const));
+  const assetMap = new Map(assetEntries);
+  const nodes = products.map((product) => mapProduct(product, assetMap.get(product.handle) ?? []));
   const mappedProducts = isHandleQuery ? (nodes[0] ?? null) : { edges: nodes.map((node) => ({ node })) };
   if (isHandleQuery) return { data: { product: mappedProducts } as T };
   if (/products\s*\(/i.test(query)) return { data: { products: mappedProducts } as T };
