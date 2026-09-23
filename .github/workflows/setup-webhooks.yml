@@ -1,6 +1,7 @@
 name: ResoFit Webhook Setup
 
-# Production recovery/verification workflow: keeps the canonical Shopify webhook subscriptions reconciled.
+# Production recovery/verification workflow: reconciles canonical Shopify webhooks for the ResoFit store.
+# The store's public primary domain is shop.resofit.fit; Shopify Admin OAuth requires the store's *.myshopify.com domain.
 
 on:
   workflow_dispatch:
@@ -36,7 +37,8 @@ jobs:
 
       - name: Execute Webhook Upsert Script
         env:
-          SHOPIFY_STORE_DOMAIN: ${{ secrets.SHOPIFY_STORE_DOMAIN }}
+          # Shopify client-credentials OAuth must target the canonical *.myshopify.com domain.
+          SHOPIFY_STORE_DOMAIN: w7hm0i-8w.myshopify.com
           SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
           SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
           SHOPIFY_API_VERSION: ${{ inputs.api_version || '2026-07' }}
