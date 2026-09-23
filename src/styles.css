@@ -250,3 +250,52 @@ body {
     color: transparent;
   }
 }
+
+
+/* RESOFIT MOBILE REFINEMENT v2 — additive, viewport-safe presentation */
+html, body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+img, video, svg, canvas {
+  max-width: 100%;
+}
+
+@media (max-width: 639px) {
+  h1.font-display {
+    font-size: clamp(2.35rem, 10.5vw, 3.35rem) !important;
+    line-height: 1.02 !important;
+    letter-spacing: .005em;
+    font-weight: 500;
+  }
+  h2.font-display {
+    font-size: clamp(1.85rem, 8vw, 2.5rem) !important;
+    line-height: 1.08 !important;
+    font-weight: 500;
+  }
+  h3.font-display {
+    font-size: clamp(1.35rem, 6vw, 1.8rem) !important;
+    line-height: 1.12 !important;
+    font-weight: 500;
+  }
+  .rf-luxury-hero,
+  section.relative.isolate {
+    overflow-x: clip;
+  }
+  .rf-luxury-hero .max-w-7xl,
+  section.relative.isolate .max-w-7xl {
+    min-width: 0;
+  }
+  .rf-luxury-hero [class*="text-6xl"],
+  .rf-luxury-hero [class*="text-7xl"],
+  .rf-luxury-hero [class*="text-8xl"],
+  .rf-luxury-hero [class*="text-9xl"] {
+    font-size: clamp(2.35rem, 10.5vw, 3.35rem) !important;
+  }
+  .text-gradient-gold { animation: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
