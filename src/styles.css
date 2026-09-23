@@ -50,23 +50,23 @@
 
   /* Editorial black + LuxeGold */
   --background: oklch(0.13 0.005 60);
-  --foreground: oklch(0.97 0.01 80);
+  --foreground: oklch(0.92 0.01 80);
   --card: oklch(0.17 0.008 60);
-  --card-foreground: oklch(0.97 0.01 80);
+  --card-foreground: oklch(0.92 0.01 80);
   --popover: oklch(0.17 0.008 60);
-  --popover-foreground: oklch(0.97 0.01 80);
+  --popover-foreground: oklch(0.92 0.01 80);
 
-  --primary: oklch(0.97 0.01 80);
+  --primary: oklch(0.92 0.01 80);
   --primary-foreground: oklch(0.13 0.005 60);
 
   --secondary: oklch(0.22 0.01 60);
-  --secondary-foreground: oklch(0.97 0.01 80);
+  --secondary-foreground: oklch(0.92 0.01 80);
 
   --muted: oklch(0.2 0.008 60);
-  --muted-foreground: oklch(0.65 0.015 70);
+  --muted-foreground: oklch(0.72 0.012 75);
 
   --accent: oklch(0.22 0.01 60);
-  --accent-foreground: oklch(0.97 0.01 80);
+  --accent-foreground: oklch(0.92 0.01 80);
 
   --gold: oklch(0.78 0.14 78);
   --gold-foreground: oklch(0.13 0.005 60);
