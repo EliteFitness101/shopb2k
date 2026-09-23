@@ -154,11 +154,11 @@ const META_MAP: Record<string, string> = {
 
 const TIKTOK_MAP: Record<string, string> = {
   product_view: "ViewContent",
-  product_click: "ViewContent",
+  product_click: "ClickButton",
   add_to_cart: "AddToCart",
   checkout_start: "InitiateCheckout",
   purchase_success: "Purchase",
-  identity_started: "SubmitForm",
+  identity_started: "Lead",
   identity_created: "Lead",
 };
 
