@@ -1,9 +1,5 @@
 name: Deploy reso-web production
-# Live storefront trigger: Coach B2K premium pull-up product
-# Production verification trigger: 2026-09-18
-# Catalog index deployment trigger: 118-product /product route
-# Zero-404 production verification trigger
-
+# Production deployment gate: build before Vercel promotion.
 on:
   push:
     branches: [main]
@@ -21,10 +17,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
       - name: Enable Corepack
         run: corepack enable
       - name: Install dependencies
         run: npm ci --include=dev
+      - name: Production build gate
+        run: npm run build
       - name: Deploy to Vercel
         run: npx vercel deploy --prod --token "$VERCEL_TOKEN" --yes
         env:
