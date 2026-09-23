@@ -56,7 +56,7 @@ function DesktopMenu({ group }: { group: (typeof NAV)[number] }) {
     <button type="button" aria-expanded={open} onFocus={() => setOpen(true)} onClick={() => setOpen(v => !v)} className="flex items-center gap-1 rounded-md px-1 py-2 text-[13px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-gold">
       {group.label}<ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`} />
     </button>
-    <div className={`absolute left-0 top-full pt-2 transition-all duration-150 motion-reduce:transition-none ${open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"}`}>
+    <div hidden={!open} className={`absolute left-0 top-full pt-2 transition-all duration-150 motion-reduce:transition-none ${open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"}`}>
       <div className="w-80 rounded-2xl border border-gold/20 bg-black/95 p-2 shadow-2xl backdrop-blur-xl">
         <div className="px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-gold">{group.label}</div>
         {group.items.map(item => <NavLink key={item.label} item={item} />)}
