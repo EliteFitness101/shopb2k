@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -132,6 +132,11 @@ function ShopGrid() {
     }
     return sorted;
   }, [data, search.type, search.vendor, search.sort]);
+
+  useEffect(() => {
+    if (!search.type || search.vendor || filtered.length !== 1) return;
+    window.location.replace(`/product/${filtered[0].node.handle}`);
+  }, [filtered, search.type, search.vendor]);
 
   const updateSearch = (patch: Partial<typeof search>) =>
     navigate({ search: (prev: typeof search) => ({ ...prev, ...patch }), replace: true });
