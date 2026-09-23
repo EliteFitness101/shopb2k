@@ -62,6 +62,7 @@ function Index() {
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
+      <main>
       <CinematicWellnessExperience />
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
