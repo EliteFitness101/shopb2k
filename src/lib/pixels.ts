@@ -148,18 +148,18 @@ const META_MAP: Record<string, string> = {
   add_to_cart: "AddToCart",
   checkout_start: "InitiateCheckout",
   purchase_success: "Purchase",
-  identity_started: "SubmitForm",
+  identity_started: "Lead",
   identity_created: "Lead",
 };
 
 const TIKTOK_MAP: Record<string, string> = {
   product_view: "ViewContent",
-  product_click: "ClickButton",
+  product_click: "ViewContent",
   add_to_cart: "AddToCart",
   checkout_start: "InitiateCheckout",
   purchase_success: "Purchase",
   identity_started: "SubmitForm",
-  identity_created: "SubmitForm",
+  identity_created: "Lead",
 };
 
 const GA4_MAP: Record<string, string> = {
