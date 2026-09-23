@@ -1,8 +1,9 @@
-import { list } from "@vercel/blob";
 import { createFileRoute } from "@tanstack/react-router";
 
+const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN ?? "";
 const HOST = "ab2ttlkn9no0tuoa.public.blob.vercel-storage.com";
 const PREFIX = "buffer/assets/ResoFlex_Vault/";
+const BLOB_API_VERSION = "12";
 
 function validPublicUrl(url: string) {
   try {
@@ -13,10 +14,24 @@ function validPublicUrl(url: string) {
   }
 }
 
+function blobStoreId(token: string) {
+  const [, , , storeId = ""] = token.split("_");
+  return storeId;
+}
+
 export const Route = createFileRoute("/api/content/assets")({
   server: {
     handlers: {
       GET: async ({ request }) => {
+        if (!BLOB_TOKEN) {
+          return Response.json({ ok: false, error: "BLOB_READ_WRITE_TOKEN is not configured" }, { status: 503 });
+        }
+
+        const storeId = blobStoreId(BLOB_TOKEN);
+        if (!storeId) {
+          return Response.json({ ok: false, error: "Invalid Vercel Blob token" }, { status: 503 });
+        }
+
         try {
           const url = new URL(request.url);
           const prefix = url.searchParams.get("prefix") || PREFIX;
@@ -28,8 +43,26 @@ export const Route = createFileRoute("/api/content/assets")({
           let cursor: string | undefined;
 
           do {
-            const page = await list({ prefix, limit: 1000, ...(cursor ? { cursor } : {}) });
+            const q = new URL("https://vercel.com/api/blob");
+            q.searchParams.set("prefix", prefix);
+            q.searchParams.set("limit", "1000");
+            if (cursor) q.searchParams.set("cursor", cursor);
 
+            const response = await fetch(q, {
+              headers: {
+                authorization: `Bearer ${BLOB_TOKEN}`,
+                "x-vercel-blob-store-id": storeId,
+                "x-api-version": BLOB_API_VERSION,
+              },
+              cache: "no-store",
+            });
+
+            if (!response.ok) {
+              const body = await response.text().catch(() => "");
+              throw new Error(`Vercel Blob API returned ${response.status}${body ? `: ${body.slice(0, 300)}` : ""}`);
+            }
+
+            const page = await response.json();
             for (const blob of page.blobs ?? []) {
               if (!validPublicUrl(blob.url)) continue;
 
