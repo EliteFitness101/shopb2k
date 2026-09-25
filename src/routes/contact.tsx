@@ -33,8 +33,8 @@ function Contact() {
           <a href={whatsappUrl()} target="_blank" rel="noopener noreferrer" onClick={() => track("product_click", { surface: "contact", cardId: "whatsapp" })} className="border border-border/60 p-6 hover:border-gold/60">
             <MessageCircle className="h-5 w-5 text-gold" /><p className="mt-3 font-display text-xl">WhatsApp</p><p className="mt-2 text-sm text-muted-foreground">Chat with CoachB2K™ · +234 813 225 5842</p>
           </a>
-          <a href="mailto:hello@resofit.fit" className="border border-border/60 p-6 hover:border-gold/60">
-            <Mail className="h-5 w-5 text-gold" /><p className="mt-3 font-display text-xl">Email</p><p className="mt-2 text-sm text-muted-foreground">hello@resofit.fit</p>
+          <a href="mailto:ceo@resofit.fit" className="border border-border/60 p-6 hover:border-gold/60">
+            <Mail className="h-5 w-5 text-gold" /><p className="mt-3 font-display text-xl">Email</p><p className="mt-2 text-sm text-muted-foreground">ceo@resofit.fit</p>
           </a>
         </div>
       </main>
