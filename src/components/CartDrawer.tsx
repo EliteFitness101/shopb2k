@@ -9,6 +9,7 @@ import { useCartStore } from "@/stores/cartStore";
 import { approxUSD, formatMoney, RESOFIT_SUPABASE_URL } from "@/lib/shopify";
 import { track } from "@/lib/tracking";
 import { getAttribution } from "@/lib/attribution";
+import { useAuth } from "@/hooks/useAuth";
 
 const PAYSTACK_INIT_URL = `${RESOFIT_SUPABASE_URL}/functions/v1/paystack-init`;
 
@@ -19,6 +20,7 @@ export function CartDrawer() {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const { user } = useAuth();
   const items = useCartStore((s) => s.items);
   const isLoading = useCartStore((s) => s.isLoading);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
@@ -44,7 +46,16 @@ export function CartDrawer() {
         /* ignore malformed local state */
       }
     }
-  }, [open]);
+
+    // Authenticated member state is canonical; local checkout data is only a
+    // convenience fallback. Never persist auth tokens or sensitive credentials.
+    if (user) {
+      const metadata = user.user_metadata ?? {};
+      setFullName((current) => current || String(metadata.full_name ?? metadata.name ?? "").trim());
+      setEmail((current) => current || user.email || "");
+      setPhone((current) => current || String(user.phone ?? metadata.phone ?? "").trim());
+    }
+  }, [open, user]);
 
   const handleCheckout = async () => {
     if (!items.length) return;
