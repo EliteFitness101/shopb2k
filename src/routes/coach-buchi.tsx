@@ -284,6 +284,86 @@ function CoachBuchi() {
           </div>
         </section>
 
+        <section id="professional-profile" className="border-b border-border/60 bg-card/20 py-20 sm:py-28">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="max-w-4xl">
+              <p className="text-xs uppercase tracking-[0.3em] text-gold">Professional Profile</p>
+              <h2 className="mt-4 font-display text-5xl leading-none sm:text-7xl">Onyebuchi Jerry Moses.</h2>
+              <p className="mt-6 text-lg leading-relaxed text-muted-foreground sm:text-xl">
+                Coach B2K™ is the Founder and Chief Executive Officer of Resonance Fitness and the creator of the ResoFit™,
+                ResoFlex™ and ChatB2K™ ecosystem. His work combines fitness and wellness, physical-product development,
+                digital commerce, systems architecture, automation, recruitment and operational management.
+              </p>
+            </div>
+
+            <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {[
+                ["Executive Leadership", "Business vision, product strategy, brand architecture and operations."],
+                ["Systems Architecture", "Full-stack web systems, cloud infrastructure, databases, APIs and production workflows."],
+                ["Fitness & Wellness", "Personalized wellness, fitness, corporate wellness and physical capability."],
+                ["Commerce & Operations", "Equipment, digital commerce, payment infrastructure, recruitment and workforce systems."],
+              ].map(([title, text]) => (
+                <article key={title} className="rounded-2xl border border-border/60 bg-background p-6">
+                  <h3 className="font-display text-2xl">{title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{text}</p>
+                </article>
+              ))}
+            </div>
+
+            <div className="mt-12 grid gap-10 lg:grid-cols-2">
+              <div className="rounded-2xl border border-border/60 bg-background p-7">
+                <p className="text-xs uppercase tracking-[0.25em] text-gold">Professional Experience</p>
+                <div className="mt-7 space-y-6">
+                  <div>
+                    <h3 className="font-display text-2xl">Resonance Fitness</h3>
+                    <p className="mt-1 text-sm text-gold">Founder & Chief Executive Officer · 2018–Present</p>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">Corporate vision, wellness systems, digital products, commerce, technology architecture and ecosystem development.</p>
+                  </div>
+                  <div>
+                    <h3 className="font-display text-2xl">ResoFlex Global Branding</h3>
+                    <p className="mt-1 text-sm text-gold">Director of Operations / Hardware & Product Architecture · 2020–Present</p>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">Fitness equipment development, product architecture, commercial fabrication and product-commerce operations.</p>
+                  </div>
+                  <div>
+                    <h3 className="font-display text-2xl">Independent Technology & Operations Consulting</h3>
+                    <p className="mt-1 text-sm text-gold">Systems / Security / Automation · 2015–Present</p>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">Systems architecture, automation, APIs, commerce workflows, security-oriented systems and operational technology.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/60 bg-background p-7">
+                <p className="text-xs uppercase tracking-[0.25em] text-gold">Education & Professional Development</p>
+                <div className="mt-7 space-y-5">
+                  <div><h3 className="font-display text-xl">B.Eng. Electrical & Electronics Engineering</h3><p className="mt-1 text-sm text-muted-foreground">Michael Okpara University of Agriculture, Umudike (MOUAU)</p></div>
+                  <div><h3 className="font-display text-xl">Cyber Security Science Studies</h3><p className="mt-1 text-sm text-muted-foreground">Federal University of Technology, Minna (FUT Minna)</p></div>
+                  <div><h3 className="font-display text-xl">Advanced Studies in Robotics & Automation Engineering</h3></div>
+                  <div><h3 className="font-display text-xl">Professional Training & Certifications</h3><p className="mt-1 text-sm text-muted-foreground">Applied Machine Learning / Google AI Tools · Ethical Hacking Systems · System Automation</p></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-10 rounded-2xl border border-gold/20 bg-background p-7">
+              <p className="text-xs uppercase tracking-[0.25em] text-gold">Selected Portfolio</p>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {[
+                  "ResoFit™ — personalized wellness platform",
+                  "ResoFlex™ — fitness equipment & product ecosystem",
+                  "ChatB2K™ — personalized wellness commerce intelligence",
+                  "Martial-X / RedZone — capability & recruitment systems",
+                  "Elite — creator/model/host recruitment infrastructure",
+                  "Makaveli Wellness — hospitality wellness operations",
+                ].map(item => <div key={item} className="border border-border/60 px-5 py-4 text-sm">{item}</div>)}
+              </div>
+            </div>
+
+            <div className="mt-10 flex flex-wrap items-center gap-4 text-sm">
+              <a href="mailto:ceo@resofit.fit" className="inline-flex items-center rounded-sm bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-widest text-gold-foreground hover:-translate-y-0.5">ceo@resofit.fit</a>
+              <a href="https://www.resofit.fit/contact" className="inline-flex items-center rounded-sm border border-border px-6 py-3 text-xs font-semibold uppercase tracking-widest hover:border-gold hover:text-gold">Contact</a>
+            </div>
+          </div>
+        </section>
+
         <section className="py-24 sm:py-32">
           <div className="mx-auto max-w-4xl px-6 text-center">
             <Users className="mx-auto h-8 w-8 text-gold" />
