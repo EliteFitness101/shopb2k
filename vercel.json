@@ -2,6 +2,16 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "redirects": [
     {
+      "source": "/martial",
+      "destination": "https://martial.resofit.fit",
+      "permanent": true
+    },
+    {
+      "source": "/martial/:path*",
+      "destination": "https://martial.resofit.fit/:path*",
+      "permanent": true
+    },
+    {
       "source": "/martial-x",
       "destination": "https://martial.resofit.fit",
       "permanent": true
