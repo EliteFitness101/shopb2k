@@ -15,11 +15,11 @@ if (!configuredStore.endsWith(".myshopify.com")) {
 }
 
 const WEBHOOKS = [
-  { topic: "ORDERS_CREATE", url: "https://resofit.fit/api/webhooks/shopify/orders" },
-  { topic: "ORDERS_PAID", url: "https://resofit.fit/api/webhooks/shopify/orders" },
-  { topic: "ORDERS_UPDATED", url: "https://resofit.fit/api/webhooks/shopify/orders" },
-  { topic: "CHECKOUTS_CREATE", url: "https://resofit.fit/api/webhooks/shopify/checkouts" },
-  { topic: "INVENTORY_LEVELS_UPDATE", url: "https://resofit.fit/api/webhooks/shopify/inventory" },
+  { topic: "ORDERS_CREATE", url: "https://www.resofit.fit/api/webhooks/shopify/orders" },
+  { topic: "ORDERS_PAID", url: "https://www.resofit.fit/api/webhooks/shopify/orders" },
+  { topic: "ORDERS_UPDATED", url: "https://www.resofit.fit/api/webhooks/shopify/orders" },
+  { topic: "CHECKOUTS_CREATE", url: "https://www.resofit.fit/api/webhooks/shopify/checkouts" },
+  { topic: "INVENTORY_LEVELS_UPDATE", url: "https://www.resofit.fit/api/webhooks/shopify/inventory" },
 ];
 
 type Webhook = { id: string; topic: string; url: string };
