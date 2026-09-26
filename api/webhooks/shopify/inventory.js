@@ -5,7 +5,8 @@ function secret(){return process.env.SHOPIFY_WEBHOOK_SECRET||process.env.SHOPIFY
 function rawBody(req){return new Promise((resolve,reject)=>{const chunks=[];req.on("data",c=>chunks.push(Buffer.isBuffer(c)?c:Buffer.from(c)));req.on("end",()=>resolve(Buffer.concat(chunks)));req.on("error",reject)})}
 function validHmac(body,provided,key){if(!provided||!key)return false;const expected=crypto.createHmac("sha256",key).update(body).digest();let received;try{received=Buffer.from(provided,"base64")}catch{return false}return received.length===expected.length&&crypto.timingSafeEqual(received,expected)}
 function sbConfig(){const url=process.env.SUPABASE_URL;const key=process.env.SUPABASE_SERVICE_ROLE_KEY;if(!url||!key)throw new Error("Supabase server configuration is incomplete");return{url:url.replace(/\/$/,""),key}}
-async function sb(path,options={}){const{url,key}=sbConfig();return fetch(`${url}/rest/v1/${path}`,{...options,headers:{apikey:key,Authorization:`Bearer ${key}`,"Content-Type":"application/json",...(options.headers||{})}})}
+function sbHeaders(key,extra={}){const headers={apikey:key,"Content-Type":"application/json",...(extra||{})};if(!key.startsWith("sb_"))headers.Authorization=`Bearer ${key}`;return headers}
+async function sb(path,options={}){const{url,key}=sbConfig();return fetch(`${url}/rest/v1/${path}`,{...options,headers:sbHeaders(key,options.headers||{})})}
 export default async function handler(req,res){
  if(req.method!=="POST"){res.setHeader("Allow","POST");return send(res,{ok:false,error:"Method Not Allowed"},405)}
  try{
