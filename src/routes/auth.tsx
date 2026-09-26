@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
@@ -38,16 +37,20 @@ function AuthPage() {
 
   async function handleGoogle() {
     setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin + "/auth",
-    });
-    if (result.error) {
-      toast.error(result.error.message ?? "Google sign in failed");
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + "/auth",
+        },
+      });
+      if (error) throw error;
+      // Supabase performs the browser redirect. On return, auth-js detects the
+      // callback and persists the session before this route resolves.
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Google sign in failed");
       setBusy(false);
-      return;
     }
-    if (result.redirected) return;
-    navigate({ to: "/community/play" });
   }
 
   async function handleSubmit(e: React.FormEvent) {
