@@ -31,7 +31,7 @@ async function check(product) {
     result.status = response.status;
     const html = await response.text();
     result.ok = response.status === 200;
-    result.notFound = /404|page not found|product not found/i.test(html);
+    result.notFound = /<h1[^>]*>\\s*Product not found\\s*<\\/h1>|We couldn[\'’]t find\\s+[^<]*\\.\\s*<\\/p>/i.test(html);
     result.titleFound = !result.notFound && html.length > 1000;
     result.skuFound = html.toLowerCase().includes(product.sku.toLowerCase());
 
