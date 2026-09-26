@@ -1,6 +1,7 @@
 name: ResoFit Webhook Setup
 
 # Production recovery/verification workflow: reconciles canonical Shopify webhooks for the ResoFit store.
+# Triggered after the webhook ingress compatibility patch.
 # The store's public primary domain is shop.resofit.fit; Shopify Admin OAuth requires the store's *.myshopify.com domain.
 
 on:
