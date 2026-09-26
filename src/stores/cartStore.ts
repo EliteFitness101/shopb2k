@@ -36,8 +36,8 @@ export const useCartStore=create<CartStore>()(persist((set,get)=>({
  items:[],cartId:null,checkoutUrl:null,isLoading:false,isSyncing:false,
  addItem:async(item)=>{set({isLoading:true});try{const current=get().items;const existing=current.find(i=>i.variantId===item.variantId);const next=existing?current.map(i=>i.variantId===item.variantId?{...i,quantity:i.quantity+item.quantity}:i):[...current,{...item,lineId:crypto.randomUUID()}];const cartId=get().cartId??crypto.randomUUID();set({items:next,cartId,checkoutUrl:null});void get().syncCart();}finally{set({isLoading:false});}},
  updateQuantity:async(variantId,quantity)=>{if(quantity<=0){await get().removeItem(variantId);return;}set({isLoading:true});try{set({items:get().items.map(i=>i.variantId===variantId?{...i,quantity}:i),checkoutUrl:null});void get().syncCart();}finally{set({isLoading:false});}},
- removeItem:async(variantId)=>{set({isLoading:true});try{const next=get().items.filter(i=>i.variantId!==variantId);set({items:next,cartId:next.length?get().cartId:null,checkoutUrl:null});void get().syncCart();}finally{set({isLoading:false});}},
- clearCart:()=>{set({items:[],cartId:null,checkoutUrl:null});},
+ removeItem:async(variantId)=>{set({isLoading:true});try{const next=get().items.filter(i=>i.variantId!==variantId);set({items:next,cartId:get().cartId,checkoutUrl:null});void get().syncCart();}finally{set({isLoading:false});}},
+ clearCart:()=>{set({items:[],checkoutUrl:null});void get().syncCart();},
  getCheckoutUrl:()=>null,
- syncCart:async()=>{const s=get();if(!s.items.length||!s.cartId)return;set({isSyncing:true});try{await syncCanonicalCart(s.items,s.cartId);}catch(error){console.warn("[cart] canonical sync deferred",error);}finally{set({isSyncing:false});}},
+ syncCart:async()=>{const s=get();if(!s.cartId)return;set({isSyncing:true});try{await syncCanonicalCart(s.items,s.cartId);}catch(error){console.warn("[cart] canonical sync deferred",error);}finally{set({isSyncing:false});}},
 }),{name:"resofit-cart",storage:createJSONStorage(()=>localStorage),partialize:s=>({items:s.items,cartId:s.cartId,checkoutUrl:null})}));
