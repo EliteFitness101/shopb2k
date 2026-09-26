@@ -24,7 +24,5 @@ jobs:
         run: npm ci --include=dev
       - name: Production build gate
         run: npm run build
-      - name: Deploy to Vercel
-        run: npx vercel deploy --prod --token "$VERCEL_TOKEN" --yes
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      - name: Verify build gate
+        run: echo "Production build gate passed; Vercel Git integration owns the production deployment."
