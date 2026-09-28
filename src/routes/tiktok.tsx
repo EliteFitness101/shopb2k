@@ -41,11 +41,12 @@ function TikTokIntegrationPage() {
     const response = await fetch("/api/auth/tiktok/start?return_to=/tiktok", {
       headers: { Authorization: "Bearer " + sessionToken },
     });
-    if (!response.ok) {
-      setStatus((await response.json().catch(() => ({})))?.error ?? "Unable to start TikTok authorization.");
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok || !body.authorizationUrl) {
+      setStatus(body.error ?? "Unable to start TikTok authorization.");
       return;
     }
-    window.location.assign(response.url);
+    window.location.assign(body.authorizationUrl);
   }
 
   async function loadCreator() {
