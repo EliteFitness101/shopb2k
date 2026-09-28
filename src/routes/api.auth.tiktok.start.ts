@@ -12,7 +12,7 @@ const REDIRECT_URI =
   process.env.TIKTOK_REDIRECT_URI ??
   SITE_URL + "/api/auth/tiktok/callback";
 
-const SCOPES = ["user.info.basic", "video.publish", "video.upload"];
+const SCOPES = ["user.info.basic", "user.info.profile", "user.info.stats", "video.list", "video.publish", "video.upload"];
 
 function json(body: unknown, status = 200, headers?: HeadersInit) {
   return Response.json(body, {
