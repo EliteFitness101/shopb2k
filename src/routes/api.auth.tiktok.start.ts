@@ -10,12 +10,15 @@ const CLIENT_KEY = process.env.TIKTOK_CLIENT_KEY;
 const SITE_URL = (process.env.PUBLIC_SITE_URL ?? "https://resofit.fit").replace(/\/$/, "");
 const REDIRECT_URI =
   process.env.TIKTOK_REDIRECT_URI ??
-  `${SITE_URL}/api/auth/tiktok/callback`;
+  SITE_URL + "/api/auth/tiktok/callback";
 
 const SCOPES = ["user.info.basic", "video.publish", "video.upload"];
 
-function json(body: unknown, status = 200) {
-  return Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
+function json(body: unknown, status = 200, headers?: HeadersInit) {
+  return Response.json(body, {
+    status,
+    headers: { "Cache-Control": "no-store", ...(headers ?? {}) },
+  });
 }
 
 function getBearer(request: Request) {
@@ -64,12 +67,15 @@ export const Route = createFileRoute("/api/auth/tiktok/start")({
           authorize.searchParams.set("redirect_uri", REDIRECT_URI);
           authorize.searchParams.set("state", state);
 
-          const headers = new Headers({ Location: authorize.toString() });
+          const headers = new Headers();
           headers.append(
             "Set-Cookie",
-            `resofit_tiktok_oauth_state=${encodeURIComponent(state)}; Max-Age=600; Path=/; Secure; HttpOnly; SameSite=Lax`,
+            "resofit_tiktok_oauth_state=" +
+              encodeURIComponent(state) +
+              "; Max-Age=600; Path=/; Secure; HttpOnly; SameSite=Lax",
           );
-          return new Response(null, { status: 302, headers });
+
+          return json({ ok: true, authorizationUrl: authorize.toString() }, 200, headers);
         } catch (error) {
           console.error("TikTok OAuth start", error);
           return json({ ok: false, error: "Unable to start TikTok authorization." }, 500);
