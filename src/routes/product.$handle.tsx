@@ -12,6 +12,7 @@ import { RecommendedProducts } from "@/components/RecommendedProducts";
 import { RecentlyViewed, recordRecentlyViewed } from "@/components/RecentlyViewed";
 import { PRODUCT_BY_HANDLE_QUERY, approxUSD, formatMoney, storefrontApiRequest, RESOFIT_SUPABASE_URL, type ShopifyProductNode } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
+import { track } from "@/lib/tracking";
 
 export const Route = createFileRoute("/product/$handle")({
   component: ProductPage,
@@ -99,6 +100,7 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
       return;
     }
     await addItem({ product: { id: product.id, title: product.title, handle: product.handle, sku: product.sku, images: product.images }, variantId: selectedVariant.id, variantTitle: selectedVariant.title, price: selectedVariant.price, quantity: qty, selectedOptions: selectedVariant.selectedOptions });
+    track("add_to_cart", { product_id: product.sku || product.id, product_title: product.title, quantity: qty, value: Number(selectedVariant.price.amount) * qty, currency: selectedVariant.price.currencyCode ?? "NGN" });
     recordEngagement(product.id, "add_to_cart");
     toast.success(`Added ${qty}× ${product.title} to cart`, { position: "top-center" });
   };
