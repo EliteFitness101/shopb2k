@@ -46,6 +46,8 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
   const selectedVariant = useMemo(() => variants.find((v) => v.id === variantId) ?? variants[0], [variantId, variants]);
   const addItem = useCartStore((s) => s.addItem);
   const isLoading = useCartStore((s) => s.isLoading);
+  const isResoFitTrial = product.sku === "RESO-PT-TRIAL-7D";
+  const [trialStarting, setTrialStarting] = useState(false);
 
   useEffect(() => {
     recordEngagement(product.id, "pdp_depth");
@@ -58,6 +60,28 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
 
   const handleAdd = async () => {
     if (!selectedVariant) return;
+    if (isResoFitTrial) {
+      setTrialStarting(true);
+      try {
+        const response = await fetch(`${RESOFIT_SUPABASE_URL}/functions/v1/resofit-entitlement`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ product_sku: product.sku }),
+        });
+        const payload = await response.json().catch(() => null) as { ok?: boolean; error?: string; end_at?: string } | null;
+        if (!response.ok || payload?.ok !== true) {
+          throw new Error(payload?.error ?? (response.status === 401 ? "Sign in to start your ResoFit trial." : "Unable to start your trial."));
+        }
+        recordEngagement(product.id, "trial_started");
+        toast.success("Your 7-day Personal Trainer trial is active.", { position: "top-center" });
+        window.location.assign("https://dashboard.resofit.fit/trainer");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Unable to start your trial.", { position: "top-center" });
+      } finally {
+        setTrialStarting(false);
+      }
+      return;
+    }
     await addItem({ product: { id: product.id, title: product.title, handle: product.handle, sku: product.sku, images: product.images }, variantId: selectedVariant.id, variantTitle: selectedVariant.title, price: selectedVariant.price, quantity: qty, selectedOptions: selectedVariant.selectedOptions });
     recordEngagement(product.id, "add_to_cart");
     toast.success(`Added ${qty}× ${product.title} to cart`, { position: "top-center" });
@@ -107,7 +131,7 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
         <div className="mt-6 flex items-baseline gap-4"><p className="font-display text-4xl text-gold">{formatMoney(selectedVariant.price)}</p><p className="text-sm uppercase tracking-widest text-muted-foreground">≈ {approxUSD(selectedVariant.price)}</p></div>
         {product.descriptionHtml ? <div className="prose prose-invert mt-8 max-w-none text-muted-foreground" dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} /> : <p className="mt-8 whitespace-pre-line text-muted-foreground">{product.description}</p>}
         {variants.length > 1 && variants[0].title !== "Default Title" && <div className="mt-8 border-t border-border/60 pt-6"><p className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">Option</p><div className="flex flex-wrap gap-2">{variants.map((v) => <button key={v.id} type="button" onClick={() => setVariantId(v.id)} disabled={!v.availableForSale} className={`rounded-sm border px-4 py-2 text-xs uppercase tracking-widest transition-colors ${v.id === variantId ? "border-gold bg-gold/10 text-gold" : "border-border text-muted-foreground hover:border-gold/60 hover:text-foreground"} disabled:line-through disabled:opacity-40`}>{v.title}</button>)}</div></div>}
-        <div className="mt-8 flex flex-wrap items-center gap-4"><div className="flex h-12 items-center border border-border"><button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} className="h-full w-12 text-lg hover:text-gold" aria-label="Decrease quantity">−</button><span className="w-10 text-center">{qty}</span><button type="button" onClick={() => setQty((q) => q + 1)} className="h-full w-12 text-lg hover:text-gold" aria-label="Increase quantity">+</button></div><button type="button" onClick={handleAdd} disabled={isLoading || !selectedVariant?.availableForSale} className="inline-flex h-12 flex-1 items-center justify-center rounded-sm bg-gold px-8 text-xs font-semibold uppercase tracking-widest text-gold-foreground hover:bg-gold/90 disabled:opacity-50">{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : selectedVariant?.availableForSale ? "Add to cart" : "Sold out"}</button></div>
+        <div className="mt-8 flex flex-wrap items-center gap-4">{!isResoFitTrial && <div className="flex h-12 items-center border border-border"><button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} className="h-full w-12 text-lg hover:text-gold" aria-label="Decrease quantity">−</button><span className="w-10 text-center">{qty}</span><button type="button" onClick={() => setQty((q) => q + 1)} className="h-full w-12 text-lg hover:text-gold" aria-label="Increase quantity">+</button></div>}<button type="button" onClick={handleAdd} disabled={trialStarting || isLoading || !selectedVariant?.availableForSale} className="inline-flex h-12 flex-1 items-center justify-center rounded-sm bg-gold px-8 text-xs font-semibold uppercase tracking-widest text-gold-foreground hover:bg-gold/90 disabled:opacity-50">{trialStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : isResoFitTrial ? "Start 7-Day Trial" : isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : selectedVariant?.availableForSale ? "Add to cart" : "Sold out"}</button></div>
         <ul className="mt-10 space-y-3 border-t border-border/60 pt-6 text-sm"><li className="flex items-start gap-3"><Truck className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">Lagos:</strong> <span className="text-muted-foreground">2–4 business days · from ₦5,000</span></span></li><li className="flex items-start gap-3"><Package className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">Nigeria nationwide:</strong> <span className="text-muted-foreground">4–7 business days · calculated at checkout</span></span></li><li className="flex items-start gap-3"><Truck className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">International:</strong> <span className="text-muted-foreground">7–21 business days · DHL / freight</span></span></li><li className="flex items-start gap-3"><ShieldCheck className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">Secure checkout:</strong> <span className="text-muted-foreground">ResoFit Paystack checkout · payment options shown at checkout</span></span></li></ul>
       </div>
     </div>
