@@ -14,7 +14,7 @@ export type TrackEvent =
   | "quick_match" | "match_started" | "match_finished" | "achievement_unlocked" | "reward_claimed"
   | "leaderboard_view" | "tournament_joined" | "friend_invited" | "wellness_bonus" | "chatb2k_play_assist"
   | "wellness_view" | "wellness_search" | "wellness_cta_click" | "wellness_hub_access_request"
-  | "wellness_location_detected";
+  | "wellness_location_detected" | "search";
 
 const CANONICAL_PUBLIC_EVENT: Partial<Record<TrackEvent, string>> = {
   product_view: "funnel.page_viewed", checkout_start: "checkout.started", identity_started: "assessment.started", chatb2k_handoff: "conversation.whatsapp_clicked",
