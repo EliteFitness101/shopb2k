@@ -71,9 +71,9 @@ function GlobalSearch() {
     event.preventDefault();
     const value = q.trim();
     if (!value) return;
-    window.location.href = `/wellness/states/cities/hubs/geo-locator?q=${encodeURIComponent(value)}`;
+    window.location.href = `/shop?q=${encodeURIComponent(value)}`;
   };
-  return <form onSubmit={submit} className="hidden min-w-0 flex-1 max-w-sm lg:flex" role="search">
+  return <form onSubmit={submit} className="flex min-w-0 flex-1 max-w-md" role="search">
     <div className="flex w-full items-center rounded-xl border border-border/70 bg-background/60 px-3 focus-within:border-gold">
       <Search className="h-4 w-4 text-muted-foreground" aria-hidden />
       <input value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search ResoFit" placeholder="Search ResoFit, products, wellness…" className="min-w-0 flex-1 bg-transparent px-2 py-2.5 text-sm outline-none" />
