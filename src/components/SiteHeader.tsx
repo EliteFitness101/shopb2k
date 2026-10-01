@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight, Menu, Search, ShieldCheck, Sparkles, X } fro
 import { CartDrawer } from "@/components/CartDrawer";
 import { ChatB2KSmartAssistant } from "@/components/ChatB2KSmartAssistant";
 import { CTA } from "@/lib/ctas";
+import { track } from "@/lib/tracking";
 
 const NAV = [
   { label: "Coach Buchi", items: [
@@ -71,6 +72,7 @@ function GlobalSearch() {
     event.preventDefault();
     const value = q.trim();
     if (!value) return;
+    track("search", { query: value });
     window.location.href = `/shop?q=${encodeURIComponent(value)}`;
   };
   return <form onSubmit={submit} className="flex min-w-0 flex-1 max-w-md" role="search">
