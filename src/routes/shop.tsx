@@ -279,6 +279,7 @@ function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; pla
           id: node.id,
           title: node.title,
           handle: node.handle,
+          sku: node.sku,
           images: node.images,
         },
         variantId: firstAvail.id,
