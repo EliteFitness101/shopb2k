@@ -72,6 +72,16 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
     recordRecentlyViewed({ handle: product.handle, title: product.title, image: images[0]?.url, price: formatMoney(variants[0]?.price ?? { amount: "0", currencyCode: "NGN" }) });
   }, [product.id, product.handle, product.title, images, variants]);
 
+  // One TikTok ViewContent per product-detail page visit; do not emit from reusable image components.
+  useEffect(() => {
+    track("product_view", {
+      product_id: product.sku || product.id,
+      product_title: product.title,
+      value: Number(selectedVariant?.price.amount ?? 0),
+      currency: selectedVariant?.price.currencyCode ?? "NGN",
+    });
+  }, [product.id, product.sku, product.title]);
+
   const perf = getCachedPerf(product.id);
   const confident = perf && perf.pps >= 60;
 
