@@ -44,6 +44,22 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
   const selectedVariant = useMemo(() => variants.find((v) => v.id === variantId) ?? variants[0], [variantId, variants]);
+  const { data: experience } = useQuery({
+    queryKey: ["product-experience", product.sku],
+    enabled: Boolean(product.sku),
+    queryFn: async () => {
+      const response = await fetch(`${RESOFIT_SUPABASE_URL}/functions/v1/resofit-product-experience`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product_sku: product.sku }),
+      });
+      if (!response.ok) return null;
+      return response.json() as Promise<{
+        experience?: { teaser?: { headline?: string; cta?: string }; promise?: { primary?: string }; delivery?: { mode?: string; entry?: string }; plan?: Record<string, unknown>; meal_workout?: Record<string, unknown>; lifestyle_hacks?: Record<string, unknown> };
+        accessories?: Array<{ sku: string; title: string; handle: string; variant_price: number }>;
+      }>;
+    },
+  });
   const addItem = useCartStore((s) => s.addItem);
   const isLoading = useCartStore((s) => s.isLoading);
   const isResoFitTrial = product.sku === "RESO-PT-TRIAL-7D";
@@ -130,6 +146,16 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
         {confident && <div className="mt-4 inline-flex items-center gap-2 rounded-sm border border-gold/40 bg-gold/10 px-3 py-1 text-[10px] uppercase tracking-widest text-gold"><Sparkles className="h-3 w-3" /> Community pick · high engagement</div>}
         <div className="mt-6 flex items-baseline gap-4"><p className="font-display text-4xl text-gold">{formatMoney(selectedVariant.price)}</p><p className="text-sm uppercase tracking-widest text-muted-foreground">≈ {approxUSD(selectedVariant.price)}</p></div>
         {product.descriptionHtml ? <div className="prose prose-invert mt-8 max-w-none text-muted-foreground" dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} /> : <p className="mt-8 whitespace-pre-line text-muted-foreground">{product.description}</p>}
+        {experience?.experience && <section className="mt-8 rounded-2xl border border-gold/25 bg-gold/5 p-5">
+          <p className="text-[10px] uppercase tracking-[0.25em] text-gold">ResoFit Personalized Experience</p>
+          <h2 className="mt-2 font-display text-2xl">{experience.experience.teaser?.headline ?? "Built around your goals, meals and movement."}</h2>
+          {experience.experience.promise?.primary && <p className="mt-2 text-sm leading-6 text-muted-foreground">{experience.experience.promise.primary}</p>}
+          <div className="mt-4 grid gap-2 text-[11px]">
+            <div className="rounded-xl border border-border bg-background/30 p-3"><b>Meal + workout:</b> {experience.experience.meal_workout?.personalized ? "Personalized" : "Included"}</div>
+            <div className="rounded-xl border border-border bg-background/30 p-3"><b>Lifestyle:</b> {experience.experience.lifestyle_hacks?.included ? "Consistency, recovery and habit support included" : "See product details"}</div>
+          </div>
+          {experience.accessories?.length ? <div className="mt-4"><p className="text-[9px] uppercase tracking-widest text-gold">Consistency accessories</p><div className="mt-2 grid gap-2">{experience.accessories.map((a) => <Link key={a.sku} to="/product/$handle" params={{ handle: a.handle }} className="flex items-center justify-between rounded-xl border border-border p-3 text-[11px]"><span>{a.title}</span><span className="text-gold">₦{Number(a.variant_price || 0).toLocaleString()}</span></Link>)}</div></div> : null}
+        </section>}
         {variants.length > 1 && variants[0].title !== "Default Title" && <div className="mt-8 border-t border-border/60 pt-6"><p className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">Option</p><div className="flex flex-wrap gap-2">{variants.map((v) => <button key={v.id} type="button" onClick={() => setVariantId(v.id)} disabled={!v.availableForSale} className={`rounded-sm border px-4 py-2 text-xs uppercase tracking-widest transition-colors ${v.id === variantId ? "border-gold bg-gold/10 text-gold" : "border-border text-muted-foreground hover:border-gold/60 hover:text-foreground"} disabled:line-through disabled:opacity-40`}>{v.title}</button>)}</div></div>}
         <div className="mt-8 flex flex-wrap items-center gap-4">{!isResoFitTrial && <div className="flex h-12 items-center border border-border"><button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} className="h-full w-12 text-lg hover:text-gold" aria-label="Decrease quantity">−</button><span className="w-10 text-center">{qty}</span><button type="button" onClick={() => setQty((q) => q + 1)} className="h-full w-12 text-lg hover:text-gold" aria-label="Increase quantity">+</button></div>}<button type="button" onClick={handleAdd} disabled={trialStarting || isLoading || !selectedVariant?.availableForSale} className="inline-flex h-12 flex-1 items-center justify-center rounded-sm bg-gold px-8 text-xs font-semibold uppercase tracking-widest text-gold-foreground hover:bg-gold/90 disabled:opacity-50">{trialStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : isResoFitTrial ? "Start 7-Day Trial" : isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : selectedVariant?.availableForSale ? "Add to cart" : "Sold out"}</button></div>
         <ul className="mt-10 space-y-3 border-t border-border/60 pt-6 text-sm"><li className="flex items-start gap-3"><Truck className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">Lagos:</strong> <span className="text-muted-foreground">2–4 business days · from ₦5,000</span></span></li><li className="flex items-start gap-3"><Package className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">Nigeria nationwide:</strong> <span className="text-muted-foreground">4–7 business days · calculated at checkout</span></span></li><li className="flex items-start gap-3"><Truck className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">International:</strong> <span className="text-muted-foreground">7–21 business days · DHL / freight</span></span></li><li className="flex items-start gap-3"><ShieldCheck className="mt-0.5 h-4 w-4 text-gold" /><span><strong className="text-foreground">Secure checkout:</strong> <span className="text-muted-foreground">ResoFit Paystack checkout · payment options shown at checkout</span></span></li></ul>
