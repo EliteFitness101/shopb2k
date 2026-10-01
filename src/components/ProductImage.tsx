@@ -90,12 +90,9 @@ export function ProductImage({
   const tier: PriorityTier =
     tierOverride ?? (priority ? "high" : resolveTier(productId, placement));
 
-  // Record a view signal once per mount for learning loop.
+  // Record an engagement signal once per mount. Product analytics are emitted by the page-level owner.
   useEffect(() => {
-    if (productId) {
-      recordEngagement(productId, "view");
-      track("product_view", { productId, placement, tier });
-    }
+    if (productId) recordEngagement(productId, "view");
   }, [productId, placement, tier]);
 
   const isHigh = tier === "high";
