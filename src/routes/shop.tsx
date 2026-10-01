@@ -40,7 +40,8 @@ export const Route = createFileRoute("/shop")({
     ],
     links: [{ rel: "canonical", href: SHOP_URL }],
   }),
-  validateSearch: (s: { type?: string; vendor?: string; sort?: string }) => ({
+  validateSearch: (s: { q?: string; type?: string; vendor?: string; sort?: string }) => ({
+    q: typeof s.q === "string" ? s.q : undefined,
     type: typeof s.type === "string" ? (s.type as string) : undefined,
     vendor: typeof s.vendor === "string" ? (s.vendor as string) : undefined,
     sort: (typeof s.sort === "string" ? s.sort : "featured") as SortKey,
@@ -106,6 +107,15 @@ function ShopGrid() {
 
   const filtered = useMemo(() => {
     let list = data ?? [];
+    const query = search.q?.trim().toLowerCase();
+    if (query) {
+      list = list.filter((p) => {
+        const node = p.node;
+        return [node.title, node.description, node.productType, node.vendor, node.handle]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(query));
+      });
+    }
     if (search.type) list = list.filter((p) => p.node.productType === search.type);
     if (search.vendor) list = list.filter((p) => p.node.vendor === search.vendor);
     const sorted = [...list];
@@ -131,7 +141,7 @@ function ShopGrid() {
         break;
     }
     return sorted;
-  }, [data, search.type, search.vendor, search.sort]);
+  }, [data, search.q, search.type, search.vendor, search.sort]);
 
   useEffect(() => {
     if (!search.type || search.vendor || filtered.length !== 1) return;
@@ -196,10 +206,10 @@ function ShopGrid() {
                 <option value="price_desc">Price: High → Low</option>
               </select>
             </label>
-            {(search.type || search.vendor) && (
+            {(search.q || search.type || search.vendor) && (
               <button
                 type="button"
-                onClick={() => updateSearch({ type: undefined, vendor: undefined })}
+                onClick={() => updateSearch({ q: undefined, type: undefined, vendor: undefined })}
                 className="ml-auto text-[11px] uppercase tracking-widest text-muted-foreground hover:text-gold focus-visible:outline-2 focus-visible:outline-gold"
               >
                 Reset filters
