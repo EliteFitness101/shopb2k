@@ -140,6 +140,8 @@ interface PixelEventPayload {
   content_type?: string;
   contents?: PixelContent[];
   num_items?: number;
+  query?: string;
+  event_id?: string;
 }
 
 const META_MAP: Record<string, string> = {
@@ -160,6 +162,7 @@ const TIKTOK_MAP: Record<string, string> = {
   purchase_success: "Purchase",
   identity_started: "Lead",
   identity_created: "Lead",
+  search: "Search",
 };
 
 const GA4_MAP: Record<string, string> = {
@@ -168,6 +171,7 @@ const GA4_MAP: Record<string, string> = {
   checkout_start: "begin_checkout",
   purchase_success: "purchase",
   identity_created: "generate_lead",
+  search: "search",
 };
 
 export function pixelEvent(event: string, payload: PixelEventPayload = {}) {
@@ -190,6 +194,8 @@ export function pixelEvent(event: string, payload: PixelEventPayload = {}) {
       contents,
       ...(payload.content_name ? { content_name: payload.content_name } : {}),
       ...(payload.num_items ? { num_items: payload.num_items } : {}),
+      ...(payload.query ? { query: payload.query } : {}),
+      ...(payload.event_id ? { event_id: payload.event_id } : {}),
     };
 
     const meta = META_MAP[event];
