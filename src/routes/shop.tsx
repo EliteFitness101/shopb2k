@@ -15,6 +15,7 @@ import {
   type ShopifyProduct,
 } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
+import { track } from "@/lib/tracking";
 
 type SortKey = "featured" | "newest" | "price_asc" | "price_desc";
 
@@ -286,6 +287,7 @@ function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; pla
         quantity: 1,
         selectedOptions: firstAvail.selectedOptions,
       });
+      track("add_to_cart", { product_id: node.sku || node.id, product_title: node.title, quantity: 1, value: Number(firstAvail.price.amount), currency: firstAvail.price.currencyCode ?? "NGN" });
       recordEngagement(node.id, "add_to_cart");
       toast.success(`Added ${node.title} to cart`, { position: "top-center" });
     } finally {
