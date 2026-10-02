@@ -380,7 +380,7 @@ export function CinematicWellnessExperience({
     >
       {/* Background layer: bundled hero poster (LCP-safe). A production poster
           asset is used only once verified to exist; otherwise we never point at it. */}
-      <div className="pointer-events-none absolute inset-0">
+      <div className="pointer-events-none absolute inset-0 z-0">
         <img
           src={posterAvailable && posterSrc ? posterSrc : heroImg}
           alt=""
@@ -461,7 +461,7 @@ export function CinematicWellnessExperience({
 
       {/* Phase indicator (accessible timeline) */}
       <div
-        className="pointer-events-auto absolute left-1/2 top-6 z-10 flex -translate-x-1/2 gap-2"
+        className="pointer-events-auto absolute left-1/2 top-6 z-30 flex -translate-x-1/2 gap-2"
         role="tablist"
         aria-label="Cinematic chapters"
       >
@@ -480,7 +480,7 @@ export function CinematicWellnessExperience({
         ))}
       </div>
 
-      <div className="relative mx-auto flex min-h-[80vh] max-w-7xl items-center px-6 py-24">
+      <div className="relative z-20 mx-auto flex min-h-[80vh] max-w-7xl items-center px-6 py-24">
         <div key={phase} className="max-w-2xl animate-fade-in">
           <p className="mb-5 inline-flex items-center gap-3 text-[11px] uppercase tracking-[0.3em] text-gold">
             <span className="h-px w-10 bg-gold" />
