@@ -19,3 +19,9 @@ SyntaxError: The requested module '@tanstack/history' does not provide an export
     at async CAC.<anonymous> (file:///home/runner/work/shopb2k/shopb2k/node_modules/vite/dist/node/cli.js:629:10)[39m
 
 EXIT_CODE=1
+COMMIT=782fade5be3b4ec6766179f59aab0745ae7f7817
+COMMIT=-n
+COMMIT=250
+COMMIT=/tmp/resofit-build.log
+
+EXIT_CODE=1
