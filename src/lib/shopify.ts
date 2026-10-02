@@ -61,6 +61,29 @@ export async function storefrontApiRequest<T = unknown>(query: string, variables
   throw new Error("Unsupported storefront operation");
 }
 
+export type EcosystemSearchResult = {
+  id: string;
+  type: string;
+  title: string;
+  description?: string | null;
+  href: string;
+  source?: string;
+  metadata?: Record<string, unknown>;
+};
+
+export async function ecosystemSearch(query: string): Promise<{ query: string; results: EcosystemSearchResult[]; groups: Record<string, number> }> {
+  const q = query.trim();
+  if (!q) return { query: q, results: [], groups: {} };
+  const url = new URL(RESOFIT_CATALOG_URL + "/search");
+  url.searchParams.set("q", q);
+  url.searchParams.set("limit", "8");
+  const response = await fetch(url.toString(), { method: "GET", cache: "no-store" });
+  if (!response.ok) throw new Error(`ResoFit ecosystem search HTTP ${response.status}`);
+  const payload = (await response.json()) as { query?: string; results?: EcosystemSearchResult[]; groups?: Record<string, number>; error?: string };
+  if (payload.error) throw new Error(payload.error);
+  return { query: payload.query ?? q, results: payload.results ?? [], groups: payload.groups ?? {} };
+};
+
 export const PRODUCTS_QUERY = /* GraphQL */ `query GetProducts($first: Int!, $query: String) { products(first: $first, query: $query) { edges { node { id title description handle productType vendor tags priceRange { minVariantPrice { amount currencyCode } } images(first: 5) { edges { node { url altText } } } variants(first: 10) { edges { node { id title availableForSale price { amount currencyCode } selectedOptions { name value } } } } options { name values } } } }`;
 export const PRODUCT_BY_HANDLE_QUERY = /* GraphQL */ `query ProductByHandle($handle: String!) { product(handle: $handle) { id title description descriptionHtml handle productType vendor tags priceRange { minVariantPrice { amount currencyCode } } images(first: 12) { edges { node { url altText } } } variants(first: 50) { edges { node { id title availableForSale price { amount currencyCode } selectedOptions { name value } } } } options { name values } } }`;
 export const CART_QUERY = `query cart($id: ID!) { cart(id: $id) { id totalQuantity } }`;
