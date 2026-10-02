@@ -25,15 +25,17 @@ jobs:
       - run: npm install --no-audit --no-fund
       - name: Capture build failure
         run: |
-          node -e "console.log('HISTORY_VERSION', require('./node_modules/@tanstack/history/package.json').version)"
-          grep -n "normalizeProtocolRelative" node_modules/@tanstack/history/dist/esm/index.js || true
           set +e
-          echo "RESOLVED_DEPENDENCIES" > BUILD_DIAGNOSTIC.txt
-          node -e "console.log(require('./node_modules/@tanstack/history/package.json').version)" >> BUILD_DIAGNOSTIC.txt 2>&1
-          grep -n "normalizeProtocolRelative" node_modules/@tanstack/history/dist/esm/index.js >> BUILD_DIAGNOSTIC.txt 2>&1 || true
+          {
+            echo "RESOLVED_DEPENDENCIES"
+            node -e "console.log(require('./node_modules/@tanstack/history/package.json').version)"
+            grep -n "normalizeProtocolRelative" node_modules/@tanstack/history/dist/esm/index.js || true
+          } > /tmp/resolved.txt 2>&1
           npm run build > /tmp/resofit-build.log 2>&1
           code=$?
-          printf 'COMMIT=%s\n' "$GITHUB_SHA" > BUILD_DIAGNOSTIC.txt\ntail -n 250 /tmp/resofit-build.log >> BUILD_DIAGNOSTIC.txt
+          cat /tmp/resolved.txt > BUILD_DIAGNOSTIC.txt
+          printf 'COMMIT=%s\n' "$GITHUB_SHA" >> BUILD_DIAGNOSTIC.txt
+          tail -n 250 /tmp/resofit-build.log >> BUILD_DIAGNOSTIC.txt
           printf '\nEXIT_CODE=%s\n' "$code" >> BUILD_DIAGNOSTIC.txt
           exit 0
       - name: Commit diagnostic
