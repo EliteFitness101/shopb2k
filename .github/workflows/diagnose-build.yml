@@ -28,7 +28,7 @@ jobs:
           set +e
           npm run build > /tmp/resofit-build.log 2>&1
           code=$?
-          tail -n 250 /tmp/resofit-build.log > BUILD_DIAGNOSTIC.txt
+          printf 'COMMIT=%s\n' "$GITHUB_SHA" > BUILD_DIAGNOSTIC.txt\ntail -n 250 /tmp/resofit-build.log >> BUILD_DIAGNOSTIC.txt
           printf '\nEXIT_CODE=%s\n' "$code" >> BUILD_DIAGNOSTIC.txt
           exit 0
       - name: Commit diagnostic
