@@ -288,7 +288,7 @@ function EcosystemSearchResults({ query, data, loading, error }: { query: string
         {!loading && !error && data?.results.length ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {data.results.map((item) => (
-              <Link key={item.id} to={item.href as never} className="group rounded-2xl border border-border/60 bg-card p-5 transition-colors hover:border-gold/60">
+              <a key={item.id} href={item.href} className="group rounded-2xl border border-border/60 bg-card p-5 transition-colors hover:border-gold/60">
                 <div className="text-[10px] uppercase tracking-[0.25em] text-gold">{item.type.replace(/_/g, " ")}{item.source ? " · " + item.source : ""}</div>
                 <h3 className="mt-2 font-display text-xl group-hover:text-gold">{item.title}</h3>
                 {item.description && <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{item.description}</p>}
