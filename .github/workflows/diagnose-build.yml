@@ -1,0 +1,40 @@
+name: Diagnose ResoFit Build
+
+on:
+  push:
+    branches: [patch/global-ecosystem-search-20261002]
+    paths:
+      - "src/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/diagnose-build.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - name: Capture build failure
+        run: |
+          set +e
+          npm run build > /tmp/resofit-build.log 2>&1
+          code=$?
+          tail -n 250 /tmp/resofit-build.log > BUILD_DIAGNOSTIC.txt
+          printf '\nEXIT_CODE=%s\n' "$code" >> BUILD_DIAGNOSTIC.txt
+          exit 0
+      - name: Commit diagnostic
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add BUILD_DIAGNOSTIC.txt
+          git commit -m "chore: capture build diagnostic" || exit 0
+          git push origin HEAD:${GITHUB_REF_NAME}
