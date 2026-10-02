@@ -28,6 +28,9 @@ jobs:
           node -e "console.log('HISTORY_VERSION', require('./node_modules/@tanstack/history/package.json').version)"
           grep -n "normalizeProtocolRelative" node_modules/@tanstack/history/dist/esm/index.js || true
           set +e
+          echo "RESOLVED_DEPENDENCIES" > BUILD_DIAGNOSTIC.txt
+          node -e "console.log(require('./node_modules/@tanstack/history/package.json').version)" >> BUILD_DIAGNOSTIC.txt 2>&1
+          grep -n "normalizeProtocolRelative" node_modules/@tanstack/history/dist/esm/index.js >> BUILD_DIAGNOSTIC.txt 2>&1 || true
           npm run build > /tmp/resofit-build.log 2>&1
           code=$?
           printf 'COMMIT=%s\n' "$GITHUB_SHA" > BUILD_DIAGNOSTIC.txt\ntail -n 250 /tmp/resofit-build.log >> BUILD_DIAGNOSTIC.txt
