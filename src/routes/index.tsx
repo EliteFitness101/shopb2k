@@ -70,7 +70,7 @@ function Index() {
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
         </div>
-        <div className="relative mx-auto grid min-h-[88vh] max-w-7xl items-center px-6 py-24">
+        <div className="relative z-20 mx-auto grid min-h-[88vh] max-w-7xl items-center px-6 py-24">
           <div className="max-w-2xl">
             <p className="mb-6 inline-flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-gold"><span className="h-px w-10 bg-gold" />ChatB2K™ · ResoFit</p>
             <h1 className="font-display text-6xl leading-[0.95] sm:text-7xl md:text-8xl lg:text-9xl">Africa's<br /><span className="text-gradient-gold">personalized</span><br />wellness platform.</h1>
