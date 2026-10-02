@@ -25,6 +25,8 @@ jobs:
       - run: npm install --no-audit --no-fund
       - name: Capture build failure
         run: |
+          node -e "console.log('HISTORY_VERSION', require('./node_modules/@tanstack/history/package.json').version)"
+          grep -n "normalizeProtocolRelative" node_modules/@tanstack/history/dist/esm/index.js || true
           set +e
           npm run build > /tmp/resofit-build.log 2>&1
           code=$?
