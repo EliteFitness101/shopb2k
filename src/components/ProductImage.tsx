@@ -12,8 +12,9 @@ import { shopifySrcSet } from "@/lib/media";
 import { track } from "@/lib/tracking";
 
 const FALLBACK_SVG = (title: string, category?: string | null) => {
-  const safeTitle = encodeURIComponent(title.slice(0, 34));
-  const safeCategory = encodeURIComponent((category ?? "RESOFIT").slice(0, 22).toUpperCase());
+  const esc = (value: string) => value.slice(0, 34).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+  const safeTitle = esc(title);
+  const safeCategory = esc((category ?? "RESOFIT").slice(0, 22).toUpperCase());
   return "data:image/svg+xml;utf8," + encodeURIComponent(`
 <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800'>
   <defs><radialGradient id='g' cx='50%' cy='42%' r='75%'><stop offset='0%' stop-color='#211a12'/><stop offset='62%' stop-color='#0b0908'/><stop offset='100%' stop-color='#000'/></radialGradient></defs>
