@@ -493,24 +493,21 @@ export function CinematicWellnessExperience({
             {active.sub}
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-4">
-            <button
-              type="button"
-              onClick={openGate}
+            <a
+              href="/me"
+              onClick={() => track("cinematic_cta_click", { phase, cta: "start_personalized_journey" })}
               className="group inline-flex h-14 items-center justify-center gap-3 rounded-sm bg-gold px-8 text-sm font-semibold uppercase tracking-widest text-gold-foreground shadow-gold transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-gold"
             >
               Start My Personalized Journey
               <span className="transition-transform group-hover:translate-x-1">→</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                track("cinematic_cta_click", { phase, cta: "meet_chatb2k" });
-                setShowGate(true);
-              }}
+            </a>
+            <a
+              href="/me"
+              onClick={() => track("cinematic_cta_click", { phase, cta: "meet_chatb2k" })}
               className="inline-flex h-14 items-center justify-center rounded-sm border border-border px-8 text-sm font-semibold uppercase tracking-widest text-foreground transition-colors hover:border-gold hover:text-gold focus-visible:outline-2 focus-visible:outline-gold"
             >
               Meet ChatB2K™
-            </button>
+            </a>
           </div>
           <p className="mt-6 text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
             {CTA.assessment} · 60 seconds · No spam
