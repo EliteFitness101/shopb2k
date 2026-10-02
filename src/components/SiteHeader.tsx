@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight, Menu, Search, ShieldCheck, Sparkles, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Search, ShieldCheck, Sparkles } from "lucide-react";
 import { CartDrawer } from "@/components/CartDrawer";
 import { ChatB2KSmartAssistant } from "@/components/ChatB2KSmartAssistant";
 import { CTA } from "@/lib/ctas";
@@ -52,20 +52,18 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
 }
 
 function DesktopMenu({ group }: { group: (typeof NAV)[number] }) {
-  const [open, setOpen] = useState(false);
-  return <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
-    <button type="button" aria-expanded={open} onFocus={() => setOpen(true)} onClick={() => setOpen(v => !v)} className="flex items-center gap-1 rounded-md px-1 py-2 text-[13px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-gold">
-      {group.label}<ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`} />
-    </button>
-    <div hidden={!open} className={`absolute left-0 top-full z-[70] pt-2 transition-all duration-150 motion-reduce:transition-none ${open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"}`}>
+  return <details className="group relative">
+    <summary className="flex cursor-pointer list-none items-center gap-1 rounded-md px-1 py-2 text-[13px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-gold">
+      {group.label}<ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" />
+    </summary>
+    <div className="absolute left-0 top-full z-[70] pt-2">
       <div className="w-80 rounded-2xl border border-gold/20 bg-black/95 p-2 shadow-2xl backdrop-blur-xl">
         <div className="px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-gold">{group.label}</div>
         {group.items.map(item => <NavLink key={item.label} item={item} />)}
       </div>
     </div>
-  </div>;
+  </details>;
 }
-
 function GlobalSearch() {
   const [q, setQ] = useState("");
   const submit = (event: React.FormEvent) => {
@@ -85,7 +83,6 @@ function GlobalSearch() {
 }
 
 export function SiteHeader() {
-  const [mobileOpen, setMobileOpen] = useState(false);
   return <>
     <header className="sticky top-0 z-[60] border-b border-border/60 bg-background/90 backdrop-blur-xl">
       <div className="border-b border-border/40 bg-black/70"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-1.5 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:px-6">
@@ -95,9 +92,9 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6"><GlobalSearch />
         <Link to="/" className="flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-gold"><span className="font-display text-2xl tracking-wider">RESO<span className="text-gold">FIT</span></span></Link>
         <nav aria-label="Primary" className="hidden items-center gap-4 xl:gap-6 lg:flex">{NAV.map(group => <DesktopMenu key={group.label} group={group} />)}</nav>
-        <div className="flex items-center gap-2"><Link to="/me" className="hidden h-10 items-center rounded-xl bg-gold px-4 text-[11px] font-semibold uppercase tracking-widest text-gold-foreground transition-transform hover:-translate-y-0.5 md:inline-flex focus-visible:outline-2 focus-visible:outline-gold motion-reduce:transition-none">{CTA.primary}</Link><CartDrawer /><button type="button" aria-label={mobileOpen ? "Close menu" : "Open menu"} aria-expanded={mobileOpen} onClick={() => setMobileOpen(v => !v)} className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-background/60 lg:hidden focus-visible:outline-2 focus-visible:outline-gold">{mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button></div>
+        <div className="flex items-center gap-2"><Link to="/me" className="hidden h-10 items-center rounded-xl bg-gold px-4 text-[11px] font-semibold uppercase tracking-widest text-gold-foreground transition-transform hover:-translate-y-0.5 md:inline-flex focus-visible:outline-2 focus-visible:outline-gold motion-reduce:transition-none">{CTA.primary}</Link><CartDrawer /><details className="group relative lg:hidden"><summary aria-label="Open menu" className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-xl border border-border bg-background/60 focus-visible:outline-2 focus-visible:outline-gold"><span className="text-lg leading-none group-open:hidden" aria-hidden>☰</span><span className="hidden text-lg leading-none group-open:inline" aria-hidden>×</span></summary><div className="absolute right-0 top-full z-[70] mt-2 w-[min(92vw,28rem)] rounded-2xl border border-border/60 bg-black/95 p-3 shadow-2xl backdrop-blur-xl"><div className="grid gap-2">{NAV.map(group => <details key={group.label} className="group/menu rounded-2xl border border-border/50 bg-background/20"><summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-foreground">{group.label}<ChevronDown className="float-right mt-0.5 h-4 w-4 transition-transform motion-reduce:transition-none group-open/menu:rotate-180" /></summary><div className="border-t border-border/50 p-2">{group.items.map(item => <NavLink key={item.label} item={item} />)}</div></details>)}</div></div></details></div>
       </div>
-      {mobileOpen && <div className="relative z-[70] border-t border-border/60 bg-black/95 px-4 py-4 shadow-2xl lg:hidden"><div className="mx-auto max-w-2xl grid gap-2">{NAV.map(group => <details key={group.label} className="group rounded-2xl border border-border/50 bg-background/20"><summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-foreground focus-visible:outline-2 focus-visible:outline-gold">{group.label}<ChevronDown className="float-right mt-0.5 h-4 w-4 transition-transform motion-reduce:transition-none group-open:rotate-180" /></summary><div className="border-t border-border/50 p-2">{group.items.map(item => <NavLink key={item.label} item={item} onNavigate={() => setMobileOpen(false)} />)}</div></details>)}</div></div>}
+
     </header>
     <ChatB2KSmartAssistant />
   </>;
