@@ -380,7 +380,7 @@ export function CinematicWellnessExperience({
     >
       {/* Background layer: bundled hero poster (LCP-safe). A production poster
           asset is used only once verified to exist; otherwise we never point at it. */}
-      <div className="absolute inset-0">
+      <div className="pointer-events-none absolute inset-0">
         <img
           src={posterAvailable && posterSrc ? posterSrc : heroImg}
           alt=""
@@ -430,7 +430,7 @@ export function CinematicWellnessExperience({
 
       {/* Accessible video controls (visible only when video is loaded) */}
       {videoReady && currentVideoAvailable && currentVideoSrc && (
-        <div className="absolute right-4 top-4 z-10 flex gap-2">
+        <div className="pointer-events-auto absolute right-4 top-4 z-10 flex gap-2">
           <button
             type="button"
             onClick={togglePlay}
@@ -461,7 +461,7 @@ export function CinematicWellnessExperience({
 
       {/* Phase indicator (accessible timeline) */}
       <div
-        className="absolute left-1/2 top-6 z-10 flex -translate-x-1/2 gap-2"
+        className="pointer-events-auto absolute left-1/2 top-6 z-10 flex -translate-x-1/2 gap-2"
         role="tablist"
         aria-label="Cinematic chapters"
       >
