@@ -12,6 +12,8 @@ import {
   approxUSD,
   formatMoney,
   storefrontApiRequest,
+  ecosystemSearch,
+  type EcosystemSearchResult,
   type ShopifyProduct,
 } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
@@ -92,6 +94,13 @@ function ShopGrid() {
     queryKey: ["products", "all"],
     queryFn: fetchProducts,
     staleTime: 60_000,
+    enabled: !search.q,
+  });
+  const { data: ecosystem, isLoading: ecosystemLoading, isError: ecosystemError } = useQuery({
+    queryKey: ["ecosystem-search", search.q ?? ""],
+    queryFn: () => ecosystemSearch(search.q ?? ""),
+    staleTime: 30_000,
+    enabled: Boolean(search.q?.trim()),
   });
 
   const productTypes = useMemo(() => {
@@ -151,6 +160,10 @@ function ShopGrid() {
 
   const updateSearch = (patch: Partial<typeof search>) =>
     navigate({ search: (prev: typeof search) => ({ ...prev, ...patch }), replace: true });
+
+  if (search.q?.trim()) {
+    return <EcosystemSearchResults query={search.q.trim()} data={ecosystem} loading={ecosystemLoading} error={ecosystemError} />;
+  }
 
   return (
     <section className="py-16">
@@ -254,6 +267,41 @@ function ShopGrid() {
         <p className="mt-16 text-center text-xs uppercase tracking-widest text-muted-foreground">
           Secure checkout by Paystack · Card · Bank · USSD
         </p>
+      </div>
+    </section>
+  );
+}
+
+function EcosystemSearchResults({ query, data, loading, error }: { query: string; data?: { results: EcosystemSearchResult[]; groups: Record<string, number> }; loading: boolean; error: boolean }) {
+  return (
+    <section className="py-12">
+      <div className="mx-auto max-w-7xl px-6">
+        <div className="mb-10 border-b border-border/60 pb-6">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-gold">ResoFit Ecosystem Search</p>
+          <h2 className="mt-2 font-display text-4xl">Results for “{query}”</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Products, services, programs, people, wellness, network, content, offers and ChatB2K knowledge.</p>
+          {data?.groups && <p className="mt-3 text-[10px] uppercase tracking-widest text-muted-foreground">{Object.entries(data.groups).map(([k, v]) => k + ": " + v).join(" · ")}</p>}
+        </div>
+        {loading && <div className="py-24 text-center text-sm text-muted-foreground">Searching the ResoFit ecosystem…</div>}
+        {error && <div className="py-24 text-center text-sm text-muted-foreground">Search is temporarily unavailable. ChatB2K™ remains available for assisted discovery.</div>}
+        {!loading && !error && data?.results.length === 0 && <div className="py-24 text-center"><p className="font-display text-2xl">No direct match found</p><p className="mt-2 text-sm text-muted-foreground">Try a broader phrase or ask ChatB2K™ to refine the intent.</p></div>}
+        {!loading && !error && data?.results.length ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {data.results.map((item) => (
+              <a key={item.id} href={item.href} className="group rounded-2xl border border-border/60 bg-card p-5 transition-colors hover:border-gold/60">
+                <div className="text-[10px] uppercase tracking-[0.25em] text-gold">{item.type.replace(/_/g, " ")}{item.source ? " · " + item.source : ""}</div>
+                <h3 className="mt-2 font-display text-xl group-hover:text-gold">{item.title}</h3>
+                {item.description && <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{item.description}</p>}
+                <div className="mt-4 text-[10px] uppercase tracking-widest text-muted-foreground">Explore →</div>
+              </a>
+            ))}
+          </div>
+        ) : null}
+        <div className="mt-12 rounded-2xl border border-gold/20 bg-gold/5 p-6">
+          <p className="text-xs uppercase tracking-[0.25em] text-gold">ChatB2K™ Knowledge</p>
+          <p className="mt-2 text-sm text-muted-foreground">Search can resolve known ecosystem entities; personalized or conversational knowledge continues through ChatB2K™.</p>
+          <Link to="/me" className="mt-4 inline-flex rounded-xl bg-gold px-4 py-2 text-xs font-semibold uppercase tracking-widest text-gold-foreground">Ask ChatB2K™</Link>
+        </div>
       </div>
     </section>
   );
