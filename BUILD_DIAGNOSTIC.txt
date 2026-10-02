@@ -31,3 +31,9 @@ COMMIT=250
 COMMIT=/tmp/resofit-build.log
 
 EXIT_CODE=1
+COMMIT=0f31ff9572ea5e4a5231ab8f7c5c8bb991cced13
+COMMIT=-n
+COMMIT=250
+COMMIT=/tmp/resofit-build.log
+
+EXIT_CODE=1
