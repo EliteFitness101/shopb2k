@@ -12,6 +12,8 @@ import {
   approxUSD,
   formatMoney,
   storefrontApiRequest,
+  ecosystemSearch,
+  type EcosystemSearchResult,
   type ShopifyProduct,
 } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
@@ -92,6 +94,13 @@ function ShopGrid() {
     queryKey: ["products", "all"],
     queryFn: fetchProducts,
     staleTime: 60_000,
+    enabled: !search.q,
+  });
+  const { data: ecosystem, isLoading: ecosystemLoading, isError: ecosystemError } = useQuery({
+    queryKey: ["ecosystem-search", search.q ?? ""],
+    queryFn: () => ecosystemSearch(search.q ?? ""),
+    staleTime: 30_000,
+    enabled: Boolean(search.q?.trim()),
   });
 
   const productTypes = useMemo(() => {
@@ -151,6 +160,10 @@ function ShopGrid() {
 
   const updateSearch = (patch: Partial<typeof search>) =>
     navigate({ search: (prev: typeof search) => ({ ...prev, ...patch }), replace: true });
+
+  if (search.q?.trim()) {
+    return <EcosystemSearchResults query={search.q.trim()} data={ecosystem} loading={ecosystemLoading} error={ecosystemError} />;
+  }
 
   return (
     <section className="py-16">
