@@ -65,7 +65,7 @@ function Index() {
       <main>
       <CinematicWellnessExperience />
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
+        <div className="pointer-events-none absolute inset-0">
           <img src={heroImg} alt="Loaded olympic barbell in dramatic studio light" width={1536} height={1280} fetchPriority="high" decoding="async" className="h-full w-full object-cover opacity-70" />
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
