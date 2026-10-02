@@ -293,7 +293,7 @@ function EcosystemSearchResults({ query, data, loading, error }: { query: string
                 <h3 className="mt-2 font-display text-xl group-hover:text-gold">{item.title}</h3>
                 {item.description && <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{item.description}</p>}
                 <div className="mt-4 text-[10px] uppercase tracking-widest text-muted-foreground">Explore →</div>
-              </Link>
+              </a>
             ))}
           </div>
         ) : null}
