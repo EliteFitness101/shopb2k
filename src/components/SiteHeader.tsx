@@ -87,7 +87,7 @@ function GlobalSearch() {
 export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   return <>
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-[60] border-b border-border/60 bg-background/90 backdrop-blur-xl">
       <div className="border-b border-border/40 bg-black/70"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-1.5 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:px-6">
         <span className="flex items-center gap-2"><Sparkles className="h-3 w-3 text-gold" aria-hidden /><span className="hidden sm:inline">Africa's Personalized Wellness Platform</span><span className="sm:hidden">Personalized Wellness</span></span>
         <span className="flex items-center gap-2"><ShieldCheck className="h-3 w-3 text-gold" aria-hidden />Secure · Paystack</span>
