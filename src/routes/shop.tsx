@@ -90,11 +90,13 @@ function Shop() {
 function ShopGrid() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
+  // Keep the canonical product grid warm even while ecosystem search is running.
+  // A slow search must never blank the shop or block direct purchase discovery.
   const { data, isLoading, isError } = useQuery({
     queryKey: ["products", "all"],
     queryFn: fetchProducts,
     staleTime: 60_000,
-    enabled: !search.q,
+    refetchOnWindowFocus: false,
   });
   const { data: ecosystem, isLoading: ecosystemLoading, isError: ecosystemError } = useQuery({
     queryKey: ["ecosystem-search", search.q ?? ""],
@@ -162,7 +164,15 @@ function ShopGrid() {
     navigate({ search: (prev: typeof search) => ({ ...prev, ...patch }), replace: true });
 
   if (search.q?.trim()) {
-    return <EcosystemSearchResults query={search.q.trim()} data={ecosystem} loading={ecosystemLoading} error={ecosystemError} />;
+    return (
+      <EcosystemSearchResults
+        query={search.q.trim()}
+        data={ecosystem}
+        loading={ecosystemLoading}
+        error={ecosystemError}
+        fallbackProducts={data ?? []}
+      />
+    );
   }
 
   return (
@@ -272,7 +282,26 @@ function ShopGrid() {
   );
 }
 
-function EcosystemSearchResults({ query, data, loading, error }: { query: string; data?: { results: EcosystemSearchResult[]; groups: Record<string, number> }; loading: boolean; error: boolean }) {
+function EcosystemSearchResults({
+  query,
+  data,
+  loading,
+  error,
+  fallbackProducts,
+}: {
+  query: string;
+  data?: { results: EcosystemSearchResult[]; groups: Record<string, number> };
+  loading: boolean;
+  error: boolean;
+  fallbackProducts: ShopifyProduct[];
+}) {
+  const normalized = query.toLowerCase();
+  const localMatches = fallbackProducts.filter((p) => {
+    const n = p.node;
+    return [n.title, n.description, n.productType, n.vendor, n.handle, n.sku]
+      .filter(Boolean)
+      .some((v) => String(v).toLowerCase().includes(normalized));
+  });
   return (
     <section className="py-12">
       <div className="mx-auto max-w-7xl px-6">
@@ -283,8 +312,30 @@ function EcosystemSearchResults({ query, data, loading, error }: { query: string
           {data?.groups && <p className="mt-3 text-[10px] uppercase tracking-widest text-muted-foreground">{Object.entries(data.groups).map(([k, v]) => k + ": " + v).join(" · ")}</p>}
         </div>
         {loading && <div className="py-24 text-center text-sm text-muted-foreground">Searching the ResoFit ecosystem…</div>}
-        {error && <div className="py-24 text-center text-sm text-muted-foreground">Search is temporarily unavailable. ChatB2K™ remains available for assisted discovery.</div>}
-        {!loading && !error && data?.results.length === 0 && <div className="py-24 text-center"><p className="font-display text-2xl">No direct match found</p><p className="mt-2 text-sm text-muted-foreground">Try a broader phrase or ask ChatB2K™ to refine the intent.</p></div>}
+        {error && (
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            Search service is temporarily unavailable.
+            {localMatches.length > 0 ? " Showing matching products below." : " ChatB2K™ remains available for assisted discovery."}
+          </div>
+        )}
+        {!loading && !error && data?.results.length === 0 && localMatches.length === 0 && (
+          <div className="py-24 text-center">
+            <p className="font-display text-2xl">No direct match found</p>
+            <p className="mt-2 text-sm text-muted-foreground">Try a broader phrase or ask ChatB2K™ to refine the intent.</p>
+          </div>
+        )}
+        {(error || (!loading && !data?.results.length)) && localMatches.length > 0 && (
+          <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {localMatches.slice(0, 8).map((p) => (
+              <Link key={p.node.id} to="/product/$handle" params={{ handle: p.node.handle }} className="group rounded-2xl border border-border/60 bg-card p-5 transition-colors hover:border-gold/60">
+                <div className="text-[10px] uppercase tracking-[0.25em] text-gold">Product</div>
+                <h3 className="mt-2 font-display text-xl group-hover:text-gold">{p.node.title}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{formatMoney(p.node.priceRange.minVariantPrice)}</p>
+                <div className="mt-4 text-[10px] uppercase tracking-widest text-muted-foreground">View product →</div>
+              </Link>
+            ))}
+          </div>
+        )}
         {!loading && !error && data?.results.length ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {data.results.map((item) => (
