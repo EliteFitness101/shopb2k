@@ -30,8 +30,14 @@ export async function storefrontApiRequest<T=unknown>(query:string,variables:Rec
  const handle=typeof variables.handle==="string"?variables.handle:null;let products:StorefrontProduct[]=[];
  try{products=await fetchCanonicalCatalog(handle)}catch(error){console.warn("Canonical catalog unavailable; using storefront compatibility fallback",error);products=await fetchStorefrontProducts(handle)}
  const isHandleQuery=/product\s*\(handle/i.test(query);
- const assetEntries=isHandleQuery&&products[0]?.handle?[[products[0].handle,await fetchCanonicalAssets(products[0].handle).catch(()=>[])] as const]:await Promise.all(products.map(async product=>[product.handle,await fetchCanonicalAssets(product.handle).catch(()=>[])] as const));
- const assetMap=new Map(assetEntries);const nodes=products.map(product=>mapProduct(product,assetMap.get(product.handle)??[]));const mappedProducts=isHandleQuery?(nodes[0]??null):{edges:nodes.map(node=>({node}))};
+ // Product grids must not fan out into one catalog-assets request per product.
+ // Fetch the six canonical assets only for an individual product page; the grid
+ // can use the lightweight image_src and stays responsive on mobile.
+ const assetEntries=isHandleQuery&&products[0]?.handle
+   ? [[products[0].handle,await fetchCanonicalAssets(products[0].handle).catch(()=>[])] as const]
+   : [];
+ const assetMap=new Map(assetEntries);
+ const nodes=products.map(product=>mapProduct(product,assetMap.get(product.handle)??[]));const mappedProducts=isHandleQuery?(nodes[0]??null):{edges:nodes.map(node=>({node}))};
  if(isHandleQuery)return{data:{product:mappedProducts} as T};if(/products\s*\(/i.test(query))return{data:{products:mappedProducts} as T};if(/query\s+cart/i.test(query))return{data:{cart:null} as T};throw new Error("Unsupported storefront operation");
 }
 export type EcosystemSearchResult={id:string;type:string;title:string;description?:string|null;href:string;source?:string;metadata?:Record<string,unknown>};
