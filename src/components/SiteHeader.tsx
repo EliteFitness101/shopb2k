@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { ChevronDown, ChevronRight, Search, ShieldCheck, Sparkles } from "lucide-react";
 import { CartDrawer } from "@/components/CartDrawer";
 import { ChatB2KSmartAssistant } from "@/components/ChatB2KSmartAssistant";
@@ -66,12 +66,14 @@ function DesktopMenu({ group }: { group: (typeof NAV)[number] }) {
 }
 function GlobalSearch() {
   const [q, setQ] = useState("");
+  const navigate = useNavigate();
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     const value = q.trim();
     if (!value) return;
     track("search", { query: value });
-    window.location.href = `/shop?q=${encodeURIComponent(value)}`;
+    // SPA navigation avoids a full document reload on every search.
+    void navigate({ to: "/shop", search: { q: value } });
   };
   return <form onSubmit={submit} className="flex min-w-0 flex-1 max-w-md" role="search">
     <div className="flex w-full items-center rounded-xl border border-border/70 bg-background/60 px-3 focus-within:border-gold">
