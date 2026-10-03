@@ -9,7 +9,7 @@ if (!STORE || !CLIENT_ID || !CLIENT_SECRET) {
   throw new Error("SHOPIFY_STORE_DOMAIN, SHOPIFY_CLIENT_ID and SHOPIFY_CLIENT_SECRET are required");
 }
 
-const normalizeStore = (value: string) => value.replace(/^https?:\\/\\//, "").replace(/\\/$/, "").toLowerCase();
+const normalizeStore = (value: string) => value.replace(/^https?:\/\//, "").replace(/\/$/, "").toLowerCase();
 
 const configuredStore = normalizeStore(STORE);
 if (!configuredStore.endsWith(".myshopify.com")) {
