@@ -22,5 +22,11 @@
       "permanent": true
     }
   ],
-  "installCommand": "npm install --production=false"
+  "installCommand": "npm install --production=false",
+  "crons": [
+    {
+      "path": "/api/asset-sync-cron",
+      "schedule": "0 3 * * *"
+    }
+  ]
 }
