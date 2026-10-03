@@ -43,7 +43,22 @@ function resetAnswers(): Answers { return { goal: "", activity: "", diet: "" }; 
 function MePage() {
   const [step, setStep] = useState(0); const [answers, setAnswers] = useState<Answers>(resetAnswers()); const [curating, setCurating] = useState(false); const [result, setResult] = useState<Recommendation | null>(null);
   const restart = () => { setStep(0); setResult(null); setAnswers(resetAnswers()); };
-  async function submit(next: Answers) { setCurating(true); trackEvent("assessment_click"); const recommendation = await canonicalRecommendation(next); window.setTimeout(() => { setResult(recommendation); setStep(3); setCurating(false); trackEvent("assessment_complete"); if (recommendation) window.location.assign(recommendation.url); }, 900); }
+  async function submit(next: Answers) {
+    setCurating(true);
+    trackEvent("assessment_click");
+    try {
+      const recommendation = await Promise.race([
+        canonicalRecommendation(next),
+        new Promise<Recommendation | null>((resolve) => window.setTimeout(() => resolve(null), 8000)),
+      ]);
+      setResult(recommendation);
+      setStep(3);
+      trackEvent("assessment_complete");
+      if (recommendation) window.location.assign(recommendation.url);
+    } finally {
+      setCurating(false);
+    }
+  }
   return <div className="min-h-screen bg-background"><SiteHeader /><main className="mx-auto max-w-3xl px-5 py-10 md:px-6 md:py-12"><header className="mb-8 text-center"><p className="text-xs uppercase tracking-[0.3em] text-gold">ChatB2K Assessment</p><h1 className="mt-3 font-display text-4xl leading-tight md:text-5xl">Your personalized <span className="text-gold">ResoFit</span> pathway</h1><p className="mt-3 text-sm text-muted-foreground">3 questions · about 60 seconds · your next step is curated for you</p></header>{step < 3 && <div className="mb-6 h-1 w-full overflow-hidden rounded-full bg-border/40"><div className="h-full bg-gold transition-all duration-500" style={{ width: `${(step / 3) * 100}%` }} /></div>}{step === 0 && <StepCard title="What's your primary goal?" options={GOALS} onSelect={(v) => { setAnswers((a) => ({ ...a, goal: v })); setStep(1); }} />}{step === 1 && <StepCard title="How active are you right now?" options={ACTIVITIES} onBack={() => setStep(0)} onSelect={(v) => { setAnswers((a) => ({ ...a, activity: v })); setStep(2); }} />}{step === 2 && <StepCard title="Which best describes your diet?" options={DIETS} loading={curating} onBack={() => setStep(1)} onSelect={(v) => { const next = { ...answers, diet: v }; setAnswers(next); submit(next); }} />}{curating && <CurationState />}{step === 3 && !result && <NoMatchView answers={answers} onRestart={restart} />}</main><SiteFooter /></div>;
 }
 function CurationState() { return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6 backdrop-blur-xl"><div className="w-full max-w-md rounded-[2rem] border border-gold/30 bg-black/80 p-8 text-center shadow-2xl shadow-gold/10"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-gold/40 bg-gold/10"><Loader2 className="h-6 w-6 animate-spin text-gold" /></div><p className="mt-6 text-[10px] uppercase tracking-[0.3em] text-gold">ChatB2K™</p><h2 className="mt-2 font-display text-3xl">Opening your matched offer…</h2><p className="mt-3 text-sm leading-relaxed text-muted-foreground">Preparing the exact product, live details, imagery and checkout path for you.</p><div className="mt-6 h-1 overflow-hidden rounded-full bg-white/10"><div className="h-full w-2/3 animate-pulse bg-gold" /></div></div></div>; }
