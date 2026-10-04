@@ -38,6 +38,15 @@ const NAV = [
     { label: "Play", purpose: "Move, compete and engage", to: "/community/play" },
     { label: "Learn", purpose: "Explore practical knowledge", to: "/knowledge" },
   ] },
+  { label: "Legal", items: [
+    { label: "Legal HQ", purpose: "Evidence-first Legal & Governance Case Intelligence", to: "/legal" },
+    { label: "Casebook", purpose: "Cases · status · chronology · analysis", to: "/legal/$section", params: { section: "casebook" } },
+    { label: "Research", purpose: "Legislation · cases · judgments · updates", to: "/legal/$section", params: { section: "research" } },
+    { label: "Evidence", purpose: "Provenance · documents · system records", to: "/legal/$section", params: { section: "evidence" } },
+    { label: "Governance", purpose: "Controls · audit · risk · decisions", to: "/legal/$section", params: { section: "governance" } },
+    { label: "Ecosystem", purpose: "ResoFit · ResoFlex · ChatB2K · architecture", to: "/legal/$section", params: { section: "ecosystem" } },
+    { label: "Principles", purpose: "LordB2K · resilience · evidence-first", to: "/legal/$section", params: { section: "principles" } },
+  },
   { label: "Company", items: [
     { label: "About", purpose: "Learn about ResoFit", to: "/about" },
     { label: "Contact", purpose: "Reach the team", to: "/contact" },
