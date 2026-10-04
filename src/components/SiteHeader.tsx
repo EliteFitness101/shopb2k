@@ -9,9 +9,14 @@ import { track } from "@/lib/tracking";
 const NAV = [
   { label: "Coach Buchi", items: [
     { label: "Coach Buchi HQ", purpose: "LordB2K · Founder vision and philosophy", to: "/coach-buchi" },
-    { label: "The State", purpose: "Body, mind, food, movement and purpose", to: "/coach-buchi" },
-    { label: "AI-SI Productivity", purpose: "Human capability and intelligent systems", to: "/coach-buchi" },
-    { label: "Community Leadership", purpose: "Learning, opportunity and stewardship", to: "/coach-buchi" },
+    { label: "The State", purpose: "Body, mind, food, movement and purpose", to: "/coach-buchi#vision" },
+    { label: "LordB2K", purpose: "Forged in the Furnace · survival → architecture", to: "/coach-buchi/$section", params: { section: "lord-b2k" } },
+    { label: "LordB2K State", purpose: "Intelligence → State → Governance → Learning", to: "/coach-buchi/$section", params: { section: "lord-b2k-state" } },
+    { label: "Lord of Light", purpose: "Truth · discernment · protection · service", to: "/coach-buchi/$section", params: { section: "lord-of-light" } },
+    { label: "Seasons", purpose: "The Last Man Standing → Legacy", to: "/coach-buchi/$section", params: { section: "seasons" } },
+    { label: "Legal & Governance", purpose: "Case intelligence · evidence · controls", to: "/coach-buchi/$section", params: { section: "legal-governance" } },
+    { label: "AI-SI Productivity", purpose: "Human capability and intelligent systems", to: "/coach-buchi#ai-si" },
+    { label: "Community Leadership", purpose: "Learning, opportunity and stewardship", to: "/coach-buchi#opportunities" },
   ] },
   { label: "Wellness", items: [
     { label: "Wellness Network", purpose: "Discover wellness options", to: "/wellness" },
@@ -42,13 +47,13 @@ const NAV = [
   ] },
 ];
 
-type NavItem = { label: string; purpose: string; to?: string; href?: string };
+type NavItem = { label: string; purpose: string; to?: string; href?: string; params?: Record<string, string> };
 
 function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
   const className = "flex items-center justify-between gap-4 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gold/10 hover:text-foreground focus-visible:outline-2 focus-visible:outline-gold";
   const content = <><span><span className="block text-foreground">{item.label}</span><span className="block text-[11px] text-muted-foreground">{item.purpose}</span></span><ChevronRight className="h-3.5 w-3.5 flex-none" /></>;
   if (item.href) return <a href={item.href} target="_blank" rel="noopener noreferrer" onClick={onNavigate} className={className}>{content}</a>;
-  return <Link to={item.to as never} onClick={onNavigate} className={className}>{content}</Link>;
+  return <Link to={item.to as never} params={item.params as never} onClick={onNavigate} className={className}>{content}</Link>;
 }
 
 function DesktopMenu({ group }: { group: (typeof NAV)[number] }) {
@@ -56,8 +61,8 @@ function DesktopMenu({ group }: { group: (typeof NAV)[number] }) {
     <summary className="flex cursor-pointer list-none items-center gap-1 rounded-md px-1 py-2 text-[13px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-gold">
       {group.label}<ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" />
     </summary>
-    <div className="absolute left-0 top-full z-[70] pt-2">
-      <div className="w-80 rounded-2xl border border-gold/20 bg-black/95 p-2 shadow-2xl backdrop-blur-xl">
+    <div className="pointer-events-none invisible absolute left-0 top-full z-[70] pt-2 opacity-0 transition-all duration-200 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:visible group-focus-within:opacity-100">
+      <div className="w-[22rem] rounded-2xl border border-gold/20 bg-black/95 p-2 shadow-[0_24px_80px_rgba(0,0,0,.55)] backdrop-blur-2xl">
         <div className="px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-gold">{group.label}</div>
         {group.items.map(item => <NavLink key={item.label} item={item} />)}
       </div>
