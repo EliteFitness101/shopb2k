@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Brain, Dumbbell, Leaf, Sparkles, Target, Users, Zap } from "lucide-react";
+import { ArrowRight, Brain, Dumbbell, Leaf, Sparkles, Target, Users, Zap, Scale, Sun, Layers3 } from "lucide-react";
 import heroImg from "@/assets/hero-barbell.jpg";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -11,6 +11,14 @@ const STATE = [
   { icon: Brain, label: "Mind", text: "Clarity, discipline and resilient thinking." },
   { icon: Leaf, label: "Food", text: "Practical nourishment built around real life." },
   { icon: Target, label: "Purpose", text: "Turn personal progress into meaningful action." },
+];
+
+const STORY_ARCHIVE = [
+  { slug: "lord-b2k", title: "LordB2K · Forged in the Furnace", text: "Survival intelligence becoming architect intelligence: pressure → evidence → architecture.", icon: Layers3 },
+  { slug: "lord-b2k-state", title: "LordB2K State", text: "The evolution from intelligence to state-aware governance: Event → Evidence → Intelligence → State → Action → Learning.", icon: Target },
+  { slug: "lord-of-light", title: "Lord of Light", text: "After the fire: truth, discernment, governance, protection, creation, service and legacy.", icon: Sun },
+  { slug: "seasons", title: "The Seasons", text: "The Last Man Standing → The Builder → The Entrepreneur → The Wars → Candy → The iPhone → ResoFit → ResoFlex → ChatB2K → The Ecosystem → The Rebuild → Revenue → Legacy.", icon: Sparkles },
+  { slug: "legal-governance", title: "Legal · Governance · Case Intelligence", text: "Evidence-first case studies connecting lived events, legal analysis, risk, governance controls and ecosystem learning.", icon: Scale },
 ];
 
 const PATHS = [
@@ -153,6 +161,23 @@ function CoachBuchi() {
                   </div>
                   <h3 className="mt-12 font-display text-3xl">{path.title}</h3>
                   <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">{path.text}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="evolution" className="border-b border-border/60 bg-black/40 py-20 sm:py-28">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+              <div><p className="text-xs uppercase tracking-[0.32em] text-gold">Founder archive · live ecosystem</p><h2 className="mt-4 font-display text-5xl leading-none sm:text-7xl">From intelligence to State.</h2></div>
+              <p className="max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">The Coach Buchi archive preserves the evolving LordB2K philosophy as living routes, seasons, analyses and governance lessons — not a static biography.</p>
+            </div>
+            <div className="mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {STORY_ARCHIVE.map(({ slug, title, text, icon: Icon }) => (
+                <Link key={slug} to="/coach-buchi/$section" params={{ section: slug }} className="group relative overflow-hidden rounded-3xl border border-gold/15 bg-background/70 p-7 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-gold/50 hover:shadow-[0_20px_70px_rgba(0,0,0,.45)]">
+                  <div className="absolute inset-0 bg-gradient-to-br from-gold/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  <div className="relative"><div className="flex items-center justify-between"><Icon className="h-6 w-6 text-gold transition-transform duration-300 group-hover:scale-110" /><span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Explore →</span></div><h3 className="mt-12 font-display text-3xl leading-tight">{title}</h3><p className="mt-4 text-sm leading-relaxed text-muted-foreground">{text}</p></div>
                 </Link>
               ))}
             </div>
