@@ -36,20 +36,45 @@ function PlayHome() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    track("play_home_view");
+    // Keep telemetry off the critical render path so Play can paint first.
+    const run = () => track("play_home_view");
+    if ("requestIdleCallback" in window) {
+      const id = window.requestIdleCallback(run, { timeout: 1500 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = window.setTimeout(run, 0);
+    return () => window.clearTimeout(id);
   }, []);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [loading, user, navigate]);
 
+  const [secondaryReady, setSecondaryReady] = useState(false);
+
+  useEffect(() => {
+    if (loading || !user) return;
+    const enable = () => setSecondaryReady(true);
+    if ("requestIdleCallback" in window) {
+      const id = window.requestIdleCallback(enable, { timeout: 1000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = window.setTimeout(enable, 200);
+    return () => window.clearTimeout(id);
+  }, [loading, user]);
+
   const games = useQuery({
     queryKey: ["play", "games"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("games").select("*").order("sort_order");
+      const { data, error } = await supabase
+        .from("games")
+        .select("id, slug, name, description, category, status, min_players, max_players, sort_order")
+        .order("sort_order");
       if (error) throw error;
       return data as Game[];
     },
+    enabled: !!user,
+    staleTime: 60_000,
   });
 
   const profile = useQuery({
@@ -64,6 +89,7 @@ function PlayHome() {
       if (error) throw error;
       return data as Profile | null;
     },
+    staleTime: 30_000,
   });
 
   const leaderboard = useQuery({
@@ -77,6 +103,8 @@ function PlayHome() {
       if (error) throw error;
       return data as Pick<Profile, "id" | "display_name" | "avatar_url" | "xp" | "level">[];
     },
+    enabled: secondaryReady,
+    staleTime: 60_000,
   });
 
   const recent = useQuery({
@@ -84,18 +112,24 @@ function PlayHome() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("activity_feed")
-        .select("id, kind, payload, created_at")
+        .select("id, kind, created_at")
         .order("created_at", { ascending: false })
         .limit(6);
       if (error) throw error;
       return data ?? [];
     },
+    enabled: secondaryReady,
+    staleTime: 15_000,
   });
 
-  if (loading || !user) {
+  if (loading) {
+    return <PlayLoadingSkeleton />;
+  }
+
+  if (!user) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-background text-sm text-muted-foreground">
-        Loading Play…
+        Redirecting…
       </div>
     );
   }
@@ -275,6 +309,25 @@ function PlayHome() {
         </div>
       </main>
       <SiteFooter />
+    </div>
+  );
+}
+
+function PlayLoadingSkeleton() {
+  return (
+    <div className="min-h-dvh bg-background">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        <div className="h-32 animate-pulse rounded-lg border border-border/40 bg-card/40" />
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-24 animate-pulse rounded-lg border border-border/40 bg-card/40" />
+          ))}
+        </div>
+        <div className="mt-6 grid gap-4 lg:grid-cols-3">
+          <div className="h-64 animate-pulse rounded-lg border border-border/40 bg-card/40 lg:col-span-2" />
+          <div className="h-64 animate-pulse rounded-lg border border-border/40 bg-card/40" />
+        </div>
+      </div>
     </div>
   );
 }
