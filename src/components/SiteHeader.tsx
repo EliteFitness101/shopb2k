@@ -46,7 +46,7 @@ const NAV = [
     { label: "Governance", purpose: "Controls · audit · risk · decisions", to: "/legal/$section", params: { section: "governance" } },
     { label: "Ecosystem", purpose: "ResoFit · ResoFlex · ChatB2K · architecture", to: "/legal/$section", params: { section: "ecosystem" } },
     { label: "Principles", purpose: "LordB2K · resilience · evidence-first", to: "/legal/$section", params: { section: "principles" } },
-  },
+  ] },
   { label: "Company", items: [
     { label: "About", purpose: "Learn about ResoFit", to: "/about" },
     { label: "Contact", purpose: "Reach the team", to: "/contact" },
