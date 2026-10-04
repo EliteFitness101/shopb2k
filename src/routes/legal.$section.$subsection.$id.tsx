@@ -1,0 +1,6 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
+import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
+export const Route=createFileRoute("/legal/$section/$subsection/$id")({component:CaseDetail});
+function CaseDetail(){const{section,subsection,id}=Route.useParams();return <div className="min-h-screen bg-background text-foreground"><SiteHeader/><main><section className="border-b border-border/60 bg-black"><div className="mx-auto max-w-5xl px-6 py-24"><Link to="/legal/$section/$subsection" params={{section,subsection}} className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground hover:text-gold"><ArrowLeft className="h-4 w-4"/> Back</Link><p className="mt-12 text-xs uppercase tracking-[.3em] text-gold">Case / record / {id}</p><h1 className="mt-4 font-display text-5xl capitalize sm:text-7xl">{id.replaceAll("-"," ")}</h1><p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground">Dynamic record shell. Publication requires evidence indexing, privacy review, legal review where required, editorial approval and verified provenance.</p></div></section></main><SiteFooter/></div>}
