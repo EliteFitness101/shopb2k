@@ -21,6 +21,7 @@ const PUBLIC_EVENTS = new Set([
   "funnel.page_viewed",
   "funnel.cta_clicked",
   "assessment.started",
+  "assessment.completed",
   "conversation.whatsapp_clicked",
   "checkout.started",
 ]);
@@ -102,6 +103,49 @@ Deno.serve(async (req) => {
         if (existing) return json({ ok: true, replay: true, event: existing });
       }
       throw eventError;
+    }
+
+    if (eventName.startsWith("commerce.")) {
+      const productId = typeof payload.product_id === "string" ? payload.product_id : null;
+      const sku = typeof payload.sku === "string" ? payload.sku : null;
+      const source = typeof payload.source === "string" ? payload.source : "resofit";
+      const sessionId = typeof body.session_id === "string" ? body.session_id : null;
+      const { error: commerceError } = await admin.from("commerce_events").insert({
+        event_name: eventName,
+        product_id: productId,
+        sku,
+        source,
+        session_id: sessionId,
+        metadata: {
+          ...payload,
+          anonymous_id: body.anonymous_id ?? null,
+          rsid: body.rsid ?? null,
+          funnel_origin: body.funnel_origin ?? null,
+          utm: body.utm ?? {},
+        },
+      });
+      if (commerceError) throw commerceError;
+
+      if (eventName === "commerce.search") {
+        const query = String(payload.query ?? "").trim();
+        if (query) {
+          const { error: intentError } = await admin.from("commerce_intents").insert({
+            session_id: sessionId,
+            intent: "search",
+            query,
+            country_code: typeof payload.country_code === "string" ? payload.country_code : null,
+            city: typeof payload.city === "string" ? payload.city : null,
+            budget: typeof payload.budget === "number" ? payload.budget : null,
+            metadata: {
+              ...payload,
+              anonymous_id: body.anonymous_id ?? null,
+              rsid: body.rsid ?? null,
+              funnel_origin: body.funnel_origin ?? null,
+            },
+          });
+          if (intentError) throw intentError;
+        }
+      }
     }
 
     if (adapters.length) {
