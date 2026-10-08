@@ -24,7 +24,7 @@ const STORY_ARCHIVE = [
 const PATHS = [
   { title: "Reset", text: "Discover → Assess → Personalize → Act → Track → Adapt → Resonate.", to: "/me" },
   { title: "ResoFlex™", text: "Train across home, gym, bunker, jungle, travel, hotel and community environments.", to: "/programs" },
-  { title: "Resilience Lab", text: "Build practical capacity for bunker, jungle, city, travel and premium-life conditions.", to: "/coach-buchi" },
+  { title: "Resilience Lab", text: "Build practical capacity for bunker, jungle, city, travel and premium-life conditions.", to: "/coach-buchi/$section", params: { section: "resilience-lab" } },
   { title: "AI-SI Academy", text: "Progress from AI literacy and prompting into research, content, automation and intelligent systems.", to: "/knowledge" },
   { title: "Community XP", text: "Turn learning, habits, participation and contribution into visible progression and rewards.", to: "/community/play" },
   { title: "Stories", text: "Explore journeys through starting state, reset, action, change and next state.", to: "/stories" },
