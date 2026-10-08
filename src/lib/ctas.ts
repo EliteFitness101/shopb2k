@@ -11,8 +11,8 @@ export const CTA = {
 } as const;
 
 export const ROUTES = {
-  personalize: "/personalize",
-  assessment: "/personalize",
+  personalize: "/me",
+  assessment: "/me",
   shop: "/shop",
   blog: "/blog",
   knowledge: "/knowledge",
