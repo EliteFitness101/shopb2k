@@ -32,6 +32,12 @@ const CONTENT: Record<string, { eyebrow: string; title: string; intro: string; p
     { title: "Seasons 11–14", body: "The Ecosystem · The Rebuild · The Revenue Machine · The Legacy." },
     { title: "Season 15", body: "Lord of Light — After the Fire, Truth Becomes Infrastructure, The Architecture of Trust, Turning Pain Into Protection, Light Is a System and Legacy." },
   ] },
+  "resilience-lab": { eyebrow: "Resilience Lab · Real Life", title: "Train for real life.", intro: "A practical capability layer for strength, movement, recovery and decision-making across changing environments.", principle: "The environment changes. Your capability should adapt.", sections: [
+    { title: "Bunker", body: "Minimal-space strength, conditioning and discipline for constrained environments." },
+    { title: "Jungle", body: "Resource-aware movement, endurance and adaptability for demanding environments." },
+    { title: "City", body: "Efficient routines for work, commuting, pressure and limited time." },
+    { title: "Luxury", body: "Travel, hotel and premium-life routines without losing the state you built." },
+  ] },
   "legal-governance": { eyebrow: "Legal · Governance · Case Intelligence", title: "Evidence Before Assumption.", intro: "A governance layer connecting real founder case studies to evidence, legal analysis, risk controls, verification and ecosystem learning.", principle: "Event → State → Evidence → Analysis → Decision → Control → Verification → Publication → Learning.", sections: [
     { title: "Case Intelligence", body: "Important events should produce a case record, evidence record, risk record, governance decision, system control, learning event or verified closure." },
     { title: "Publication Discipline", body: "Public material distinguishes FACTUAL, ALLEGED, ANALYSIS, DISPUTED, RESOLVED, ONGOING and VERIFIED SOURCE states, with privacy protection and legal review where required." },
