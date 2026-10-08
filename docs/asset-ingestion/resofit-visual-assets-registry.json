@@ -257,5 +257,172 @@
       "publish_guard": "Review ownership and duplicate content",
       "production_url": null
     }
-  ]
+  ],
+  "storage_mapping": {
+    "provider": "Vercel Blob",
+    "team_id": "team_iRyfIbkZpnmY0x43nnOI0Q9I",
+    "store_id": "store_aB2ttlKn9NO0tuoa",
+    "store_display_name": null,
+    "env_keys": [
+      "BLOB_STORE_ID",
+      "BLOB_READ_WRITE_TOKEN",
+      "BLOB_WEBHOOK_PUBLIC_KEY"
+    ],
+    "secret_handling": "BLOB_READ_WRITE_TOKEN is stored as a sensitive/encrypted Vercel environment variable; never serialize token values into this registry or client bundles.",
+    "endpoint_configuration": {
+      "resolution": "Vercel Blob SDK uses the store-scoped read/write token; no separate BLOB_ENDPOINT variable was verified.",
+      "standalone_endpoint": null,
+      "note": "Do not invent an endpoint or substitute another media provider. Verify SDK/runtime behavior before upload."
+    },
+    "mapping_status": "environment-variable records verified for all listed projects; runtime upload/read delivery not yet verified",
+    "store_metadata_status": "Vercel store-detail lookup returned 404; store identity is corroborated by matching BLOB_STORE_ID values and existing Vercel Blob credential metadata in source projects.",
+    "asset_upload_status": "not_uploaded",
+    "public_asset_url_verification": "pending",
+    "runtime_write_read_smoke_test": "pending",
+    "production_publish_authorized": false,
+    "verified_at_utc": "2026-10-08T23:44:32.341Z",
+    "projects": [
+      {
+        "name": "reso-web",
+        "project_id": "prj_7raCDyL4cxB5PDvhlBnCssRI3r3r",
+        "domain": "https://www.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "chatb2k",
+        "project_id": "prj_Ts9QF7ahMFOCzeKGflikM5G0FNLA",
+        "domain": "https://chatb2k.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "reso-dash",
+        "project_id": "prj_fmHnZvuSxFELERlCqJB27tNcNqyR",
+        "domain": "https://dashboard.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "shop-resoflex",
+        "project_id": "prj_QeiXB0eBuRCiFBCL0gpIpckFxwWG",
+        "domain": "https://store.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "resocatalog",
+        "project_id": "prj_oP6hbhU0v6KUTWWNZcGXk8V3hvxQ",
+        "domain": null,
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "resofit-api",
+        "project_id": "prj_b6IVjIos1q2RaXhihICrhj5hEOgL",
+        "domain": "https://api.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "resonance-fitness-automation",
+        "project_id": "prj_ouN3SxrXoz5wEHejPkgqQTbqsxWt",
+        "domain": null,
+        "targets": [
+          "development",
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "redzone-recruit",
+        "project_id": "prj_mUnYg6xCjlsv4tv5JY9eSdtTercv",
+        "domain": null,
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "reso-flex",
+        "project_id": "prj_x6bXD6kHO8RITNyDXVHHWmPHcm2w",
+        "domain": null,
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "elite",
+        "project_id": "prj_KaehH0OfGQhLyQ1f9xkree0SmCqL",
+        "domain": "https://elite.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "bellyfat",
+        "project_id": "prj_7GJxhgopuq2fNgbX3PxQk1PLEGFO",
+        "domain": "https://bellyfat.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "reset-resofit-fit",
+        "project_id": "prj_BgWWdYB88ov7Nc5hvmqql4jCsaWw",
+        "domain": "https://reset.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "martial-x",
+        "project_id": "prj_HdRvtuW9nVcHUu53nqnb6qH8mw1Z",
+        "domain": "https://martial.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "resofit-os",
+        "project_id": "prj_bO4CvJ2IxA02LnCPmBcINCVYnp2Q",
+        "domain": null,
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      }
+    ]
+  }
 }
