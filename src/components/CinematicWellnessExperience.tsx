@@ -108,7 +108,7 @@ function IdentityGate({ open, onClose, onComplete }: IdentityGateProps) {
     createIdentity(channel, handle);
     // Preload /personalize before handoff for instant mobile navigation.
     try {
-      await router.preloadRoute({ to: "/personalize" });
+      await router.preloadRoute({ to: "/me" });
     } catch {
       /* preload best-effort */
     }
