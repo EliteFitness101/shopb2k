@@ -299,3 +299,96 @@ img, video, svg, canvas {
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }
+
+
+/* RESOFIT MOBILE EXPERIENCE HARDENING v3 — additive, touch-safe and viewport-safe */
+@media (max-width: 639px) {
+  html {
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+  }
+
+  body {
+    overflow-x: hidden;
+    background-attachment: scroll;
+  }
+
+  /* Keep every primary conversion action thumb-reachable and full-width. */
+  main a[class*="bg-gold"],
+  main button[class*="bg-gold"] {
+    min-height: 48px;
+  }
+
+  /* Prevent long cinematic / assessment copy from creating horizontal pressure. */
+  main h1,
+  main h2,
+  main h3,
+  main p,
+  main a,
+  main button {
+    overflow-wrap: anywhere;
+  }
+
+  /* Hero controls and chapter markers remain inside the iPhone viewport. */
+  section.relative.isolate > div[class*="top-6"] {
+    left: 1rem;
+    right: 1rem;
+    width: auto;
+    justify-content: center;
+    transform: none;
+  }
+
+  section.relative.isolate > div[class*="top-4"] {
+    right: 1rem;
+  }
+
+  /* Conversion CTAs stack cleanly rather than creating narrow tap targets. */
+  section.relative.isolate main,
+  section.relative.isolate [class*="flex-wrap"] {
+    min-width: 0;
+  }
+
+  /* Reduce cinematic hero cost/height on small screens without changing desktop composition. */
+  section.relative.isolate .min-h-\[80vh\] {
+    min-height: min(720px, 78svh);
+  }
+
+  /* Respect iOS safe-area insets around the sticky navigation. */
+  header.sticky > div:last-child {
+    padding-top: max(0px, env(safe-area-inset-top));
+  }
+
+  /* Avoid accidental hover lift on touch devices. */
+  .luxury-glass-panel:hover,
+  [class*="bg-card\/20"]:hover,
+  [class*="bg-card\/30"]:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 380px) {
+  /* iPhone SE / narrow Android fallback: collapse search controls before content compresses. */
+  header.sticky form[role="search"] {
+    max-width: none;
+  }
+
+  header.sticky form[role="search"] input {
+    font-size: 13px;
+  }
+
+  section.relative.isolate .max-w-2xl {
+    max-width: 100%;
+  }
+
+  section.relative.isolate [class*="px-8"] {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  /* Tablet: retain desktop information density without allowing nav/search collisions. */
+  header.sticky form[role="search"] {
+    max-width: 22rem;
+  }
+}
