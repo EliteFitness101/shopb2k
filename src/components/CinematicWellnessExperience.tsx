@@ -106,7 +106,7 @@ function IdentityGate({ open, onClose, onComplete }: IdentityGateProps) {
     if (!handle.trim() || submitting) return;
     setSubmitting(true);
     createIdentity(channel, handle);
-    // Preload /personalize before handoff for instant mobile navigation.
+    // Preload the canonical assessment route before handoff for instant mobile navigation.
     try {
       await router.preloadRoute({ to: "/me" });
     } catch {
@@ -367,7 +367,7 @@ export function CinematicWellnessExperience({
 
   const onIdentityComplete = () => {
     setShowGate(false);
-    navigate({ to: "/personalize" });
+    navigate({ to: "/me" });
   };
 
   const active = PHASES[phase];
