@@ -6,7 +6,7 @@ permissions:
   contents: write
 jobs:
   repair:
-    if: contains(github.event.head_commit.message, 'Repair stale npm lock entries')
+    if: contains(github.event.head_commit.message, 'Add one-time lockfile synchronization guard')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
