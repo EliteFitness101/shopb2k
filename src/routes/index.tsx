@@ -84,6 +84,33 @@ function Index() {
         </div>
       </section>
       <TrustBar />
+      <section className="border-t border-border/60 bg-black/30 py-20 sm:py-24" aria-labelledby="revenue-paths">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-gold">Choose your next step</p>
+              <h2 id="revenue-paths" className="mt-3 font-display text-4xl sm:text-5xl">Premium wellness, made simple.</h2>
+            </div>
+            <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">Tap the path that interests you. Every card opens a live production journey — not another return to the homepage.</p>
+          </div>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { label: "Assessment", title: "Get My Personalized Plan", text: "60 seconds. ChatB2K™ matches your goal to the live ResoFit catalog.", to: "/me", cta: "Start assessment", accent: true },
+              { label: "Programs", title: "Build My Body", text: "Strength, mobility, nutrition, recovery and longevity paths.", to: "/programs", cta: "Explore programs" },
+              { label: "Equipment", title: "Premium Home Training", text: "ResoFlex™ equipment selected for practical home and performance use.", to: "/shop", cta: "Shop equipment" },
+              { label: "Membership", title: "ResoLuxe Privé", text: "Concierge wellness, coaching and recovery for high-performers.", to: "/programs/$slug", params: { slug: "resoluxe" }, cta: "View membership" },
+              { label: "Wellness", title: "Find a Wellness Experience", text: "Discover services, hubs and location-based wellness options.", to: "/wellness", cta: "Explore wellness" },
+              { label: "Coaching", title: "Talk to CoachB2K™", text: "Move directly into premium 1:1 support when you want a human guide.", href: "https://wa.me/2348132255842?text=I%27d%20like%20to%20speak%20with%20CoachB2K%20about%20premium%20wellness%20coaching.", cta: "Chat on WhatsApp" },
+            ].map((card) => {
+              const className = "group flex min-h-[230px] flex-col justify-between rounded-3xl border border-border/60 bg-card/30 p-6 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-gold/50 hover:bg-card/60 hover:shadow-[0_24px_70px_rgba(0,0,0,.35)]";
+              const content = <><div><p className="text-[10px] uppercase tracking-[0.3em] text-gold">{card.label}</p><h3 className="mt-4 font-display text-2xl leading-tight sm:text-3xl">{card.title}</h3><p className="mt-3 text-sm leading-relaxed text-muted-foreground">{card.text}</p></div><span className="mt-8 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-gold">{card.cta}<span className="transition-transform group-hover:translate-x-1">→</span></span></>;
+              return "href" in card
+                ? <a key={card.title} href={card.href} target="_blank" rel="noopener noreferrer" className={className}>{content}</a>
+                : <Link key={card.title} to={card.to as never} params={"params" in card ? card.params as never : undefined} className={className}>{content}</Link>;
+            })}
+          </div>
+        </div>
+      </section>
       <section className="border-t border-border/60 bg-card/20 py-20"><div className="mx-auto max-w-7xl px-6"><p className="mb-3 text-xs uppercase tracking-[0.3em] text-gold">Who We Help</p><h2 className="font-display text-4xl md:text-5xl">Built for every wellness path.</h2><div className="mt-10 grid gap-px bg-border/60 md:grid-cols-3">{[{t:"Longevity seekers",d:"Healthy ageing, energy and biomarker-backed protocols."},{t:"Strength builders",d:"Mobility, recovery and progressive strength — coached."},{t:"Body-confidence journeys",d:"Sustainable nutrition and habit systems that stick."}].map((x)=><div key={x.t} className="bg-background p-6"><div className="h-2 w-10 bg-gold/70"/><h3 className="mt-4 font-display text-xl">{x.t}</h3><p className="mt-2 text-sm text-muted-foreground">{x.d}</p></div>)}</div></div></section>
       <section className="border-t border-border/60 py-20"><div className="mx-auto max-w-7xl px-6"><p className="mb-3 text-xs uppercase tracking-[0.3em] text-gold">How It Works</p><h2 className="font-display text-4xl md:text-5xl">Three steps to your plan.</h2><ol className="mt-10 grid gap-px bg-border/60 md:grid-cols-3">{[{n:"01",t:"Assess",d:"60-second ChatB2K™ wellness assessment."},{n:"02",t:"Personalize",d:"We match programs, nutrition and equipment to you."},{n:"03",t:"Live it",d:"Coaching, guides and community keep you consistent."}].map((s)=><li key={s.n} className="bg-background p-6"><p className="font-display text-4xl text-gold">{s.n}</p><h3 className="mt-3 font-display text-xl">{s.t}</h3><p className="mt-2 text-sm text-muted-foreground">{s.d}</p></li>)}</ol></div></section>
       <section id="featured" className="border-t border-border/60 py-24">
