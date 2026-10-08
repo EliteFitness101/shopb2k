@@ -76,7 +76,7 @@ function ArticleView() {
         </article>
         <div className="mt-12 flex flex-col items-start gap-4 border border-gold/40 bg-gold/5 p-6 md:flex-row md:items-center md:justify-between">
           <div><p className="text-xs uppercase tracking-widest text-gold">Ready to personalize?</p><p className="mt-2 text-sm text-muted-foreground">Take the ChatB2K™ Wellness Assessment and get your plan.</p></div>
-          <Link to="/personalize" className="inline-flex h-12 items-center gap-2 rounded-sm bg-gold px-6 text-xs font-semibold uppercase tracking-widest text-gold-foreground">{CTA.primary} <ArrowRight className="h-4 w-4" /></Link>
+          <Link to="/me" className="inline-flex h-12 items-center gap-2 rounded-sm bg-gold px-6 text-xs font-semibold uppercase tracking-widest text-gold-foreground">{CTA.primary} <ArrowRight className="h-4 w-4" /></Link>
         </div>
         {related.length > 0 && <section className="mt-16"><h2 className="font-display text-2xl">Related reading</h2><ul className="mt-4 space-y-3">{related.map((r) => <li key={r.slug}><Link to="/blog/$slug" params={{ slug: r.slug }} className="text-sm text-muted-foreground hover:text-gold">→ {r.title}</Link></li>)}</ul></section>}
       </main>
