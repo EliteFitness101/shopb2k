@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.paystack-webhook]
 verify_jwt = false
+
+[functions.catalog-public]
+verify_jwt = false
