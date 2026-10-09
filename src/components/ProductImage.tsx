@@ -8,7 +8,7 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { recordEngagement, resolveTier, type PriorityTier } from "@/lib/imagePriority";
-import { shopifySrcSet } from "@/lib/media";
+import { isImageKitImage, isShopifyImage, responsiveImageSrcSet } from "@/lib/media";
 import { track } from "@/lib/tracking";
 
 const FALLBACK_SVG =
@@ -84,7 +84,8 @@ export function ProductImage({
   const resolvedAlt = buildAlt(title, category, alt);
   // Responsive srcSet only for approved Shopify CDN URLs; local assets,
   // data URIs and arbitrary hosts pass through untouched.
-  const resolvedSrcSet = errored ? undefined : shopifySrcSet(src);
+  const resolvedSrcSet = errored ? undefined : responsiveImageSrcSet(src);
+  const responsiveProvider = isShopifyImage(src) ? "shopify" : isImageKitImage(src) ? "imagekit" : "static";
 
   // Smart-priority tier: explicit override > priority flag > computed from signals.
   const tier: PriorityTier =
@@ -109,7 +110,7 @@ export function ProductImage({
         fetchPriority={isHigh ? "high" : isMedium ? "auto" : "low"}
         sizes={resolvedSrcSet ? sizes : undefined}
         data-priority-tier={tier}
-        data-responsive={resolvedSrcSet ? "shopify" : "static"}
+        data-responsive={resolvedSrcSet ? responsiveProvider : "static"}
         onError={() => setErrored(true)}
         onClick={() => {
           if (!productId) return;
