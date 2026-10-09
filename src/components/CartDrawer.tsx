@@ -10,6 +10,7 @@ import { approxUSD, formatMoney, RESOFIT_SUPABASE_URL } from "@/lib/shopify";
 import { track } from "@/lib/tracking";
 import { getAttribution } from "@/lib/attribution";
 import { useAuth } from "@/hooks/useAuth";
+import { ProductImage } from "@/components/ProductImage";
 
 const PAYSTACK_INIT_URL = `${RESOFIT_SUPABASE_URL}/functions/v1/paystack-init`;
 
@@ -131,7 +132,7 @@ export function CartDrawer() {
                 {items.map((item) => {
                   const img = item.product.images?.edges?.[0]?.node;
                   return <div key={item.variantId} className="flex gap-4 border border-border/60 p-3">
-                    <div className="h-20 w-20 flex-shrink-0 overflow-hidden bg-card">{img && <img src={img.url} alt={img.altText ?? item.product.title} loading="lazy" decoding="async" width={320} height={320} className="h-full w-full object-cover" />}</div>
+                    <div className="h-20 w-20 flex-shrink-0 overflow-hidden bg-card">{img && <ProductImage src={img.url} alt={img.altText ?? item.product.title} title={item.product.title} aspect="square" sizes="80px" className="h-full w-full" />}</div>
                     <div className="min-w-0 flex-1"><h4 className="truncate font-medium">{item.product.title}</h4>{item.variantTitle && item.variantTitle !== "Default Title" && <p className="text-xs text-muted-foreground">{item.variantTitle}</p>}<p className="mt-1 font-display text-gold">{formatMoney(item.price)} <span className="text-xs text-muted-foreground">· {approxUSD(item.price)}</span></p></div>
                     <div className="flex flex-shrink-0 flex-col items-end gap-2"><Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeItem(item.variantId)} aria-label="Remove"><Trash2 className="h-3 w-3" /></Button><div className="flex items-center gap-1"><Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.variantId, item.quantity - 1)}><Minus className="h-3 w-3" /></Button><span className="w-8 text-center text-sm">{item.quantity}</span><Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.variantId, item.quantity + 1)}><Plus className="h-3 w-3" /></Button></div></div>
                   </div>;
