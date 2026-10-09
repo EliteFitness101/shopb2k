@@ -335,11 +335,12 @@ function EcosystemSearchResults({
             <p className="mb-3 text-xs uppercase tracking-widest text-gold">{loading ? "Matching products available now" : "Matching products"}</p>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {localMatches.slice(0, 8).map((p) => (
-              <Link key={p.node.id} to="/product/$handle" params={{ handle: p.node.handle }} className="group rounded-2xl border border-border/60 bg-card p-5 transition-colors hover:border-gold/60">
-                <div className="text-[10px] uppercase tracking-[0.25em] text-gold">Product</div>
+              <Link key={p.node.id} to="/product/$handle" params={{ handle: p.node.handle }} className="group overflow-hidden rounded-2xl border border-border/60 bg-card transition-colors hover:border-gold/60">
+                <ProductImage src={p.node.images.edges[0]?.node.url} alt={p.node.images.edges[0]?.node.altText} title={p.node.title} category={p.node.productType} productId={p.node.id} aspect="landscape" placement={0} sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" />
+                <div className="p-5"><div className="text-[10px] uppercase tracking-[0.25em] text-gold">Product</div>
                 <h3 className="mt-2 font-display text-xl group-hover:text-gold">{p.node.title}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{formatMoney(p.node.priceRange.minVariantPrice)}</p>
-                <div className="mt-4 text-[10px] uppercase tracking-widest text-muted-foreground">View product →</div>
+                <div className="mt-4 text-[10px] uppercase tracking-widest text-muted-foreground">View product →</div></div>
               </Link>
             ))}
             </div>
