@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.wellness-locator]
 verify_jwt = false
+
+[functions.verify-order]
+verify_jwt = false
