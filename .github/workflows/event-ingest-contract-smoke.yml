@@ -1,0 +1,26 @@
+name: ResoFit event-ingest contract smoke
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [chore/sync-live-event-ingest-contracts]
+permissions:
+  contents: read
+concurrency:
+  group: event-ingest-contract-smoke-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  event-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --no-audit --no-fund
+      - name: Validate public event contract and server-only payment guard
+        run: node scripts/smoke-event-ingest-contract.mjs
+      - name: Type-check Supabase Edge Function
+        uses: denoland/setup-deno@v2
+      - run: deno check supabase/functions/resofit-event-ingest/index.ts
