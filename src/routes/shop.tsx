@@ -417,6 +417,7 @@ function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; pla
           category={node.productType}
           productId={node.id}
           placement={placement}
+          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
           className="group-hover:[&>img]:scale-105"
         />
         {node.productType && (
