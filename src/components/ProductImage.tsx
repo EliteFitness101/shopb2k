@@ -82,7 +82,7 @@ export function ProductImage({
   const [errored, setErrored] = useState(false);
   const resolvedSrc = !src || errored ? FALLBACK_SVG : src;
   const resolvedAlt = buildAlt(title, category, alt);
-  // Responsive srcSet only for approved Shopify CDN URLs; local assets,
+  // Responsive srcSet only for approved Shopify/ImageKit CDN URLs; local assets,
   // data URIs and arbitrary hosts pass through untouched.
   const resolvedSrcSet = errored ? undefined : responsiveImageSrcSet(src);
   const responsiveProvider = isShopifyImage(src) ? "shopify" : isImageKitImage(src) ? "imagekit" : "static";
