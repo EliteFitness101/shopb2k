@@ -10,6 +10,7 @@ const webhook = await fs.readFile(
 const contracts = [
   ["canonical booking reference lookup", '.eq("booking_reference",reference)'],
   ["legacy payment reference fallback", '.eq("payment_reference",reference)'],
+  ["Makaveli checkout surfaces reference persistence errors", "if(referenceUpdateError)throw referenceUpdateError"],
   ["Paystack signature verification before processing", "validSignature(raw,request.headers.get(\"x-paystack-signature\")"],
   ["successful NGN charge and exact amount verification", 'event.data?.status==="success"&&event.data?.currency==="NGN"&&Number(event.data?.amount)===expected'],
   ["booking email binding", 'String(event.data?.customer?.email??"").toLowerCase()===String(booking.customer_email).toLowerCase()'],
