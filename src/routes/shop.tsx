@@ -9,6 +9,8 @@ import { ProductImage } from "@/components/ProductImage";
 import { recordEngagement } from "@/lib/imagePriority";
 import {
   PRODUCTS_QUERY,
+  fetchCatalogAssetsForGrid,
+  type CatalogAsset,
   approxUSD,
   formatMoney,
   storefrontApiRequest,
@@ -99,6 +101,24 @@ function ShopGrid() {
     refetchOnWindowFocus: false,
     retry: 2,
   });
+  const { data: catalogAssets } = useQuery({
+    queryKey: ["catalog-assets", "shop-grid"],
+    queryFn: fetchCatalogAssetsForGrid,
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+  const heroAssetsByHandle = useMemo(() => {
+    const assets = new Map<string, CatalogAsset>();
+    for (const asset of catalogAssets ?? []) {
+      if (asset.role !== "hero" || !asset.handle || !asset.canonical_url) continue;
+      try {
+        const host = new URL(asset.canonical_url).hostname.toLowerCase();
+        if (!(host === "imagekit.io" || host.endsWith(".imagekit.io") || host.endsWith("public.blob.vercel-storage.com"))) continue;
+      } catch { continue; }
+      if (!assets.has(asset.handle)) assets.set(asset.handle, asset);
+    }
+    return assets;
+  }, [catalogAssets]);
   const { data: ecosystem, isLoading: ecosystemLoading, isError: ecosystemError } = useQuery({
     queryKey: ["ecosystem-search", search.q ?? ""],
     queryFn: () => ecosystemSearch(search.q ?? ""),
@@ -172,6 +192,7 @@ function ShopGrid() {
         loading={ecosystemLoading}
         error={ecosystemError}
         fallbackProducts={data ?? []}
+        heroAssetsByHandle={heroAssetsByHandle}
       />
     );
   }
@@ -275,7 +296,7 @@ function ShopGrid() {
         {filtered.length > 0 && (
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((p, i) => (
-              <ProductCard key={p.node.id} product={p} placement={i} />
+              <ProductCard key={p.node.id} product={p} placement={i} heroImage={heroAssetsByHandle.get(p.node.handle)?.canonical_url} />
             ))}
           </div>
         )}
@@ -294,12 +315,14 @@ function EcosystemSearchResults({
   loading,
   error,
   fallbackProducts,
+  heroAssetsByHandle,
 }: {
   query: string;
   data?: { results: EcosystemSearchResult[]; groups: Record<string, number> };
   loading: boolean;
   error: boolean;
   fallbackProducts: ShopifyProduct[];
+  heroAssetsByHandle: Map<string, CatalogAsset>;
 }) {
   const normalized = query.toLowerCase();
   const localMatches = fallbackProducts.filter((p) => {
@@ -336,7 +359,7 @@ function EcosystemSearchResults({
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {localMatches.slice(0, 8).map((p, i) => (
               <Link key={p.node.id} to="/product/$handle" params={{ handle: p.node.handle }} className="group overflow-hidden rounded-2xl border border-border/60 bg-card transition-colors hover:border-gold/60">
-                <ProductImage src={p.node.images.edges[0]?.node.url} alt={p.node.images.edges[0]?.node.altText} title={p.node.title} category={p.node.productType} productId={p.node.id} aspect="landscape" placement={i} sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" />
+                <ProductImage src={heroAssetsByHandle.get(p.node.handle)?.canonical_url || p.node.images.edges[0]?.node.url} alt={p.node.images.edges[0]?.node.altText ?? p.node.title} title={p.node.title} category={p.node.productType} productId={p.node.id} aspect="landscape" placement={i} sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" />
                 <div className="p-5"><div className="text-[10px] uppercase tracking-[0.25em] text-gold">Product</div>
                 <h3 className="mt-2 font-display text-xl group-hover:text-gold">{p.node.title}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{formatMoney(p.node.priceRange.minVariantPrice)}</p>
@@ -368,11 +391,12 @@ function EcosystemSearchResults({
   );
 }
 
-function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; placement?: number }) {
+function ProductCard({ product, placement = 99, heroImage }: { product: ShopifyProduct; placement?: number; heroImage?: string }) {
   const node = product.node;
   const variants = node.variants.edges.map((e) => e.node);
   const firstAvail = variants.find((v) => v.availableForSale) ?? variants[0];
   const image = node.images.edges[0]?.node;
+  const imageSrc = heroImage || image?.url;
   const price = node.priceRange.minVariantPrice;
 
   const addItem = useCartStore((s) => s.addItem);
@@ -411,8 +435,8 @@ function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; pla
     <article className="group flex flex-col border border-border/60 bg-card transition-colors hover:border-gold/60">
       <Link to="/product/$handle" params={{ handle: node.handle }} className="relative block">
         <ProductImage
-          src={image?.url}
-          alt={image?.altText}
+          src={imageSrc}
+          alt={image?.altText ?? node.title}
           title={node.title}
           category={node.productType}
           productId={node.id}
