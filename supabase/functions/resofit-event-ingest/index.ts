@@ -24,6 +24,15 @@ const PUBLIC_EVENTS = new Set([
   "assessment.completed",
   "conversation.whatsapp_clicked",
   "checkout.started",
+  "application.submitted",
+  "commerce.search",
+  "commerce.product_viewed",
+  "commerce.product_clicked",
+  "commerce.compare",
+  "commerce.price_filtered",
+  "commerce.wishlist_added",
+  "commerce.wishlist_removed",
+  "commerce.cart_added",
 ]);
 
 function json(body: unknown, status = 200) {
@@ -38,6 +47,79 @@ function isAuthorized(req: Request) {
   if (apiKey && publishableKeySet.has(apiKey)) return true;
   const bearer = req.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1];
   return Boolean(bearer && publishableKeySet.has(bearer));
+}
+
+function safeObs(payload: Record<string, unknown>) {
+  const keys = [
+    "application_id", "application_reference", "application_track", "programme",
+    "training_interest", "location", "source", "farm_position", "farm_unit",
+    "checkout_id", "assessment_id", "page", "cta", "destination", "sku",
+    "product_id", "order_id", "hub_code", "service_id", "booking_method",
+    "channel", "content_id", "goal", "amount", "currency", "payment_reference",
+  ];
+  return Object.fromEntries(keys.filter((key) => payload[key] !== undefined).map((key) => [key, payload[key]]));
+}
+
+async function orchestrate(eventName: string, payload: Record<string, unknown>, eventId: string) {
+  const critical = new Set(["application.submitted", "checkout.started", "assessment.started", "funnel.cta_clicked"]);
+  if (!critical.has(eventName)) return { requested: false, ok: false, reason: "non_critical_event" };
+
+  const query = eventName === "application.submitted"
+    ? `Martial X recruitment event: ${String(payload.application_track ?? "Security")} application submitted; determine the next operational intelligence action.`
+    : `ResoFit event ${eventName}; determine the next operational intelligence action from verified event data.`;
+  const context = {
+    event_id: eventId,
+    event_name: eventName,
+    source_system: eventName.startsWith("application.") ? "redzone-recruit" : "resofit",
+    application_track: payload.application_track ?? null,
+    programme: payload.programme ?? null,
+    training_interest: payload.training_interest ?? null,
+    farm_position: payload.farm_position ?? null,
+    farm_unit: payload.farm_unit ?? null,
+    location: payload.location ?? null,
+    source: payload.source ?? null,
+  };
+
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/chatb2k-orchestrator`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` },
+      body: JSON.stringify({ mode: "revenue", q: query, domain: "ecosystem", discover: "false", execute: "false", context }),
+    });
+    const raw = await response.text();
+    let data: any = {};
+    try { data = JSON.parse(raw); } catch { /* retain an empty result */ }
+    return {
+      requested: true,
+      ok: response.ok,
+      status: response.status,
+      production_routable: Boolean(data?.agent_routing?.production_routable),
+      selected_agent: data?.agent_routing?.selected_agent?.agent_code ?? null,
+      enrichment_ok: Boolean(data?.gemini_enrichment?.ok),
+    };
+  } catch (error) {
+    return { requested: true, ok: false, status: 0, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+function learningPlatform(eventName: string) {
+  if (eventName.startsWith("application.") || eventName.startsWith("farm.")) return "martial_x";
+  if (eventName.startsWith("wellness.")) return "wellness";
+  if (/^(commerce|funnel|checkout|assessment|conversation|payment|order|fulfillment|lead|retention)\\./.test(eventName)) return "resofit";
+  return "ecosystem";
+}
+
+async function learn(eventName: string, payload: Record<string, unknown>, action: string) {
+  const { error } = await admin.from("chatb2k_learning_events").insert({
+    platform: learningPlatform(eventName),
+    source: "resofit_event_ingest",
+    event_type: eventName,
+    topic: String(payload.sku ?? payload.product_id ?? payload.application_track ?? payload.programme ?? payload.cta ?? eventName),
+    observation: safeObs(payload),
+    confidence: 1,
+    action,
+  });
+  if (error) console.error("chatb2k-learning-write", error);
 }
 
 Deno.serve(async (req) => {
@@ -158,7 +240,9 @@ Deno.serve(async (req) => {
         if (deliveryError) throw deliveryError;
       }
     }
-    return json({ ok: true, replay: false, event });
+    const task = await orchestrate(eventName, payload, event.id);
+    await learn(eventName, payload, task.requested ? (task.ok ? "chatb2k_orchestration_completed" : "chatb2k_orchestration_failed") : "event_observed");
+    return json({ ok: true, replay: false, event, chatb2k: task });
   } catch (error) {
     console.error("resofit-event-ingest", error);
     return json({ error: "Event ingestion failed" }, 500);
