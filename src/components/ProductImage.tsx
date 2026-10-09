@@ -1,6 +1,6 @@
 // Unified product image layer for the ResoFit catalog.
 // - Lazy by default, eager + high priority for above-the-fold heroes
-// - WebP-friendly: trusts Shopify CDN (which serves WebP via Accept negotiation)
+// - Responsive srcSet for Shopify and ImageKit CDN variants; safe fallbacks for other hosts
 // - SVG data-URI fallback prevents broken UI states without new dependencies
 // - Aspect-ratio container prevents layout shift
 // - SEO alt: "{Title} – premium {category} for home gym strength training"
