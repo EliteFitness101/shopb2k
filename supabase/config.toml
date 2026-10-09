@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.verify-order]
 verify_jwt = false
+
+[functions.paystack-webhook]
+verify_jwt = false
