@@ -4,4 +4,4 @@ Disallow: /admin
 Disallow: /auth
 Disallow: /api
 
-Sitemap: https://resofit.fit/sitemap.xml
+Sitemap: https://www.resofit.fit/sitemap.xml
