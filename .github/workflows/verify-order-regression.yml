@@ -23,4 +23,4 @@ jobs:
         run: node scripts/smoke-verify-order.mjs
       - uses: denoland/setup-deno@v2
       - name: Type-check deployed function source
-        run: deno check supabase/functions/verify-order/index.ts
+        run: deno check supabase/functions/verify-order/index.ts supabase/functions/paystack-webhook/index.ts
