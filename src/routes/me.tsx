@@ -29,8 +29,7 @@ const DIETS: Option[] = [
 async function canonicalRecommendation(a: Answers): Promise<Recommendation | null> {
   if (a.goal === "reset") return { title: "ResoFit Reset", summary: "Your reset journey is handled by the dedicated ResoFit Reset experience.", reason: "ChatB2K detected reset intent and is routing you to the Reset purchase journey.", url: EXTERNAL_RESET_URL, cta: "Continue to Reset" };
   if (!supabase) return null;
-  try {
-    const sessionId = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `assessment-${Date.now()}`;
+  const sessionId = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `assessment-${Date.now()}`;
     const query = a.goal === "fat_loss" ? "fat loss body composition nutrition" : a.goal === "muscle" ? "lean muscle strength resistance training" : "energy focus nutrition recovery wellness";
     const { data, error } = await supabase.functions.invoke("chatb2k-recommend", { body: { query, goal: a.goal, interests: `${a.activity} ${a.diet}`, session_id: sessionId, limit: 1 } });
     if (error) throw error;
@@ -38,7 +37,6 @@ async function canonicalRecommendation(a: Answers): Promise<Recommendation | nul
     const winner = data.recommendations[0] as ChatB2KRecommendation;
     if (!winner.handle || !winner.sku || Number(winner.inventory ?? 0) <= 0) return null;
     return { title: winner.title, summary: winner.summary || "A personalized ResoFit offer selected from the live catalog.", reason: winner.rationale || "ChatB2K matched your goal, activity and lifestyle against the live ResoFit catalog and availability.", price: Number.isFinite(Number(winner.price)) ? Number(winner.price) : undefined, image: winner.image || winner.image_url, sku: winner.sku, url: `/recommendation/${encodeURIComponent(winner.handle)}?sku=${encodeURIComponent(winner.sku)}&goal=${encodeURIComponent(a.goal)}`, cta: "Continue to checkout" };
-  }
 }
 const RECOMMENDATION_TIMEOUT = Symbol("recommendation-timeout");
 function resetAnswers(): Answers { return { goal: "", activity: "", diet: "" }; }
