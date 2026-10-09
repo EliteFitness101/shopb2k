@@ -105,7 +105,7 @@ async function orchestrate(eventName: string, payload: Record<string, unknown>, 
 function learningPlatform(eventName: string) {
   if (eventName.startsWith("application.") || eventName.startsWith("farm.")) return "martial_x";
   if (eventName.startsWith("wellness.")) return "wellness";
-  if (/^(commerce|funnel|checkout|assessment|conversation|payment|order|fulfillment|lead|retention)\\./.test(eventName)) return "resofit";
+  if (/^(commerce|funnel|checkout|assessment|conversation|payment|order|fulfillment|lead|retention)\./.test(eventName)) return "resofit";
   return "ecosystem";
 }
 
