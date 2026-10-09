@@ -62,6 +62,39 @@ export function shopifySrcSet(src?: string | null): string | undefined {
   return SHOPIFY_IMAGE_WIDTHS.map((w) => `${shopifyImage(src!, w)} ${w}w`).join(", ");
 }
 
+/** ImageKit supports on-demand width, quality and format negotiation through its transform query. */
+export const IMAGEKIT_IMAGE_WIDTHS = [320, 480, 640, 960, 1280] as const;
+
+export function isImageKitImage(src?: string | null): boolean {
+  if (!src || src.startsWith("data:") || src.startsWith("/")) return false;
+  try {
+    const host = new URL(src).hostname.toLowerCase();
+    return host === "imagekit.io" || host.endsWith(".imagekit.io");
+  } catch {
+    return false;
+  }
+}
+
+export function imageKitImage(src: string, width: number): string {
+  if (!isImageKitImage(src)) return src;
+  try {
+    const url = new URL(src);
+    url.searchParams.set("tr", `w-${width},q-80,f-auto`);
+    return url.toString();
+  } catch {
+    return src;
+  }
+}
+
+/** Responsive transforms are generated only for explicitly supported CDN hosts. */
+export function responsiveImageSrcSet(src?: string | null): string | undefined {
+  if (isShopifyImage(src)) return shopifySrcSet(src);
+  if (isImageKitImage(src)) {
+    return IMAGEKIT_IMAGE_WIDTHS.map((w) => `${imageKitImage(src!, w)} ${w}w`).join(", ");
+  }
+  return undefined;
+}
+
 /** HEAD-probe an asset URL. Resolves false on any failure (safe by default). */
 export async function mediaExists(url?: string | null): Promise<boolean> {
   if (!url || typeof window === "undefined") return false;

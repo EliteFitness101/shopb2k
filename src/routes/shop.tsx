@@ -9,6 +9,8 @@ import { ProductImage } from "@/components/ProductImage";
 import { recordEngagement } from "@/lib/imagePriority";
 import {
   PRODUCTS_QUERY,
+  fetchCatalogAssetsForGrid,
+  type CatalogAsset,
   approxUSD,
   formatMoney,
   storefrontApiRequest,
@@ -92,12 +94,31 @@ function ShopGrid() {
   const navigate = Route.useNavigate();
   // Keep the canonical product grid warm even while ecosystem search is running.
   // A slow search must never blank the shop or block direct purchase discovery.
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["products", "all"],
     queryFn: fetchProducts,
     staleTime: 60_000,
     refetchOnWindowFocus: false,
+    retry: 2,
   });
+  const { data: catalogAssets } = useQuery({
+    queryKey: ["catalog-assets", "shop-grid"],
+    queryFn: fetchCatalogAssetsForGrid,
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+  const heroAssetsByHandle = useMemo(() => {
+    const assets = new Map<string, CatalogAsset>();
+    for (const asset of catalogAssets ?? []) {
+      if (asset.role !== "hero" || !asset.handle || !asset.canonical_url) continue;
+      try {
+        const host = new URL(asset.canonical_url).hostname.toLowerCase();
+        if (!(host === "imagekit.io" || host.endsWith(".imagekit.io") || host.endsWith("public.blob.vercel-storage.com"))) continue;
+      } catch { continue; }
+      if (!assets.has(asset.handle)) assets.set(asset.handle, asset);
+    }
+    return assets;
+  }, [catalogAssets]);
   const { data: ecosystem, isLoading: ecosystemLoading, isError: ecosystemError } = useQuery({
     queryKey: ["ecosystem-search", search.q ?? ""],
     queryFn: () => ecosystemSearch(search.q ?? ""),
@@ -171,6 +192,7 @@ function ShopGrid() {
         loading={ecosystemLoading}
         error={ecosystemError}
         fallbackProducts={data ?? []}
+        heroAssetsByHandle={heroAssetsByHandle}
       />
     );
   }
@@ -245,17 +267,22 @@ function ShopGrid() {
           </div>
         )}
 
-        {isLoading && (
-          <div className="flex justify-center py-32 text-muted-foreground">
-            <Loader2 className="h-6 w-6 animate-spin" />
+        {isLoading && !data && (
+          <div role="status" aria-live="polite" aria-busy="true" className="py-8">
+            <p className="mb-5 flex items-center justify-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin" /> Loading ResoFit products…</p>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }, (_, i) => <div key={i} className="animate-pulse overflow-hidden rounded-sm border border-border/50" aria-hidden="true"><div className="aspect-square bg-white/[0.05]" /><div className="space-y-3 p-5"><div className="h-4 w-3/4 rounded bg-white/[0.08]" /><div className="h-3 w-full rounded bg-white/[0.06]" /><div className="h-10 rounded bg-white/[0.08]" /></div></div>)}
+            </div>
           </div>
         )}
 
-        {isError && (
-          <p className="py-16 text-center text-sm text-muted-foreground">
-            Couldn't load products. Try refreshing.
-          </p>
+        {isError && !data && (
+          <div role="alert" className="py-16 text-center text-sm text-muted-foreground">
+            <p>Couldn't load products right now. Your cart is unchanged.</p>
+            <button type="button" onClick={() => void refetch()} className="mt-4 inline-flex min-h-12 touch-manipulation items-center justify-center rounded-xl border border-gold/50 px-5 py-3 font-semibold text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Retry loading products</button>
+          </div>
         )}
+        {isError && data && <p role="status" className="mb-4 text-center text-xs text-muted-foreground">Showing the last loaded catalog while refreshing is temporarily unavailable.</p>}
 
         {data && filtered.length === 0 && (
           <div className="py-24 text-center">
@@ -269,7 +296,7 @@ function ShopGrid() {
         {filtered.length > 0 && (
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((p, i) => (
-              <ProductCard key={p.node.id} product={p} placement={i} />
+              <ProductCard key={p.node.id} product={p} placement={i} heroImage={heroAssetsByHandle.get(p.node.handle)?.canonical_url} />
             ))}
           </div>
         )}
@@ -288,12 +315,14 @@ function EcosystemSearchResults({
   loading,
   error,
   fallbackProducts,
+  heroAssetsByHandle,
 }: {
   query: string;
   data?: { results: EcosystemSearchResult[]; groups: Record<string, number> };
   loading: boolean;
   error: boolean;
   fallbackProducts: ShopifyProduct[];
+  heroAssetsByHandle: Map<string, CatalogAsset>;
 }) {
   const normalized = query.toLowerCase();
   const localMatches = fallbackProducts.filter((p) => {
@@ -324,16 +353,20 @@ function EcosystemSearchResults({
             <p className="mt-2 text-sm text-muted-foreground">Try a broader phrase or ask ChatB2K™ to refine the intent.</p>
           </div>
         )}
-        {(error || (!loading && !data?.results.length)) && localMatches.length > 0 && (
-          <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {localMatches.slice(0, 8).map((p) => (
-              <Link key={p.node.id} to="/product/$handle" params={{ handle: p.node.handle }} className="group rounded-2xl border border-border/60 bg-card p-5 transition-colors hover:border-gold/60">
-                <div className="text-[10px] uppercase tracking-[0.25em] text-gold">Product</div>
+        {(loading || error || (!loading && !data?.results.length)) && localMatches.length > 0 && (
+          <div className="mb-8">
+            <p className="mb-3 text-xs uppercase tracking-widest text-gold">{loading ? "Matching products available now" : "Matching products"}</p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {localMatches.slice(0, 8).map((p, i) => (
+              <Link key={p.node.id} to="/product/$handle" params={{ handle: p.node.handle }} className="group overflow-hidden rounded-2xl border border-border/60 bg-card transition-colors hover:border-gold/60">
+                <ProductImage src={heroAssetsByHandle.get(p.node.handle)?.canonical_url || p.node.images.edges[0]?.node.url} alt={p.node.images.edges[0]?.node.altText ?? p.node.title} title={p.node.title} category={p.node.productType} productId={p.node.id} aspect="landscape" placement={i} sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" />
+                <div className="p-5"><div className="text-[10px] uppercase tracking-[0.25em] text-gold">Product</div>
                 <h3 className="mt-2 font-display text-xl group-hover:text-gold">{p.node.title}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{formatMoney(p.node.priceRange.minVariantPrice)}</p>
-                <div className="mt-4 text-[10px] uppercase tracking-widest text-muted-foreground">View product →</div>
+                <div className="mt-4 text-[10px] uppercase tracking-widest text-muted-foreground">View product →</div></div>
               </Link>
             ))}
+            </div>
           </div>
         )}
         {!loading && !error && data?.results.length ? (
@@ -358,11 +391,12 @@ function EcosystemSearchResults({
   );
 }
 
-function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; placement?: number }) {
+function ProductCard({ product, placement = 99, heroImage }: { product: ShopifyProduct; placement?: number; heroImage?: string }) {
   const node = product.node;
   const variants = node.variants.edges.map((e) => e.node);
   const firstAvail = variants.find((v) => v.availableForSale) ?? variants[0];
   const image = node.images.edges[0]?.node;
+  const imageSrc = heroImage || image?.url;
   const price = node.priceRange.minVariantPrice;
 
   const addItem = useCartStore((s) => s.addItem);
@@ -390,6 +424,8 @@ function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; pla
       track("add_to_cart", { product_id: node.sku || node.id, product_title: node.title, quantity: 1, value: Number(firstAvail.price.amount), currency: firstAvail.price.currencyCode ?? "NGN" });
       recordEngagement(node.id, "add_to_cart");
       toast.success(`Added ${node.title} to cart`, { position: "top-center" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not add this product to your cart.", { position: "top-center" });
     } finally {
       setBusy(false);
     }
@@ -399,12 +435,13 @@ function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; pla
     <article className="group flex flex-col border border-border/60 bg-card transition-colors hover:border-gold/60">
       <Link to="/product/$handle" params={{ handle: node.handle }} className="relative block">
         <ProductImage
-          src={image?.url}
-          alt={image?.altText}
+          src={imageSrc}
+          alt={image?.altText ?? node.title}
           title={node.title}
           category={node.productType}
           productId={node.id}
           placement={placement}
+          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
           className="group-hover:[&>img]:scale-105"
         />
         {node.productType && (

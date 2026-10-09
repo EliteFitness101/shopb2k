@@ -83,9 +83,9 @@ export function pixelPageView(path?: string) {
 interface PixelContent { content_id: string; content_name?: string; quantity: number; price?: number; }
 interface PixelEventPayload { value?: number; currency?: string; content_ids?: string[]; content_name?: string; content_type?: string; contents?: PixelContent[]; num_items?: number; query?: string; event_id?: string; }
 
-const META_MAP: Record<string,string> = { product_view:"ViewContent", product_click:"ClickButton", add_to_cart:"AddToCart", checkout_start:"InitiateCheckout", purchase_success:"Purchase", identity_started:"Lead", identity_created:"Lead" };
-const TIKTOK_MAP: Record<string,string> = { product_view:"ViewContent", product_click:"ClickButton", add_to_cart:"AddToCart", checkout_start:"InitiateCheckout", purchase_success:"Purchase", identity_started:"Lead", identity_created:"Lead", search:"Search" };
-const GA4_MAP: Record<string,string> = { product_view:"view_item", add_to_cart:"add_to_cart", checkout_start:"begin_checkout", purchase_success:"purchase", identity_created:"generate_lead", search:"search" };
+const META_MAP: Record<string,string> = { product_view:"ViewContent", product_click:"ClickButton", cta_click:"ClickButton", add_to_cart:"AddToCart", checkout_start:"InitiateCheckout", purchase_success:"Purchase", identity_started:"Lead", identity_created:"Lead", assessment_completed:"CompleteRegistration" };
+const TIKTOK_MAP: Record<string,string> = { product_view:"ViewContent", product_click:"ClickButton", cta_click:"ClickButton", add_to_cart:"AddToCart", checkout_start:"InitiateCheckout", purchase_success:"Purchase", identity_started:"Lead", identity_created:"Lead", assessment_completed:"SubmitForm", search:"Search" };
+const GA4_MAP: Record<string,string> = { product_view:"view_item", add_to_cart:"add_to_cart", checkout_start:"begin_checkout", purchase_success:"purchase", identity_created:"generate_lead", identity_started:"generate_lead", assessment_completed:"generate_lead", search:"search" };
 
 export function pixelEvent(event: string, payload: PixelEventPayload = {}) {
   if (typeof window === "undefined") return;
