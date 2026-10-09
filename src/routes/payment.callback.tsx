@@ -72,14 +72,17 @@ function PaymentCallback() {
   const success = result.state === "success";
   const pending = result.state === "pending";
   const failed = result.state === "failed";
-  const title = success ? "Payment confirmed" : pending ? "Payment is processing" : failed ? "Payment not confirmed" : "Payment verification pending";
-  const message = success
+  const title = result.state === "success" ? "Payment confirmed" : result.state === "pending" ? "Payment is processing" : result.state === "failed" ? "Payment not confirmed" : "Payment verification pending";
+  const message = result.state === "success"
     ? "Your payment has been verified. Your purchase is now entering the fulfillment and access workflow."
-    : pending
+    : result.state === "pending"
       ? result.result.message ?? "Paystack has not returned a final status yet. Please check again shortly."
-      : failed
+      : result.state === "failed"
         ? result.result.message ?? "We could not confirm a successful payment. If your bank account was debited, contact support with your payment reference."
         : result.message;
+  const experienceTitle = result.state === "success"
+    ? result.result.experience?.title ?? result.result.experience?.name
+    : undefined;
 
   return (
     <main className="grid min-h-[70vh] place-items-center bg-background px-4 py-12 text-foreground">
@@ -89,9 +92,7 @@ function PaymentCallback() {
         <h1 className="mt-3 text-center text-2xl font-semibold sm:text-3xl">{title}</h1>
         <p className="mt-3 text-center text-sm leading-6 text-muted-foreground">{message}</p>
 
-        {success && result.state === "success" && (result.result.experience?.title || result.result.experience?.name) && (
-          <p className="mt-4 text-center font-medium">{result.result.experience.title ?? result.result.experience.name}</p>
-        )}
+        {experienceTitle && <p className="mt-4 text-center font-medium">{experienceTitle}</p>}
 
         {referenceSuffix && (
           <p className="mt-5 text-center text-xs text-muted-foreground">Reference ending in <span className="font-mono">{referenceSuffix}</span></p>
