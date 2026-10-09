@@ -5,7 +5,7 @@ import { getMakaveliProductionService } from "@/lib/makaveliProductionCatalog";
 const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "https://vbqjvmnhdtdhmeeudqnn.supabase.co";
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY ?? process.env.PAYSTACK_SECRET;
-const SITE_URL = process.env.PUBLIC_SITE_URL ?? "https://resofit.fit";
+const SITE_URL = process.env.PUBLIC_SITE_URL ?? "https://www.resofit.fit";
 function db(){if(!SERVICE_ROLE)throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured");return createClient(SUPABASE_URL,SERVICE_ROLE,{auth:{persistSession:false}});}
 function clean(value:unknown,max=500){return typeof value === "string"?value.trim().slice(0,max):"";}
 function reference(){return `MKV-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0,8).toUpperCase()}`;}
