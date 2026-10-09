@@ -1,0 +1,26 @@
+name: Verify-order reconciliation regression
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [fix/verify-order-event-identity]
+permissions:
+  contents: read
+concurrency:
+  group: verify-order-regression-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify-order:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - name: Verify reconciliation contracts
+        run: node scripts/smoke-verify-order.mjs
+      - uses: denoland/setup-deno@v2
+      - name: Type-check deployed function source
+        run: deno check --config supabase/functions/deno.json supabase/functions/verify-order/index.ts supabase/functions/paystack-webhook/index.ts
