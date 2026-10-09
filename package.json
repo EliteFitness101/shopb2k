@@ -20,7 +20,8 @@
     "wellness:smoke": "node scripts/smoke-wellness-production.mjs",
     "revenue:smoke": "node scripts/smoke-revenue-production.mjs",
     "production:live-smoke": "node scripts/smoke-production-live.mjs",
-    "production:gate": "npm run lint && npm run wellness:smoke && npm run products:seo-smoke && npm run revenue:smoke && npm run build"
+    "production:gate": "npm run lint && npm run wellness:smoke && npm run products:seo-smoke && npm run revenue:smoke && npm run booking:smoke && npm run build",
+    "booking:smoke": "node scripts/smoke-booking-payment-linkage.mjs"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
