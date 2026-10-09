@@ -9,7 +9,7 @@ export interface ShopifyVariant{id:string;title:string;price:MoneyV2;availableFo
 export interface ShopifyProductNode{id:string;title:string;description:string;descriptionHtml?:string;handle:string;sku?:string|null;productType?:string;vendor?:string;tags?:string[];fulfillmentMode?:string|null;priceRange:{minVariantPrice:MoneyV2};images:{edges:Array<{node:ShopifyImage}>};variants:{edges:Array<{node:ShopifyVariant}>};options:Array<{name:string;values:string[]}>}
 export interface ShopifyProduct{node:ShopifyProductNode}
 type StorefrontProduct={id:string;handle:string;title:string;body_html:string|null;vendor:string|null;product_type:string;tags:string[]|null;published:boolean;variant_price:number;variant_inventory_qty:number;image_src:string|null;sku:string|null;fulfillment_mode?:string|null};
-type CatalogAsset={sku:string;role:string;filename:string;canonical_url:string;image_position:number|null};
+export type CatalogAsset={sku:string;handle:string;role:string;filename:string;canonical_url:string;image_position:number|null};
 const STOREFRONT_REQUEST_TIMEOUT_MS=8000;
 async function fetchWithTimeout(input:RequestInfo|URL,init:RequestInit={}):Promise<Response>{const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),STOREFRONT_REQUEST_TIMEOUT_MS);try{return await fetch(input,{...init,signal:controller.signal})}catch(error){if(error instanceof DOMException&&error.name==="AbortError")throw new Error(`ResoFit catalog request timed out after ${STOREFRONT_REQUEST_TIMEOUT_MS}ms`);throw error}finally{clearTimeout(timer)}}
 
@@ -27,6 +27,16 @@ function mapProduct(p:StorefrontProduct,assets:CatalogAsset[]=[]):ShopifyProduct
 async function fetchStorefrontProducts(handle:string|null):Promise<StorefrontProduct[]>{const url=new URL(RESOFIT_STOREFRONT_URL);if(handle)url.searchParams.set("handle",handle);const response=await fetchWithTimeout(url.toString(),{method:"GET",cache:"no-store"});if(!response.ok)throw new Error(`ResoFit storefront HTTP ${response.status}`);const payload=await response.json() as {products?:StorefrontProduct[];error?:string};if(payload.error)throw new Error(payload.error);return payload.products??[]}
 async function fetchCanonicalCatalog(handle:string|null):Promise<StorefrontProduct[]>{const url=new URL(handle?`${RESOFIT_CATALOG_URL}/product`:RESOFIT_CATALOG_URL);if(handle)url.searchParams.set("handle",handle);else url.searchParams.set("limit","200");const response=await fetchWithTimeout(url.toString(),{method:"GET",cache:"no-store"});if(!response.ok)throw new Error(`ResoFit canonical catalog HTTP ${response.status}`);const payload=await response.json() as {data?:StorefrontProduct|StorefrontProduct[];error?:string};if(payload.error)throw new Error(payload.error);if(handle)return payload.data?[payload.data as StorefrontProduct]:[];return Array.isArray(payload.data)?payload.data:[]}
 async function fetchCanonicalAssets(handle:string):Promise<CatalogAsset[]>{if(!handle)return[];const url=new URL(`${RESOFIT_CATALOG_URL}/assets`);url.searchParams.set("handle",handle);url.searchParams.set("limit","50");const response=await fetchWithTimeout(url.toString(),{method:"GET",cache:"no-store"});if(!response.ok)throw new Error(`ResoFit catalog assets HTTP ${response.status}`);const payload=await response.json() as {data?:CatalogAsset[];error?:string};if(payload.error)throw new Error(payload.error);return Array.isArray(payload.data)?payload.data:[]}
+/** Fetch the lightweight asset registry once for the grid; cards enrich in-place without N+1 requests. */
+export async function fetchCatalogAssetsForGrid():Promise<CatalogAsset[]>{
+ const url=new URL(`${RESOFIT_CATALOG_URL}/assets`);
+ url.searchParams.set("limit","1000");
+ const response=await fetchWithTimeout(url.toString(),{method:"GET",cache:"no-store"});
+ if(!response.ok)throw new Error(`ResoFit catalog asset registry HTTP ${response.status}`);
+ const payload=await response.json() as {data?:CatalogAsset[];error?:string};
+ if(payload.error)throw new Error(payload.error);
+ return Array.isArray(payload.data)?payload.data:[];
+}
 
 export async function storefrontApiRequest<T=unknown>(query:string,variables:Record<string,unknown>={}):Promise<{data?:T;errors?:Array<{message:string}>}|undefined>{
  const handle=typeof variables.handle==="string"?variables.handle:null;let products:StorefrontProduct[]=[];
