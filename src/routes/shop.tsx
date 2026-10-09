@@ -92,11 +92,12 @@ function ShopGrid() {
   const navigate = Route.useNavigate();
   // Keep the canonical product grid warm even while ecosystem search is running.
   // A slow search must never blank the shop or block direct purchase discovery.
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["products", "all"],
     queryFn: fetchProducts,
     staleTime: 60_000,
     refetchOnWindowFocus: false,
+    retry: 2,
   });
   const { data: ecosystem, isLoading: ecosystemLoading, isError: ecosystemError } = useQuery({
     queryKey: ["ecosystem-search", search.q ?? ""],
@@ -245,17 +246,22 @@ function ShopGrid() {
           </div>
         )}
 
-        {isLoading && (
-          <div className="flex justify-center py-32 text-muted-foreground">
-            <Loader2 className="h-6 w-6 animate-spin" />
+        {isLoading && !data && (
+          <div role="status" aria-live="polite" aria-busy="true" className="py-8">
+            <p className="mb-5 flex items-center justify-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin" /> Loading ResoFit products…</p>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }, (_, i) => <div key={i} className="animate-pulse overflow-hidden rounded-sm border border-border/50" aria-hidden="true"><div className="aspect-square bg-white/[0.05]" /><div className="space-y-3 p-5"><div className="h-4 w-3/4 rounded bg-white/[0.08]" /><div className="h-3 w-full rounded bg-white/[0.06]" /><div className="h-10 rounded bg-white/[0.08]" /></div></div>)}
+            </div>
           </div>
         )}
 
-        {isError && (
-          <p className="py-16 text-center text-sm text-muted-foreground">
-            Couldn't load products. Try refreshing.
-          </p>
+        {isError && !data && (
+          <div role="alert" className="py-16 text-center text-sm text-muted-foreground">
+            <p>Couldn't load products right now. Your cart is unchanged.</p>
+            <button type="button" onClick={() => void refetch()} className="mt-4 inline-flex min-h-12 touch-manipulation items-center justify-center rounded-xl border border-gold/50 px-5 py-3 font-semibold text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Retry loading products</button>
+          </div>
         )}
+        {isError && data && <p role="status" className="mb-4 text-center text-xs text-muted-foreground">Showing the last loaded catalog while refreshing is temporarily unavailable.</p>}
 
         {data && filtered.length === 0 && (
           <div className="py-24 text-center">
@@ -324,8 +330,10 @@ function EcosystemSearchResults({
             <p className="mt-2 text-sm text-muted-foreground">Try a broader phrase or ask ChatB2K™ to refine the intent.</p>
           </div>
         )}
-        {(error || (!loading && !data?.results.length)) && localMatches.length > 0 && (
-          <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {(loading || error || (!loading && !data?.results.length)) && localMatches.length > 0 && (
+          <div className="mb-8">
+            <p className="mb-3 text-xs uppercase tracking-widest text-gold">{loading ? "Matching products available now" : "Matching products"}</p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {localMatches.slice(0, 8).map((p) => (
               <Link key={p.node.id} to="/product/$handle" params={{ handle: p.node.handle }} className="group rounded-2xl border border-border/60 bg-card p-5 transition-colors hover:border-gold/60">
                 <div className="text-[10px] uppercase tracking-[0.25em] text-gold">Product</div>
@@ -334,6 +342,7 @@ function EcosystemSearchResults({
                 <div className="mt-4 text-[10px] uppercase tracking-widest text-muted-foreground">View product →</div>
               </Link>
             ))}
+            </div>
           </div>
         )}
         {!loading && !error && data?.results.length ? (
@@ -390,6 +399,8 @@ function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; pla
       track("add_to_cart", { product_id: node.sku || node.id, product_title: node.title, quantity: 1, value: Number(firstAvail.price.amount), currency: firstAvail.price.currencyCode ?? "NGN" });
       recordEngagement(node.id, "add_to_cart");
       toast.success(`Added ${node.title} to cart`, { position: "top-center" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not add this product to your cart.", { position: "top-center" });
     } finally {
       setBusy(false);
     }
