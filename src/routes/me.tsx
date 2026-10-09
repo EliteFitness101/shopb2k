@@ -28,7 +28,7 @@ const DIETS: Option[] = [
 ];
 async function canonicalRecommendation(a: Answers): Promise<Recommendation | null> {
   if (a.goal === "reset") return { title: "ResoFit Reset", summary: "Your reset journey is handled by the dedicated ResoFit Reset experience.", reason: "ChatB2K detected reset intent and is routing you to the Reset purchase journey.", url: EXTERNAL_RESET_URL, cta: "Continue to Reset" };
-  if (!supabase) return null;
+  if (!supabase) throw new Error("Assessment service is not configured. Please contact a specialist.");
   const sessionId = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `assessment-${Date.now()}`;
     const query = a.goal === "fat_loss" ? "fat loss body composition nutrition" : a.goal === "muscle" ? "lean muscle strength resistance training" : "energy focus nutrition recovery wellness";
     const { data, error } = await supabase.functions.invoke("chatb2k-recommend", { body: { query, goal: a.goal, interests: `${a.activity} ${a.diet}`, session_id: sessionId, limit: 1 } });
