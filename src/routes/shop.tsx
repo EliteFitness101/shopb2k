@@ -24,6 +24,17 @@ type SortKey = "featured" | "newest" | "price_asc" | "price_desc";
 const SHOP_URL = "https://www.resofit.fit/shop";
 
 export const Route = createFileRoute("/shop")({
+  loader: async () => {
+    try {
+      const products = await Promise.race<ShopifyProduct[] | null>([
+        fetchProducts(),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 1800)),
+      ]);
+      return { products };
+    } catch {
+      return { products: null };
+    }
+  },
   head: () => ({
     meta: [
       { title: "Shop — ResoFit Hardware" },
@@ -90,11 +101,13 @@ function Shop() {
 function ShopGrid() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
+  const loaderData = Route.useLoaderData();
   // Keep the canonical product grid warm even while ecosystem search is running.
   // A slow search must never blank the shop or block direct purchase discovery.
   const { data, isLoading, isError } = useQuery({
     queryKey: ["products", "all"],
     queryFn: fetchProducts,
+    initialData: loaderData.products ?? undefined,
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
