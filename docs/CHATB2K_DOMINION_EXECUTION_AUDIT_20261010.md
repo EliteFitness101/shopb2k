@@ -13,7 +13,8 @@
 - Vercel canonical-domain lookup resolves `www.resofit.fit` to deployment `dpl_2Q86YnanEVGdTzYxTK7qN2vzRiGV`: state `READY`, target `production`, aliases include `resofit.fit` and `www.resofit.fit`, source commit `8e70cab95bd2137e16563b87eabe960d708284f8` on `main`, and `aliasError=null`. This verifies a production deployment/alias association; it does not substitute for customer journey smoke tests.
 - A separate deployment created from the documentation branch is also READY, but has only a branch-preview alias and target `null`; it is not treated as production.
 - The GitHub connector installation exposes selected repositories, including `shopb2k` and `chatb2k-f9d8a04d`. The returned installation data does not identify it as the specifically named `chatb2k-dominion-engine` app.
-- The existing Dropbox archive verification workflow is present in `chatb2k-f9d8a04d`; it can verify refresh-token exchange, test upload/read-back/cleanup, and avoid printing credentials. No successful run ID was obtained in this audit.
+- **Dropbox credential and folder-write smoke test passed.** GitHub Actions run `38088031977` on isolated branch `ops/dropbox-bigo-archive-smoke-20261010` completed with conclusion `success` at `2026-10-10T21:32:51Z`. The job successfully exchanged the stored refresh token, uploaded a temporary test file to `/ResoFit/BIGO/logs/`, read back metadata, and deleted the test file; no credential values were printed. Evidence: https://github.com/EliteFitness101/chatb2k-f9d8a04d/actions/runs/38088031977. This proves small-file Dropbox connectivity and write/read/delete permission only—not media chunking or the complete BIGO→ChatB2K→Buffer path.
+- Existing `scripts/bigo-capture-host.sh` already has an optional Dropbox copy for raw video, processed video, cover, and JSON metadata, but it uploads through Dropbox's single-request endpoint and skips any file over 150 MiB. It uploads to Vercel Blob first, and the resulting highlight continues to use `blob_url` as its downstream media reference. Thus Dropbox is an archive copy, not yet the replacement source of truth or a proven Blob disconnect.
 
 ## Current blockers / risks requiring controlled remediation
 
@@ -26,7 +27,7 @@
 3. **Orchestrator public discovery endpoint has wildcard CORS.** The revenue/orchestration mode performs an internal viewer check; the ordinary discovery path is separately handled. Review allowed origins and caller expectations before changing CORS, because a global tightening can break existing public customer flows.
 4. **Production deployment is verified; customer journey readiness is not.** The canonical domain resolves to a READY production deployment, but no end-to-end checkout, payment, fulfillment, ChatB2K action-executor, or Dropbox archive canary was proven by this audit.
 5. **GitHub App identity and least-privilege permissions are not verified.** Do not mint a broad personal admin token as a workaround.
-6. **BIGO → Dropbox remains unverified end-to-end.** Keep Blob-backed ingestion unchanged until Dropbox canary upload, checksum/read-back, asset-registry reference, and downstream fetch are all proven.
+6. **BIGO → Dropbox migration is only partially verified.** The small-file Dropbox smoke passed, and the capture script has a best-effort archive copy; files over 150 MiB are skipped, content bytes/checksum are not verified on read-back, and downstream ingestion still depends on `blob_url`. Keep the Blob path operational until chunked upload, content checksum/read-back, registry update, and downstream media fetch are proven.
 
 ## Change boundary
 
@@ -37,5 +38,5 @@ This audit is documentation-only. No production function, schema, RLS policy, se
 1. Inspect the 12 security-definer findings and dependent application call sites; patch only confirmed unintended grants in a migration/branch.
 2. Run non-destructive canonical-domain and customer journey smoke tests; verify each stage from inference through authorized execution and business outcome.
 3. Identify the actual GitHub App by its app identity and permissions; use least-privilege installation tokens.
-4. Run the existing Dropbox verification workflow and capture its run ID, then do a private media canary without publishing.
+4. Extend Dropbox upload to resumable/chunked large-file handling and checksum verification; run a private media canary, then prove the existing asset-registry and publisher can fetch the archived media without public posting.
 5. Reconcile agent registry IDs and health evidence; separately test inference, authorized execution, and business outcomes.
