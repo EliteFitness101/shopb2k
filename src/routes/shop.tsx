@@ -396,7 +396,7 @@ function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; pla
   };
 
   return (
-    <article className="group flex flex-col border border-border/60 bg-card transition-colors hover:border-gold/60">
+    <article className="group flex flex-col overflow-hidden rounded-2xl border border-gold/20 bg-gradient-to-br from-card/90 via-background/90 to-gold/5 shadow-lg shadow-black/20 transition-all duration-300 hover:-translate-y-1 hover:border-gold/60 hover:shadow-[0_24px_70px_rgba(0,0,0,.35)]">
       <Link to="/product/$handle" params={{ handle: node.handle }} className="relative block">
         <ProductImage
           src={image?.url}
