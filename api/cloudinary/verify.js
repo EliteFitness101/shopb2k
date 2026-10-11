@@ -31,10 +31,10 @@ function getCloudinaryConfig() {
 }
 
 function getSupabaseConfig() {
-  const url = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "").trim().replace(/\/+$/, "");
+  const url = "https://vbqjvmnhdtdhmeeudqnn.supabase.co";
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceRoleKey) {
-    throw new Error("Canonical Supabase URL and server-side service role key are required");
+  if (!serviceRoleKey) {
+    throw new Error("Canonical Supabase server-side service role key is required");
   }
   return { url, serviceRoleKey };
 }
