@@ -7,7 +7,6 @@ const json = (body, status = 200) => new Response(JSON.stringify(body, null, 2),
 });
 
 const MAX_RESULTS = 100;
-const MAX_PAGES = 2;
 const MAX_ASSETS = 100;
 const CONCURRENCY = 4;
 const REQUEST_TIMEOUT_MS = 5000;
@@ -38,14 +37,6 @@ function getSupabaseConfig() {
     throw new Error("Canonical Supabase URL and server-side service role key are required");
   }
   return { url, serviceRoleKey };
-}
-
-function headerValue(request, name) {
-  const headers = request?.headers;
-  if (!headers) return null;
-  if (typeof headers.get === "function") return headers.get(name);
-  const value = headers[name] ?? headers[name.toLowerCase()];
-  return Array.isArray(value) ? value[0] : value ?? null;
 }
 
 async function sha1(value) {
@@ -134,7 +125,7 @@ async function verifyRegistryAsset(config, row) {
     ) ?? null;
     const asset = resource ? normaliseResource(resource) : null;
     const expectedResourceType = row.cloudinary_resource_type;
-    const expectedFormatMatch = String(row.delivery_url || "").match(/\\.([a-z0-9]{2,5})(?:\\?|$)/i);
+    const expectedFormatMatch = String(row.delivery_url || "").match(/\.([a-z0-9]{2,5})(?:\?|$)/i);
     const expectedFormat = expectedFormatMatch?.[1]?.toLowerCase() ?? null;
     const found = Boolean(asset);
     const live = Boolean(asset?.secureUrl);
