@@ -2,16 +2,27 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { formatMoney } from "@/lib/shopify";
 import { ProductImage } from "@/components/ProductImage";
+import { getAttribution } from "@/lib/attribution";
 
-interface Props { currentHandle: string; productType?: string; title?: string; }
+interface Props { currentHandle: string; productTitle?: string; productType?: string; title?: string; }
 type Recommendation={id:string;sku:string|null;handle:string;title:string;product_type:string|null;price:number;inventory:number;image:string|null;score:number;lifecycle:string|null;route:string};
 const SUPABASE_URL=import.meta.env.VITE_SUPABASE_URL as string|undefined;
 const SUPABASE_KEY=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string|undefined;
 
-export function RecommendedProducts({currentHandle,productType,title="Recommended for you"}:Props){
+function getChatB2KSessionId(): string | undefined {
+ try {
+  let id=sessionStorage.getItem("resofit:chatb2k-session");
+  if(!id){id=typeof crypto!=="undefined"&&"randomUUID" in crypto?crypto.randomUUID():`session_${Date.now().toString(36)}`;sessionStorage.setItem("resofit:chatb2k-session",id);}
+  return id;
+ } catch { return undefined; }
+}
+
+export function RecommendedProducts({currentHandle,productTitle,productType,title="Recommended for you"}:Props){
  const {data}=useQuery({queryKey:["chatb2k-recommend",currentHandle,productType??"all"],queryFn:async()=>{
   if(!SUPABASE_URL||!SUPABASE_KEY)return [] as Recommendation[];
-  const r=await fetch(`${SUPABASE_URL.replace(/\/$/,"")}/functions/v1/chatb2k-recommend`,{method:"POST",headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({query:productType??currentHandle.replace(/[-_]/g," "),product_type:productType??"",limit:6})});
+  const attribution=getAttribution();
+  const query=[productTitle,currentHandle.replace(/[-_]/g," "),productType].filter(Boolean).join(" ");
+  const r=await fetch(`${SUPABASE_URL.replace(/\/$/,"")}/functions/v1/chatb2k-recommend`,{method:"POST",headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({query,product_type:productType??"",session_id:getChatB2KSessionId(),rsid:attribution.rsid??null,limit:6})});
   if(!r.ok)return [] as Recommendation[]; const b=await r.json(); return (b.recommendations??[]) as Recommendation[];
  },staleTime:60000});
  const items=(data??[]).filter(p=>p.handle!==currentHandle).slice(0,3); if(!items.length)return null;

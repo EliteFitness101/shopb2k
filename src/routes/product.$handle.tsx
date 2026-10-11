@@ -33,8 +33,21 @@ async function fetchProductByHandle(handle: string): Promise<ShopifyProductNode 
 
 function ProductPage() {
   const { handle } = Route.useParams();
-  const { data, isLoading } = useQuery({ queryKey: ["product", handle], queryFn: async () => { const p = await fetchProductByHandle(handle); if (!p) throw notFound(); return p; } });
-  if (isLoading || !data) return <div className="min-h-screen bg-background"><SiteHeader /><div className="flex justify-center py-32"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div></div>;
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ["product", handle],
+    queryFn: () => fetchProductByHandle(handle),
+    retry: 1,
+  });
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-background"><SiteHeader /><div className="flex flex-col items-center justify-center gap-3 py-32" role="status" aria-live="polite"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /><p className="text-sm text-muted-foreground">Loading product details…</p></div></div>;
+  }
+
+  if (isError) {
+    return <div className="min-h-screen bg-background"><SiteHeader /><div className="mx-auto max-w-3xl px-6 py-24 text-center"><h1 className="font-display text-3xl">Product temporarily unavailable</h1><p className="mt-4 text-muted-foreground">We couldn’t load this product right now. Your cart and payment details have not been changed.</p><div className="mt-8 flex flex-wrap justify-center gap-4"><button type="button" onClick={() => void refetch()} className="rounded-sm bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-widest text-gold-foreground">Try again</button><Link to="/shop" className="rounded-sm border border-border px-5 py-3 text-xs uppercase tracking-widest text-foreground">Back to shop</Link></div></div><SiteFooter /></div>;
+  }
+
+  if (!data) throw notFound();
   return <div className="min-h-screen bg-background"><SiteHeader /><ProductDetail product={data} /><SiteFooter /></div>;
 }
 
@@ -199,7 +212,7 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
         <div className="mt-8 border-t border-border/60 pt-6 text-sm">{!((product.fulfillmentMode ?? "").toLowerCase().includes("digital") && !(product.fulfillmentMode ?? "").toLowerCase().includes("hybrid")) && <div className="space-y-3"><div className="flex items-start gap-3"><Truck className="mt-0.5 h-4 w-4 text-gold"/><span><strong className="text-foreground">Nigeria delivery:</strong> <span className="text-muted-foreground">Shipping options and charges are confirmed at checkout.</span></span></div><div className="flex items-start gap-3"><Truck className="mt-0.5 h-4 w-4 text-gold"/><span><strong className="text-foreground">International:</strong> <span className="text-muted-foreground">International fulfillment where supported.</span></span></div></div>}{((product.fulfillmentMode ?? "").toLowerCase().includes("digital") && !(product.fulfillmentMode ?? "").toLowerCase().includes("hybrid")) && <div className="flex items-start gap-3"><Package className="mt-0.5 h-4 w-4 text-gold"/><span><strong className="text-foreground">Digital delivery:</strong> <span className="text-muted-foreground">No physical shipping required.</span></span></div>}<div className="mt-3 flex items-start gap-3"><ShieldCheck className="mt-0.5 h-4 w-4 text-gold"/><span><strong className="text-foreground">Secure checkout:</strong> <span className="text-muted-foreground">ResoFit Paystack checkout · payment options shown at checkout.</span></span></div></div>
       </div>
     </div>
-    <RecommendedProducts currentHandle={product.handle} productType={product.productType} title="Pairs well with" />
+    <RecommendedProducts currentHandle={product.handle} productTitle={product.title} productType={product.productType} title="Pairs well with" />
     <RecentlyViewed excludeHandle={product.handle} />
   </article>;
 }
