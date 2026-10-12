@@ -7,7 +7,9 @@ export default defineConfig({
   reporter: "list",
   use: { ...devices["Desktop Chrome"], headless: true },
   webServer: {
-    command: "npm run preview -- --host 127.0.0.1",
+    // This repository builds a Nitro .output bundle; Vite preview incorrectly
+    // looks for dist/server/server.js. Preview the actual Nitro build instead.
+    command: "npx nitro preview --host 127.0.0.1 --port 4173",
     url: "http://127.0.0.1:4173",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
