@@ -44,7 +44,6 @@ function corsHeaders(request: Request, env: Env): Headers {
   const allowed = (env.MEDIA_CORS_ORIGINS ?? "*").split(",").map((value) => value.trim()).filter(Boolean);
   const origin = allowed.includes("*") ? "*" : requestOrigin && allowed.includes(requestOrigin) ? requestOrigin : "null";
   const headers = new Headers({
-    "access-control-allow-origin": origin,
     "access-control-allow-methods": "GET, HEAD, OPTIONS",
     "access-control-allow-headers": "Range, If-None-Match, If-Modified-Since, Content-Type",
     "access-control-expose-headers": "Accept-Ranges, Content-Length, Content-Range, ETag",
@@ -52,6 +51,7 @@ function corsHeaders(request: Request, env: Env): Headers {
     "referrer-policy": "strict-origin-when-cross-origin",
     "vary": "Origin",
   });
+  if (origin !== "null") headers.set("access-control-allow-origin", origin);
   return headers;
 }
 
@@ -214,6 +214,9 @@ export default {
       const headers = objectHeaders(head, env, cors);
       return new Response(null, { status: 304, headers });
     }
+    if (request.method === "HEAD" && !rangeHeader) {
+      return new Response(null, { status: 200, headers: objectHeaders(head, env, cors) });
+    }
 
     if (rangeHeader) {
       const range = parseRange(rangeHeader, head.size);
@@ -236,8 +239,9 @@ export default {
     if (request.method === "GET") {
       const cached = await cache.match(request);
       if (cached) {
-        cors.forEach((value, name) => cached.headers.set(name, value));
-        return cached;
+        const cachedResponse = new Response(cached.body, cached);
+        cors.forEach((value, name) => cachedResponse.headers.set(name, value));
+        return cachedResponse;
       }
     }
 
