@@ -23,11 +23,11 @@ function escapeHtml(value: unknown): string {
 }
 function sanitizeHtmlFragment(input: string): string {
   return input
-    .replace(/<\s*(script|iframe|object|embed|form|link|meta|base|svg|math)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
-    .replace(/<\s*(script|iframe|object|embed|form|link|meta|base|svg|math)\b[^>]*\/?>/gi, "")
+    .replace(/<\s*(script|style|iframe|object|embed|form|link|meta|base|svg|math|video|audio|picture|source|track)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
+    .replace(/<\s*(script|style|iframe|object|embed|form|link|meta|base|svg|math|img|video|audio|picture|source|track)\b[^>]*\/?>/gi, "")
     .replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
-    .replace(/\s+(href|src)\s*=\s*("|')\s*javascript:[\s\S]*?\2/gi, "")
-    .replace(/<\s*style\b[^>]*>[\s\S]*?<\s*\/\s*style\s*>/gi, "")
+    .replace(/\s+(href|src|srcset|style)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    .replace(/url\s*\([^)]*\)/gi, "")
     .trim();
 }
 function hex(bytes: ArrayBuffer): string {
