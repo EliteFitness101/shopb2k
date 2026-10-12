@@ -21,3 +21,6 @@ verify_jwt = false
 
 [functions.echo-v13-watchdog]
 verify_jwt = false
+
+[functions.chatb2k-orchestrator]
+verify_jwt = false
