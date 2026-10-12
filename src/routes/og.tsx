@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-const FALLBACK_COVER = "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/cover/resofit-cover2";
+const FALLBACK_COVER = "https://www.resofit.fit/og?title=ResoFit%E2%84%A2&subtitle=Personalized%20Wellness%20Platform&section=RESOFIT%E2%84%A2";
 const escapeXml = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&apos;");
 
 export const Route = createFileRoute("/og")({
