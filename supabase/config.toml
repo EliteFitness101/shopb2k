@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.wellness-locator]
 verify_jwt = false
+
+[functions.digital-product-delivery-worker]
+verify_jwt = true
