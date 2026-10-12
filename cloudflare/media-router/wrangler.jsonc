@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "resofit-media-router",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-12",
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "media.resofit.fit/*",
+      "zone_name": "resofit.fit"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA_BUCKET",
+      "bucket_name": "resofit-cdn"
+    }
+  ],
+  "vars": {
+    "MEDIA_PUBLIC_PREFIXES": "public/,assets/,products/,campaigns/,generated/,buffer/assets/",
+    "MEDIA_CACHE_MAX_AGE": "3600"
+  }
+}
