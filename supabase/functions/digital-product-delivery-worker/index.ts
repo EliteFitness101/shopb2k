@@ -1,5 +1,3 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-
 const BUCKET = "digital-product-deliverables";
 const MODEL = "gemini-2.5-flash";
 const MAX_HTML_BYTES = 5_000_000;
