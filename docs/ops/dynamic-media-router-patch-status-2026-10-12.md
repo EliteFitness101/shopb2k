@@ -5,7 +5,7 @@ Branch: fix/chatb2k-content-pipeline-2026-10-12
 Status: DRAFT / NOT DEPLOYED
 
 ## Decision
-**CEO SIGN-OFF: HOLD.** Registry/resolver foundation is staged, but full UI integration and live-provider verification are incomplete.
+**CEO SIGN-OFF: HOLD.** Registry/resolver foundation and the previously identified UI consumers are now staged in source, but CI/build, live-provider mappings, health/failover probes and production migration are not verified.
 
 ## Implemented in branch (source only)
 - Added migration `supabase/migrations/20261012170000_dynamic_media_provider_registry.sql`.
@@ -16,7 +16,12 @@ Status: DRAFT / NOT DEPLOYED
 - Updated `src/lib/media.ts` to remove hardcoded Blob and `r2.dev` candidate URLs and fail closed until verified registry locations exist.
 
 ## Known incomplete work
-- `src/components/CinematicWellnessExperience.tsx` now resolves its poster and hero-video asset keys through the registry helper; its hardcoded Blob video list was removed. A repo scan still found hardcoded Blob URLs/host checks in `src/content/martialVideos.ts`, `src/content/martialXAssets.ts`, `src/routes/og.tsx`, `src/config/martialXExecProducts.ts`, `src/routes/__root.tsx`, `src/routes/wellness.index.tsx`, `src/routes/wellness.makaveli.tsx`, `src/lib/shopify.ts`, and `src/routes/content.tsx`. Those consumers are not yet migrated.
+- `src/components/CinematicWellnessExperience.tsx`, `src/routes/wellness.index.tsx`, and `src/routes/wellness.makaveli.tsx` now resolve stable asset keys through the registry helper. Wellness uses a local bundled hero image fallback; no remote Blob fallback remains.
+- `src/content/martialVideos.ts` and `src/content/martialXAssets.ts` now hold stable keys rather than Blob URLs. `/content` resolves each video through healthy, verified registry locations on the server before analysis/publishing and returns 503 when no mapping exists; its remaining Blob/R2 references are rejection guards only.
+- `src/config/martialXExecProducts.ts` now references stable `imageAssetKey` values; `/martial-x3`, `/martial-x3/rsdn`, and `/martial-x3/executive` resolve them through the registry helper.
+- `src/routes/og.tsx` generates a first-party SVG fallback; `src/routes/__root.tsx` points social metadata at that canonical generated OG route instead of Blob.
+- `src/lib/shopify.ts` no longer accepts Blob URLs as approved catalog images and no longer falls back to unfiltered catalog assets. If no safe HTTPS image is available, it returns no remote image rather than routing through Blob.
+- These source changes are additive and remain unmerged. Because no public asset-location rows exist yet, registry-based media intentionally fails closed until real mappings are verified; product/hero images may be absent in a build until mappings are provisioned. Do not release before that is addressed.
 - The migration exists in Git only; it has NOT been applied to production Supabase.
 - All seeded providers are disabled and unknown. No public asset locations have been inserted. No provider health probe, CDN transform test, or failover test has passed.
 - No production deploy, asset rewrite, storage migration, or media-generation job was triggered.
@@ -34,7 +39,7 @@ Status: DRAFT / NOT DEPLOYED
 | Gate | Status |
 |---|---|
 | Registry/resolver source foundation | STAGED |
-| No hardcoded Blob delivery path | FAIL — additional content/product/route consumers remain |
+| No hardcoded Blob delivery candidates in the previously identified consumers | STAGED — source paths removed; rejection guards remain by design |
 | Production migration applied | NOT DONE |
 | Providers configured and healthy | NOT VERIFIED |
 | Asset mappings verified | NOT DONE |
@@ -47,3 +52,8 @@ Status: DRAFT / NOT DEPLOYED
 - Migration source: https://github.com/EliteFitness101/shopb2k/blob/fix/chatb2k-content-pipeline-2026-10-12/supabase/migrations/20261012170000_dynamic_media_provider_registry.sql
 - Resolver source: https://github.com/EliteFitness101/shopb2k/blob/fix/chatb2k-content-pipeline-2026-10-12/src/lib/assetResolver.ts
 - Media helper: https://github.com/EliteFitness101/shopb2k/blob/fix/chatb2k-content-pipeline-2026-10-12/src/lib/media.ts
+
+
+## Patch execution update — 2026-10-12
+
+Source-only commits were added to this same draft branch for the following paths: `src/routes/og.tsx`, `src/routes/__root.tsx`, `src/routes/wellness.index.tsx`, `src/routes/wellness.makaveli.tsx`, `src/content/martialVideos.ts`, `src/routes/content.tsx`, `src/content/martialXAssets.ts`, `src/config/martialXExecProducts.ts`, `src/routes/martial-x3.tsx`, `src/routes/martial-x3.rsdn.tsx`, `src/routes/martial-x3.executive.tsx`, and `src/lib/shopify.ts`. These are not proof of a successful build. Provider registry tables are still absent in production and no asset mappings have been populated. The next gate is compile/type-check + review of these consumer changes, followed by provisioning and live verification in the approved release path. No production migration or deployment was executed.
