@@ -23,7 +23,7 @@ These route files are present in `EliteFitness101/shopb2k`:
 - `src/routes/api.asset-sync-cron.ts` → `GET /api/asset-sync-cron` (Vercel cron is configured in `vercel.json`)
 - `src/routes/api.content.publish-cron.ts` → `GET /api/content/publish-cron`
 
-These examples establish that `/api/*` is not a single duplicate API root; it is a set of same-origin server handlers. Each handler still requires production smoke tests and correct secrets/authorization.
+These examples establish that `/api/*` is not a single duplicate API root; it is a set of same-origin server handlers. The current Vercel production deployment for `reso-web` is READY at commit `3443a44846601d522c52ff4ac17d3c804c6f7381`, and `api.cart.ts`, `api.makaveli.verify.ts`, and `api.resonance.booking.ts` are present at that exact commit. This confirms the handlers are in the deployed source tree; it does not replace an external HTTP smoke test. Each handler still requires production smoke tests and correct secrets/authorization.
 
 ## Legacy projects and hostnames: do not treat as canonical
 
