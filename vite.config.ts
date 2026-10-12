@@ -16,8 +16,10 @@ export default defineConfig({
         output: {
           manualChunks(id) {
             if (!id.includes("node_modules")) return;
+            // Let Vite/Rollup resolve TanStack's interdependent router/query/runtime graph.
+            // Manually isolating these packages caused a production TDZ error in vendor-tanstack.
+            if (id.includes("/node_modules/@tanstack/")) return;
             if (id.includes("/react/") || id.includes("/react-dom/") || id.includes("/scheduler/")) return "vendor-react";
-            if (id.includes("@tanstack/react-router") || id.includes("@tanstack/react-query") || id.includes("@tanstack/router-core") || id.includes("@tanstack/query-core")) return "vendor-tanstack";
             if (id.includes("@supabase/") || id.includes("@lovable.dev/")) return "vendor-platform";
             if (id.includes("recharts") || id.includes("victory")) return "vendor-charts";
             if (id.includes("@radix-ui/") || id.includes("lucide-react") || id.includes("cmdk") || id.includes("vaul")) return "vendor-ui";
