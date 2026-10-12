@@ -16,11 +16,12 @@ async function fetchWithTimeout(input:RequestInfo|URL,init:RequestInit={},timeou
 function mapProduct(p:StorefrontProduct,assets:CatalogAsset[]=[]):ShopifyProductNode{
  const price={amount:String(p.variant_price??0),currencyCode:"NGN"};
  const variant:ShopifyVariant={id:p.id,title:"Default Title",price,availableForSale:(p.variant_inventory_qty??0)>0,selectedOptions:[]};
- const approved=assets.filter(a=>{try{const host=new URL(a.canonical_url).hostname.toLowerCase();return host.endsWith("imagekit.io")||host.endsWith("public.blob.vercel-storage.com")}catch{return false}});
+ const isSafeCatalogImage=(value:string|null|undefined)=>{if(!value)return false;try{const u=new URL(value);const h=u.hostname.toLowerCase();return u.protocol==="https:"&&!h.endsWith("blob.vercel-storage.com")&&!h.endsWith(".r2.dev")&&!h.includes("localhost")}catch{return false}};
+ const approved=assets.filter(a=>isSafeCatalogImage(a.canonical_url));
  const roleOrder=new Map([["hero",1],["lifestyle",2],["detail",3],["gallery-01",4],["gallery-02",5],["gallery-03",6]]);
- const ordered=(approved.length?approved:assets).filter(a=>a.canonical_url).sort((a,b)=>(roleOrder.get(a.role)??99)-(roleOrder.get(b.role)??99)||(a.image_position??Number.MAX_SAFE_INTEGER)-(b.image_position??Number.MAX_SAFE_INTEGER));
+ const ordered=approved.sort((a,b)=>(roleOrder.get(a.role)??99)-(roleOrder.get(b.role)??99)||(a.image_position??Number.MAX_SAFE_INTEGER)-(b.image_position??Number.MAX_SAFE_INTEGER));
  const registryImages=ordered.slice(0,6).map(a=>({url:a.canonical_url,altText:`${p.title} ${a.role.replace(/[-_]/g," ")}`.trim()}));
- const images=registryImages.length?registryImages:p.image_src?[{url:p.image_src,altText:p.title}]:[];
+ const images=registryImages.length?registryImages:isSafeCatalogImage(p.image_src)?[{url:p.image_src!,altText:p.title}]:[];
  const description=p.body_html?.replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim()||`Explore ${p.title} from ResoFit${p.product_type?` — ${p.product_type}`:""}. View product details, availability and secure checkout.`;
  return{id:p.id,title:p.title,description,descriptionHtml:p.body_html??undefined,handle:p.handle,sku:p.sku,productType:p.product_type,vendor:p.vendor??"ResoFlex",tags:p.tags??[],fulfillmentMode:p.fulfillment_mode??null,priceRange:{minVariantPrice:price},images:{edges:images.map(node=>({node}))},variants:{edges:[{node:variant}]},options:[]};
 }
