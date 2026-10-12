@@ -83,3 +83,11 @@ Registry schema correction: replaced the single `role` enum with a validated `ro
 
 
 R2 implementation record: [Cloudflare R2 Main Media CDN — Implementation Record](cloudflare-r2-media-cdn-implementation-2026-10-12.md). The separate Worker has not been deployed; no Cloudflare resources or production objects were changed.
+
+
+## Verification delta — 2026-10-12 (follow-up)
+
+- Re-read PR #63 metadata and commit checks: still open/draft, unmerged, `mergeable=false`; latest reviewed head at time of check is `ba50a7d50da7c91e54de3b6924e707aa733c4243`. Combined commit statuses are empty and no PR workflow runs were returned. This is absence of CI evidence, not a passing build.
+- Re-checked the Dropbox raw-only BIGO item. `/ResoFit/BIGO/raw-captures/1102883606-20261010T224651Z-raw.mp4` is only 72,037 bytes (70.35 KiB) despite its sidecar claiming a 59.03-second, 1080×1920 H.264 capture. Its matching JSON and cover exist, but no processed MP4 with the same capture timestamp exists. This is likely a failed/truncated raw capture rather than a simple missing processed copy. Preserve it for diagnosis; do not publish or blindly reprocess it. Other processed captures for the same host exist at 22:01:53Z, 22:08:22Z, and 22:22:45Z.
+- Queried the current failed Google Drive archive rows. Four failures are all old Vercel Blob source URLs under `ab2ttlkn9no0tuoa.public.blob.vercel-storage.com`, with HTTP 403 recorded and `attempt_count=1`. They include captures dated 2026-09-20, 2026-09-29, 2026-10-08 and 2026-10-09. Do not mass-retry these records: validate object accessibility and replace the source reference only with a verified existing archive copy or a successfully checksum-verified Dropbox-origin copy. Current Drive OAuth healthcheck still cannot be invoked through the available connector surface.
+- No Dropbox file was changed, no Drive archive retry was launched, and no production schema/function/configuration was changed during this follow-up.
