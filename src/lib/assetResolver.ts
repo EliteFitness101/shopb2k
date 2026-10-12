@@ -8,7 +8,7 @@ export type MediaProvider = {
   enabled: boolean;
   public_delivery: boolean;
   health_status: "unknown" | "healthy" | "degraded" | "unhealthy";
-  role: string;
+  roles: string[];
 };
 type RegisteredLocation = { provider_id: string; asset_url: string; priority: number; verified_at: string | null };
 
@@ -38,13 +38,13 @@ function isSafeDeliveryUrl(value: unknown): value is string {
 export async function getMediaProviderRegistry(forceRefresh = false): Promise<MediaProvider[]> {
   if (!forceRefresh && providerCache && Date.now() - providerCache.at < REGISTRY_TTL_MS) return providerCache.providers;
   const { data, error } = await db().from("media_provider_registry")
-    .select("provider_id,priority,enabled,public_delivery,health_status,role")
+    .select("provider_id,priority,enabled,public_delivery,health_status,roles")
     .eq("enabled", true).eq("public_delivery", true).eq("health_status", "healthy")
-    .in("role", ["delivery", "transform"]).order("priority", { ascending: true });
+    .overlaps("roles", ["delivery", "transform"]).order("priority", { ascending: true });
   if (error) throw new Error("Media provider registry is unavailable");
   const providers = (Array.isArray(data) ? data : []).filter((p: MediaProvider) =>
     p && typeof p.provider_id === "string" && Number.isFinite(Number(p.priority)) && p.enabled
-    && p.public_delivery && p.health_status === "healthy" && ["delivery", "transform"].includes(p.role));
+    && p.public_delivery && p.health_status === "healthy" && Array.isArray(p.roles) && p.roles.some((role) => ["delivery", "transform"].includes(role)));
   providerCache = { at: Date.now(), providers };
   return providers;
 }
