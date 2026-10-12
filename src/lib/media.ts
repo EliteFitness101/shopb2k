@@ -1,21 +1,10 @@
 // Central media registry — single source of truth for media paths and CDN transforms.
 // No path literals should be duplicated in components.
 
-import { cloudinaryVisualUrl, getCloudinaryVisualAsset } from "./cloudinaryVisuals";
-import { normalizeAssetCandidate, resolveAssetUrl } from "@/lib/assetResolver";
+import { resolveRegisteredAssetUrl } from "@/lib/assetResolver";
 
-const cloudinaryCommunityPoster = cloudinaryVisualUrl(getCloudinaryVisualAsset("resofit-community-poster")!);
-const cloudinaryCommunityVideo = cloudinaryVisualUrl(getCloudinaryVisualAsset("resofit-community-video")!);
-
-const DEFAULT_MEDIA_CANDIDATES = [
-  normalizeAssetCandidate(cloudinaryCommunityPoster || "", "cloudinary"),
-  normalizeAssetCandidate("https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/buffer/assets/cover/resofit-community-poster.webp", "blob"),
-  normalizeAssetCandidate("https://pub-6a0f7b69f1d34d3c9a4a49d8de94d2b3.r2.dev/media/community/resofit-community.webp", "r2"),
-];
-
-export async function resolveCommunityPoster(): Promise<string> {
-  return resolveAssetUrl(DEFAULT_MEDIA_CANDIDATES);
-}
+export const resolveCommunityPoster = () => resolveRegisteredAssetUrl("community-poster");
+export const resolveCommunityVideo = () => resolveRegisteredAssetUrl("community-video");
 
 /** Community cinematic assets.
  * Cloudinary is the production visual-experience CDN. If the public cloud name
@@ -26,8 +15,8 @@ export const MEDIA: {
   communityVideo: string | null;
   communityCaptions: string | null;
 } = {
-  communityPoster: cloudinaryCommunityPoster || null,
-  communityVideo: cloudinaryCommunityVideo || null,
+  communityPoster: null,
+  communityVideo: null,
   communityCaptions: null,
 };
 
