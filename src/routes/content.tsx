@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Sparkles, Video, CheckCircle2, AlertTriangle, Loader2, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { MARTIAL_VIDEOS } from "@/content/martialVideos";
+import { resolveRegisteredAssetUrl } from "@/lib/assetResolver";
 
 const BUFFER_API = "https://api.buffer.com";
 const BUFFER_CHANNELS = {
@@ -21,16 +22,37 @@ function gqlString(value: unknown) {
   return JSON.stringify(String(value ?? ""));
 }
 
-const BUFFER_MEDIA_HOST = "ab2ttlkn9no0tuoa.public.blob.vercel-storage.com";
-const BUFFER_MEDIA_PREFIX = "/buffer/assets/";
-
 function assertBufferMediaUrl(mediaUrl: string) {
   let parsed: URL;
-  try { parsed = new URL(mediaUrl); } catch { throw new Error("Media URL must be a valid HTTPS Buffer asset URL"); }
-  if (parsed.protocol !== "https:" || parsed.hostname !== BUFFER_MEDIA_HOST || !parsed.pathname.startsWith(BUFFER_MEDIA_PREFIX)) {
-    throw new Error("Only public Vercel Blob URLs under /buffer/assets/ are allowed for content media");
+  try { parsed = new URL(mediaUrl); } catch { throw new Error("Media URL must be a valid HTTPS URL resolved from the media registry"); }
+  const host = parsed.hostname.toLowerCase();
+  if (parsed.protocol !== "https:" || host.endsWith("blob.vercel-storage.com") || host.endsWith(".r2.dev") || host.includes("localhost")) {
+    throw new Error("Media URL is not an approved production delivery URL");
   }
   return parsed.toString();
+}
+
+async function resolveRegisteredAssetUrlForServer(supabaseAdmin: any, assetKey: string): Promise<string | null> {
+  const { data: providers, error: providerError } = await supabaseAdmin.from("media_provider_registry")
+    .select("provider_id,priority").eq("enabled", true).eq("public_delivery", true)
+    .eq("health_status", "healthy").in("role", ["delivery", "transform"]).order("priority", { ascending: true });
+  if (providerError || !providers?.length) return null;
+  const { data: locations, error: locationError } = await supabaseAdmin.from("media_asset_locations")
+    .select("provider_id,asset_url,priority,verified_at").eq("asset_key", assetKey).eq("enabled", true).not("verified_at", "is", null);
+  if (locationError || !locations?.length) return null;
+  const priority = new Map(providers.map((provider: any) => [provider.provider_id, Number(provider.priority)]));
+  const candidates = locations.filter((location: any) => priority.has(location.provider_id) && typeof location.asset_url === "string")
+    .sort((a: any, b: any) => (priority.get(a.provider_id)! - priority.get(b.provider_id)!) || (a.priority - b.priority));
+  for (const candidate of candidates) {
+    try {
+      const parsed = new URL(candidate.asset_url);
+      const host = parsed.hostname.toLowerCase();
+      if (parsed.protocol !== "https:" || host.endsWith("blob.vercel-storage.com") || host.endsWith(".r2.dev") || host.includes("localhost")) continue;
+      const response = await fetch(parsed.toString(), { method: "HEAD", signal: AbortSignal.timeout(2000) });
+      if (response.ok) return parsed.toString();
+    } catch { /* Try the next registry-approved location. */ }
+  }
+  return null;
 }
 
 async function publishDirectToBuffer(input: {
@@ -108,11 +130,13 @@ export const Route = createFileRoute("/content")({
         const body = await request.json().catch(() => ({}));
         const asset = MARTIAL_VIDEOS.find((item) => item.id === body.assetId);
         if (!asset) return Response.json({ ok: false, error: "Unknown content asset" }, { status: 400 });
+        const mediaUrl = await resolveRegisteredAssetUrlForServer(supabaseAdmin, asset.assetKey);
+        if (!mediaUrl) return Response.json({ ok: false, error: "No verified healthy public media location is registered for this asset" }, { status: 503 });
 
         const { data: existing, error: duplicateError } = await supabaseAdmin
           .from("content_queue")
           .select("id,status,buffer_post_ids")
-          .eq("asset_url", asset.url)
+          .eq("asset_url", mediaUrl)
           .limit(1);
         if (duplicateError) throw duplicateError;
         if (existing?.length) return Response.json({ ok: true, status: "duplicate", queueId: existing[0].id, bufferPostIds: existing[0].buffer_post_ids ?? [] });
@@ -120,7 +144,7 @@ export const Route = createFileRoute("/content")({
         const geminiKey = process.env.GEMINI_API_KEY;
         if (!geminiKey) return Response.json({ ok: false, error: "GEMINI_API_KEY is not configured server-side" }, { status: 503 });
 
-        const mediaResponse = await fetch(asset.url);
+        const mediaResponse = await fetch(mediaUrl);
         if (!mediaResponse.ok) throw new Error(`Media fetch failed: ${mediaResponse.status}`);
         const mediaBytes = new Uint8Array(await mediaResponse.arrayBuffer());
         const mimeType = mediaResponse.headers.get("content-type") || "video/mp4";
@@ -179,7 +203,7 @@ export const Route = createFileRoute("/content")({
           .insert({
             sku: `MARTIAL-${asset.id}`,
             title: enrichment.title || asset.label,
-            asset_url: asset.url,
+            asset_url: mediaUrl,
             public_id: asset.id,
             caption: enrichment.caption || enrichment.hook || enrichment.platforms?.tiktok || enrichment.title || asset.label,
             platforms: ["tiktok", "youtube_shorts", "google_business"],
@@ -210,7 +234,7 @@ export const Route = createFileRoute("/content")({
         try {
           for (const platform of Object.keys(BUFFER_CHANNELS) as BufferChannel[]) {
             const post = await publishDirectToBuffer({
-              mediaUrl: asset.url,
+              mediaUrl,
               title: enrichment.title || asset.label,
               caption: platformCaption(platform),
               platform,
@@ -264,6 +288,13 @@ export const Route = createFileRoute("/content")({
 });
 
 function ContentEnginePage() {
+  const [resolvedVideoUrls, setResolvedVideoUrls] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all(MARTIAL_VIDEOS.map(async (asset) => [asset.id, await resolveRegisteredAssetUrl(asset.assetKey)] as const))
+      .then((entries) => { if (!cancelled) setResolvedVideoUrls(Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => Boolean(entry[1])).map(([id, url]) => [id, url]))); });
+    return () => { cancelled = true; };
+  }, []);
   const { user, loading } = useAuth();
   const [running, setRunning] = useState<string | null>(null);
   const [results, setResults] = useState<Record<string, string>>({});
@@ -322,7 +353,7 @@ function ContentEnginePage() {
         <section className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {MARTIAL_VIDEOS.map((asset) => (
             <article key={asset.id} className="overflow-hidden rounded-xl border border-border bg-card">
-              <video src={asset.url} muted playsInline preload="metadata" className="aspect-video w-full object-cover" />
+              <video src={resolvedVideoUrls[asset.id] ?? undefined} muted playsInline preload="metadata" className="aspect-video w-full object-cover" />
               <div className="p-4"><div className="flex items-start justify-between gap-3"><div><h2 className="text-sm font-semibold">{asset.label}</h2><p className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground">{asset.role.replaceAll("_", " ")}</p></div><Video className="h-4 w-4 text-gold" /></div>
                 <button onClick={() => runAsset(asset.id)} disabled={Boolean(running)} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-xs uppercase tracking-widest disabled:opacity-50">{running === asset.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} ChatB2K Enrich + Direct Buffer</button>
                 {results[asset.id] && <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">{results[asset.id].includes("published") || results[asset.id] === "duplicate" ? <CheckCircle2 className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />} {results[asset.id]}</p>}
