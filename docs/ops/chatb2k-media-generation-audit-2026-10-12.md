@@ -32,6 +32,7 @@ The branch mirrors the active runtime sources so the proposed patch is reviewabl
 
 - Type-check/lint/build the branch and compare mirrored function snapshots to the active runtime hashes.
 - Verify watchdog invocation reaches `buffer-publisher` without 401 using the configured cron secret, without printing secrets.
+- Verify ECHO V13's new Gemini/media health summary records ledger successes/errors and Flow failures without initiating unbounded generation retries.
 - In a controlled test, force Telegram fanout to fail after Buffer success and confirm parent stays successful, child error is logged, and retry does not duplicate the parent post or child job.
 - Confirm unknown/pending rights remain ineligible across ingestion, enrichment, autopilot, and publisher.
 - Run one explicitly rights-cleared asset through each applicable platform's QA, then verify actual provider post IDs and public URLs.
