@@ -16,13 +16,13 @@ Status: DRAFT / NOT DEPLOYED
 - Updated `src/lib/media.ts` to remove hardcoded Blob and `r2.dev` candidate URLs and fail closed until verified registry locations exist.
 
 ## Known incomplete work
-- `src/components/CinematicWellnessExperience.tsx` still contains hardcoded Vercel Blob video URLs. It has not yet been connected to the new registry resolver. Therefore the app is not yet fully Blob-independent.
+- `src/components/CinematicWellnessExperience.tsx` now resolves its poster and hero-video asset keys through the registry helper; its hardcoded Blob video list was removed. A repo scan still found hardcoded Blob URLs/host checks in `src/content/martialVideos.ts`, `src/content/martialXAssets.ts`, `src/routes/og.tsx`, `src/config/martialXExecProducts.ts`, `src/routes/__root.tsx`, `src/routes/wellness.index.tsx`, `src/routes/wellness.makaveli.tsx`, `src/lib/shopify.ts`, and `src/routes/content.tsx`. Those consumers are not yet migrated.
 - The migration exists in Git only; it has NOT been applied to production Supabase.
 - All seeded providers are disabled and unknown. No public asset locations have been inserted. No provider health probe, CDN transform test, or failover test has passed.
 - No production deploy, asset rewrite, storage migration, or media-generation job was triggered.
 
 ## Required next steps
-1. Remove the hardcoded cinematic Blob video URLs and resolve stable asset keys through the registry helper.
+1. Migrate the remaining content/product/route consumers listed above to stable asset keys and the registry helper without breaking catalog/product media.
 2. Run lint, type-check/build and repository-wide scan for hardcoded Blob / `r2.dev` delivery references.
 3. Review and apply the migration through the approved production release path.
 4. Populate provider rows only after configuration is confirmed and live health probes pass; insert asset-location rows only after URL, bytes, MIME type, checksum and rights/QA verification.
@@ -34,7 +34,7 @@ Status: DRAFT / NOT DEPLOYED
 | Gate | Status |
 |---|---|
 | Registry/resolver source foundation | STAGED |
-| No hardcoded Blob delivery path | FAIL — cinematic UI consumer remains |
+| No hardcoded Blob delivery path | FAIL — additional content/product/route consumers remain |
 | Production migration applied | NOT DONE |
 | Providers configured and healthy | NOT VERIFIED |
 | Asset mappings verified | NOT DONE |
