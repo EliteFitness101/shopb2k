@@ -6,19 +6,11 @@ import { createIdentity, handoffToChatB2K, type IdentityChannel } from "@/lib/id
 import { CTA } from "@/lib/ctas";
 import heroImg from "@/assets/hero-barbell.jpg";
 
-import { MEDIA, mediaExists } from "@/lib/media";
+import { mediaExists } from "@/lib/media";
+import { resolveRegisteredAssetUrl } from "@/lib/assetResolver";
 
-const DEFAULT_POSTER = MEDIA.communityPoster;
-const DEFAULT_VIDEO = MEDIA.communityVideo;
-const DEFAULT_CAPTIONS = MEDIA.communityCaptions;
-
-// Production cinematic hero carousel. Each video plays to completion before
-// the next Blob asset is mounted. No Blob token is required in the client.
-const HERO_VIDEO_CAROUSEL = [
-  "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/shop/Athletic_model_wearing_performan%E2%80%A6_20260913181729.mp4",
-  "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/shop/Couple_experiencing_wellness_adv%E2%80%A6_20260911183919.mp4",
-  "https://ab2ttlkn9no0tuoa.public.blob.vercel-storage.com/shop/Couples_getting_foot_soak_and_20260912210821.mp4",
-] as const;
+// Stable keys resolve through the enabled, healthy media-provider registry.
+const HERO_VIDEO_ASSET_KEYS = ["hero-video-1", "hero-video-2", "hero-video-3"] as const;
 
 // Four cinematic phases — 0–2 / 2–4 / 4–6 / 6–8 seconds.
 // Poster-first (no LCP hit); optional muted video enhancement on idle.
@@ -203,7 +195,7 @@ function IdentityGate({ open, onClose, onComplete }: IdentityGateProps) {
 }
 
 interface Props {
-  /** Optional single video override. If omitted, the production Blob carousel is used. */
+  /** Optional single video override. If omitted, registry-resolved videos are used. */
   videoSrc?: string | null;
   posterSrc?: string | null;
   /** Optional captions track (WebVTT). If absent, a caption fallback message is provided for AT. */
@@ -212,8 +204,8 @@ interface Props {
 
 export function CinematicWellnessExperience({
   videoSrc,
-  posterSrc = DEFAULT_POSTER,
-  captionsSrc = DEFAULT_CAPTIONS,
+  posterSrc,
+  captionsSrc,
 }: Props) {
   const navigate = useNavigate();
   const reducedMotion = useReducedMotion();
@@ -224,13 +216,16 @@ export function CinematicWellnessExperience({
   const [playing, setPlaying] = useState(false);
   const [captionsAvailable, setCaptionsAvailable] = useState(false);
   const [posterAvailable, setPosterAvailable] = useState(false);
+  const [resolvedPoster, setResolvedPoster] = useState<string | null>(null);
+  const [resolvedHeroVideos, setResolvedHeroVideos] = useState<string[]>([]);
   const [availableVideos, setAvailableVideos] = useState<boolean[]>([]);
   const [videoIndex, setVideoIndex] = useState(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
   const viewFiredRef = useRef(false);
 
-  const videoSources = videoSrc ? [videoSrc] : [...HERO_VIDEO_CAROUSEL];
+  const effectivePosterSrc = posterSrc ?? resolvedPoster;
+  const videoSources = videoSrc ? [videoSrc] : resolvedHeroVideos;
   const currentVideoSrc = videoSources[videoIndex] ?? videoSources[0] ?? null;
   const currentVideoAvailable = Boolean(currentVideoSrc && availableVideos[videoIndex]);
 
@@ -270,12 +265,25 @@ export function CinematicWellnessExperience({
     return () => window.clearInterval(id);
   }, [reducedMotion]);
 
-  // Probe the poster and every configured Blob video so a failed asset is skipped.
+  // Resolve stable asset keys, then probe the selected public URLs.
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.all([
+      resolveRegisteredAssetUrl("community-poster"),
+      Promise.all(HERO_VIDEO_ASSET_KEYS.map((key) => resolveRegisteredAssetUrl(key))),
+    ]).then(([poster, videos]) => {
+      if (cancelled) return;
+      setResolvedPoster(poster);
+      setResolvedHeroVideos(videos.filter((url): url is string => Boolean(url)));
+    });
+    return () => { cancelled = true; };
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       const [poster, videos] = await Promise.all([
-        mediaExists(posterSrc),
+        mediaExists(effectivePosterSrc),
         Promise.all(videoSources.map((source) => mediaExists(source))),
       ]);
       if (cancelled) return;
@@ -286,10 +294,8 @@ export function CinematicWellnessExperience({
       if (videoSrc && videos[0]) setCaptionsAvailable(await mediaExists(captionsSrc));
       else setCaptionsAvailable(false);
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, [videoSrc, posterSrc, captionsSrc]);
+    return () => { cancelled = true; };
+  }, [videoSrc, effectivePosterSrc, captionsSrc, resolvedHeroVideos]);
 
   // Idle-load video enhancement — never blocks LCP, and only when a verified file exists.
   useEffect(() => {
@@ -382,7 +388,7 @@ export function CinematicWellnessExperience({
           asset is used only once verified to exist; otherwise we never point at it. */}
       <div className="pointer-events-none absolute inset-0 z-0">
         <img
-          src={posterAvailable && posterSrc ? posterSrc : heroImg}
+          src={posterAvailable && effectivePosterSrc ? effectivePosterSrc : heroImg}
           alt=""
           aria-hidden="true"
           width={1536}
@@ -396,7 +402,7 @@ export function CinematicWellnessExperience({
             key={currentVideoSrc}
             ref={videoRef}
             src={currentVideoSrc}
-            poster={posterAvailable && posterSrc ? posterSrc : undefined}
+            poster={posterAvailable && effectivePosterSrc ? effectivePosterSrc : undefined}
             muted={muted}
             playsInline
             loop={videoSources.length === 1}
