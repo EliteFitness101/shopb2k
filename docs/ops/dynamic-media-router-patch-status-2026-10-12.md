@@ -41,8 +41,10 @@ Status: DRAFT / NOT DEPLOYED
 - `reso-web` has production-targeted Cloudinary config entries (`CLOUDINARY_URL`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`) and ImageKit config entries (`IMAGEKIT_URL_ENDPOINT`, `IMAGEKIT_PRIVATE_KEY`, `IMAGEKIT_PUBLIC_KEY`). `imagekit-auth` v23 and `imagekit-webhook` v22 are ACTIVE in production. The repository contains Cloudinary visual URL helpers and `/api/cloudinary/verify` source, but this session did not obtain a successful live HTTP/credential verification response. Classify both providers as configured/registered; live delivery and transformation readiness remains unproven.
 
 ### Cloudflare R2 target architecture
+
+- A dedicated source-only Worker is now staged at `cloudflare/media-router/src/index.ts`, with `cloudflare/media-router/wrangler.jsonc` and implementation gates in `docs/ops/cloudflare-r2-media-cdn-implementation-2026-10-12.md`. It implements read-only R2 delivery, HEAD/GET, byte ranges, ETags, caching, CORS, a strict public-prefix allowlist and optional bounded image transforms. It is not deployed or build-verified; `/healthz` reports configuration presence, not live bucket health.
 - R2 is the planned primary origin/delivery provider for `media.resofit.fit`, with a custom domain (not `r2.dev`), registry-based origin selection, verified asset manifest and checksums, cache/transform layer, and deterministic failover to verified Cloudinary/ImageKit URLs. Dropbox/Google Drive remain private source/archive providers, never public delivery endpoints.
-- No Cloudflare account/bucket/domain verification or R2 runtime credentials were accessible in this audit. The R2 registry seed stays disabled/unknown until bucket, custom domain, CORS, caching, auth boundaries, and live GET/HEAD probes are verified.
+- No Cloudflare account/bucket/domain verification or R2 runtime credentials were accessible in this audit. The R2 registry seed stays disabled/unknown until bucket, custom domain, CORS, caching, auth boundaries, and live GET/HEAD probes are verified. The separate Worker config intentionally remains source-only until Cloudflare confirms the `resofit-cdn` bucket, zone route, and a distinct custom origin for transforms.
 
 ## Required next steps
 1. Fix the Google Drive archiver's 403 source URL cases; confirm its healthcheck and perform one controlled capture archive with byte-count/SHA-256 read-back.
@@ -78,3 +80,6 @@ Source-only commits were added to this same draft branch for the following paths
 
 
 Registry schema correction: replaced the single `role` enum with a validated `roles` array, allowing each provider to have multiple capabilities without forcing Drive into archive-only mode. Resolver queries now select providers with delivery/transform roles via array overlap. Production Supabase still has no `media_provider_registry` or `media_asset_locations` tables; the migration is source-only and has not been applied.
+
+
+R2 implementation record: [Cloudflare R2 Main Media CDN — Implementation Record](cloudflare-r2-media-cdn-implementation-2026-10-12.md). The separate Worker has not been deployed; no Cloudflare resources or production objects were changed.
