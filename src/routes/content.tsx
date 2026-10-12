@@ -35,7 +35,7 @@ function assertBufferMediaUrl(mediaUrl: string) {
 async function resolveRegisteredAssetUrlForServer(supabaseAdmin: any, assetKey: string): Promise<string | null> {
   const { data: providers, error: providerError } = await supabaseAdmin.from("media_provider_registry")
     .select("provider_id,priority").eq("enabled", true).eq("public_delivery", true)
-    .eq("health_status", "healthy").in("role", ["delivery", "transform"]).order("priority", { ascending: true });
+    .eq("health_status", "healthy").overlaps("roles", ["delivery", "transform"]).order("priority", { ascending: true });
   if (providerError || !providers?.length) return null;
   const { data: locations, error: locationError } = await supabaseAdmin.from("media_asset_locations")
     .select("provider_id,asset_url,priority,verified_at").eq("asset_key", assetKey).eq("enabled", true).not("verified_at", "is", null);
