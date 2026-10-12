@@ -1,0 +1,26 @@
+name: Digital delivery worker validation
+
+on:
+  pull_request:
+    paths:
+      - "supabase/functions/digital-product-delivery-worker/**"
+      - ".github/workflows/digital-delivery-worker-check.yml"
+  push:
+    branches: [main]
+    paths:
+      - "supabase/functions/digital-product-delivery-worker/**"
+      - ".github/workflows/digital-delivery-worker-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  deno-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check worker
+        run: deno check supabase/functions/digital-product-delivery-worker/index.ts
