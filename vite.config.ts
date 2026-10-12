@@ -17,7 +17,10 @@ export default defineConfig({
           manualChunks(id) {
             if (!id.includes("node_modules")) return;
             if (id.includes("/react/") || id.includes("/react-dom/") || id.includes("/scheduler/")) return "vendor-react";
-            if (id.includes("@tanstack/react-router") || id.includes("@tanstack/react-query") || id.includes("@tanstack/router-core") || id.includes("@tanstack/query-core")) return "vendor-tanstack";
+            // Keep TanStack Router/Query in Rollup's default graph. Forcing these mutually
+            // dependent packages into one manual chunk caused a production TDZ ReferenceError
+            // in vendor-tanstack ("Cannot access 'Cn' before initialization").
+            if (id.includes("@tanstack/react-router") || id.includes("@tanstack/react-query") || id.includes("@tanstack/router-core") || id.includes("@tanstack/query-core")) return;
             if (id.includes("@supabase/") || id.includes("@lovable.dev/")) return "vendor-platform";
             if (id.includes("recharts") || id.includes("victory")) return "vendor-charts";
             if (id.includes("@radix-ui/") || id.includes("lucide-react") || id.includes("cmdk") || id.includes("vaul")) return "vendor-ui";
