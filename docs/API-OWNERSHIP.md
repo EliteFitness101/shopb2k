@@ -43,6 +43,7 @@ These examples establish that `/api/*` is not a single duplicate API root; it is
 - Its current source config rewrites `/api/v1/:path*` to `/api/index.py`. That FastAPI source contains a mock `POST /api/verify-payment` handler that returns `SUCCESS` and grants a vault entitlement without checking a payment provider. **Do not use this handler for real payment verification.** This is a source-level security finding, not proof that the endpoint is currently reachable.
 - A separate repo `EliteFitness101/resoflex-intelligence-node` also references `api.resofit.fit` in a scaffold and exposes static illustrative counters in `api/stats.js`; this is another source-level naming drift, not evidence of current DNS ownership.
 - Live external DNS/HTTP checks could not be completed from the current execution environment. The domain is verified and attached in Vercel, but current serving behavior remains unverified.
+- **Remediation state:** the attempted source write to `EliteFitness101/resonance-fitness-automation-` was rejected by GitHub integration permissions. The mock handler is therefore **not patched by this workflow**. A repository owner with write access must disable it and deploy a verified fix; do not assume the source-level risk is remediated.
 
 ## Canonical rules
 
