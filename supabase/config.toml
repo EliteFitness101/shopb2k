@@ -5,3 +5,22 @@ verify_jwt = false
 
 [functions.wellness-locator]
 verify_jwt = false
+
+# Production Edge Functions mirrored from active Supabase runtime for reviewable, additive remediation.
+[functions.buffer-publisher]
+verify_jwt = false
+
+[functions.content-asset-ingestion]
+verify_jwt = false
+
+[functions.content-intelligence-enricher]
+verify_jwt = false
+
+[functions.resofit-ecosystem-autopilot]
+verify_jwt = false
+
+[functions.echo-v13-watchdog]
+verify_jwt = false
+
+[functions.chatb2k-orchestrator]
+verify_jwt = false
