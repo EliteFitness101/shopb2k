@@ -23,4 +23,4 @@ jobs:
         with:
           deno-version: v2.x
       - name: Type-check worker
-        run: deno check supabase/functions/digital-product-delivery-worker/index.ts
+        run: deno check --no-config supabase/functions/digital-product-delivery-worker/index.ts
