@@ -1,0 +1,27 @@
+name: Guest payment callback smoke
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [fix/guest-payment-callback-route]
+permissions:
+  contents: read
+concurrency:
+  group: guest-payment-callback-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  callback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - name: Validate guest callback contract
+        run: node scripts/smoke-payment-callback.mjs
+      - name: Lint and production build
+        run: |
+          npm run lint
+          npm run build
