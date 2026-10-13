@@ -95,3 +95,9 @@ Original user-shared assessment/generator links should be preferred over transie
 - Reso-Dash's existing `src/routes/_shell.onboarding.tsx` is the detailed intake UI; baseline `generatePlan()` is client-side preview. Draft PR [#14](https://github.com/EliteFitness101/reso-dash/pull/14) adds customer sign-in, server-side entitlement claim, saved-plan generation, and saved-plan retrieval. It is unmerged/unverified; no workflow runs were returned for its latest commit.
 - NOWNOWGYM's `src/components/site/HeroMedia.tsx` currently has `HERO_CLIPS=[]`, so the app uses static poster imagery. The Canva “High-Energy Luxury Gym Promo Video” and gym landing-page designs are registered as **candidate references only**, not production MP4/image assets. The exact NOWNOWGYM design IDs are not confirmed.
 - Remaining separate fulfillment gap: no exported/ingested approved guide/PDF asset, watermarking, server-generated signed expiring buyer link, or post-purchase retrieval test has been demonstrated. The factory job remains `awaiting_ingest` with 0 assets; Flow/Veo generation history still records `BLOB_READ_WRITE_TOKEN_missing`.
+
+
+### Project-specific reference manifests
+
+- Reso-Dash authenticated plan generation/retrieval draft: [PR #14](https://github.com/EliteFitness101/reso-dash/pull/14). It reuses the existing detailed intake instead of cloning it into a second full intake form.
+- NOWNOWGYM Canva media candidate manifest: [PR #2](https://github.com/EliteFitness101/nownowgym/pull/2). It records six gym-related Canva candidates while leaving the current app hero media unchanged.
