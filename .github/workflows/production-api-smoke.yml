@@ -1,0 +1,31 @@
+name: ResoFit Production API Smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 */6 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-api-smoke
+  cancel-in-progress: true
+
+jobs:
+  api-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check canonical production API
+        env:
+          BASE_URL: https://www.resofit.fit
+        run: node scripts/smoke-api-production.mjs
