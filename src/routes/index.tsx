@@ -98,6 +98,7 @@ function Index() {
               { label: "Assessment", title: "Get My Personalized Plan", text: "60 seconds. ChatB2K™ matches your goal to the live ResoFit catalog.", to: "/me", cta: "Start assessment", accent: true },
               { label: "Programs", title: "Build My Body", text: "Strength, mobility, nutrition, recovery and longevity paths.", to: "/programs", cta: "Explore programs" },
               { label: "Equipment", title: "Premium Home Training", text: "ResoFlex™ equipment selected for practical home and performance use.", to: "/shop", cta: "Shop equipment" },
+              { label: "Official Store", title: "Shop ResoFit on Selar", text: "Browse the official ResoFit store on Selar. Product access follows the store’s checkout and delivery instructions.", href: "https://selar.com/m/resofitstore", cta: "Visit Selar Store" },
               { label: "Membership", title: "ResoLuxe Privé", text: "Concierge wellness, coaching and recovery for high-performers.", to: "/programs/$slug", params: { slug: "resoluxe" }, cta: "View membership" },
               { label: "Wellness", title: "Find a Wellness Experience", text: "Discover services, hubs and location-based wellness options.", to: "/wellness", cta: "Explore wellness" },
               { label: "Coaching", title: "Talk to CoachB2K™", text: "Move directly into premium 1:1 support when you want a human guide.", href: "https://wa.me/2348132255842?text=I%27d%20like%20to%20speak%20with%20CoachB2K%20about%20premium%20wellness%20coaching.", cta: "Chat on WhatsApp" },
