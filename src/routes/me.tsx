@@ -77,7 +77,7 @@ function MePage() {
         new Promise<Recommendation | null>((resolve) => window.setTimeout(() => resolve(null), 8000)),
       ]);
       setResult(recommendation);
-      setStep(3);
+      setStep(4);
       trackEvent("assessment_complete");
 
     } finally {
