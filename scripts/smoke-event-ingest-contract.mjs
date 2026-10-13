@@ -6,6 +6,7 @@ const [ingest, tracking, revenueOS, pixels] = await Promise.all([
   fs.readFile(new URL("../src/lib/tracking.ts", import.meta.url), "utf8"),
   fs.readFile(new URL("../src/lib/revenueOS.ts", import.meta.url), "utf8"),
   fs.readFile(new URL("../src/lib/pixels.ts", import.meta.url), "utf8"),
+  fs.readFile(new URL("../src/lib/pixels.ts", import.meta.url), "utf8"),
 ]);
 
 const allowlistBlock = ingest.match(/const PUBLIC_EVENTS = new Set\(\[([\s\S]*?)\]\);/)?.[1] ?? "";
@@ -28,4 +29,5 @@ assert.match(ingest, /\.from\("chatb2k_learning_events"\)/, "Learning loop must 
 assert.match(ingest, /function learningPlatform\(eventName: string\)/, "Learning rows must be classified by event family");
 assert.match(tracking, /supabase\.functions\.invoke\("resofit-event-ingest"/, "Storefront tracking must use canonical ingestion");
 assert.match(revenueOS, /payment\.succeeded/, "Payment event mapping remains explicit and server-only");
+assert.match(pixels, /assessment_completed:"SubmitForm"/, "TikTok assessment completion must map to SubmitForm");
 console.log(`PASS ${expectedPublicEvents.length} public event contracts, server-only payment guard, persistence, and learning loop`);
