@@ -31,7 +31,8 @@ Original user-shared assessment/generator links should be preferred over transie
 - Main route: `src/routes/me.tsx` at `https://www.resofit.fit/me`.
 - The current UI had three single-choice steps: goal, activity, diet. It called `chatb2k-recommend` with a transient session UUID and sent the user to an exact SKU/handle recommendation when available.
 - The additive patch adds a fourth plan-focus step (meal+workout, meal plan, workout plan, digital guide/reset, interactive trainer, equipment) and forwards a bounded attribution allowlist (`rsid`, `session_id`, UTM fields, `ttclid`, `funnel_origin`) through the recommendation request and destination URL. It does not add PII to URLs.
-- `resofit-product-experience` v5 reads `resofit_product_experience_config` by canonical SKU and returns the configured product experience and published accessories.
+- `resofit-product-experience` v6 reads `resofit_product_experience_config` by canonical SKU and returns the configured product experience and published accessories.
+- `chatb2k-recommend` v10 scores against published, in-stock canonical products and now writes the bounded plan-focus and attribution fields (`rsid`, UTM fields, `ttclid`, `funnel_origin`) into `chat_commerce_events` metadata. This records what the browser sends; it does not prove a completed purchase or generated deliverable.
 - `resofit-personal-plan` v5 requires an authenticated user and an active entitlement, reads `resofit_product_experience_config`, generates a plan, and upserts it into `resofit_personalized_plans`. This is the correct authenticated/post-entitlement generation path; do not call it from the public assessment or bypass entitlement checks.
 - Product experience rows already reference Canva source IDs for `RESO-DIG-MW-001`, `res-dig-nut`, and several B2K products. This mapping should be preserved and reconciled against the canonical SKU registry.
 - Prior live QA evidence still records `RESO-DIG-LIFE-001` as `awaiting_ingest` with zero attached/approved assets and historical media-generation failures due to missing `BLOB_READ_WRITE_TOKEN`. A deployed generator is not proof of completed asset ingestion or fulfillment.
@@ -60,3 +61,28 @@ Original user-shared assessment/generator links should be preferred over transie
 - Verify recommendation function accepts/retains attribution and focus fields, not merely that the client sends them.
 - Trace one assessment through exact recommendation, canonical SKU/price, Paystack confirmation, entitlement, plan generation, asset ingestion, saved plan and buyer retrieval.
 - Confirm actual NOWNOWGYM Canva design IDs and asset rights/QA before production use.
+
+
+## Changes made during this audit (2026-10-13)
+
+### Production metadata / backend (deployed, execution evidence limited)
+
+- Registered **23 legacy Canva design references** in `public.content_asset_registry` under campaign `legacy-architecture-recovery-2026-10-13`. All are deliberately `qa_status=hold`, `rights_status=unknown`, `commercial_status=internal_reference`; the registry metadata says runtime/autofill/export are unverified and publishing is disallowed until QA.
+- Registered **6 gym-app visual candidates** under `gym-app-visual-candidates-2026-10-13`. All remain on hold with `association_status=candidate_unconfirmed`; search results do not prove these are the exact NOWNOWGYM designs.
+- Added `RESO-DIG-LIFE-001` product-experience configuration with a seven-day plan shape and UX reference IDs. It explicitly records `fulfillment_status=awaiting_ingest`; it does not invent a generated asset or mark the SKU fulfilled.
+- Added separate `promise.ux_references` metadata to `RESO-DIG-MW-001`, `res-dig-nut`, and `RESO-PT-TRIAL-7D`, preserving existing `source_assets` and canonical SKUs.
+- Deployed `resofit-product-experience` v6 with an explicit CORS allowlist for `https://resofit.fit` and `https://www.resofit.fit`.
+- Deployed `chatb2k-recommend` v10 to record bounded plan-focus and attribution fields in recommendation-event metadata.
+- Both functions are reported ACTIVE and their deployed source contains the intended changes. A live browser/API call against the production origins has **not** been independently completed in this audit, so runtime CORS and persisted attribution remain evidence level B until exercised.
+
+### Frontend PR / CI
+
+- Draft PR: [#68 — Integrate legacy assessment UX with ChatB2K recommendation context](https://github.com/EliteFitness101/shopb2k/pull/68). It adds the fourth plan-focus step and attribution handoff to `src/routes/me.tsx`; it is **not merged or deployed**.
+- The UX lint, full lint diagnostic, revenue smoke, and production gate workflows reported success for the updated commit.
+- The production-bundle browser smoke failed before build/browser tests at `npm ci`: `package.json` requests `@lovable.dev/vite-tanstack-config@2.25.3`, while `package-lock.json` resolves `2.7.7`. The changed files do not include either dependency file. Do not claim a successful build/browser verification until the lockfile is regenerated and the workflow passes.
+
+### Still blocking end-to-end fulfillment
+
+- Latest `digital_product_factory_jobs` row for `RESO-DIG-LIFE-001` remains `awaiting_ingest`, `asset_count=0`, `approved_asset_count=0` (updated 2026-10-12 19:07:53 UTC).
+- The latest recorded Flow/Veo generation failure remains `BLOB_READ_WRITE_TOKEN_missing` (2026-10-09 06:00:14 UTC).
+- Therefore the assessment/recommendation UX and reference metadata have been improved, but personalized guide generation, verified post-payment attachment, expiring buyer delivery and retrieval are **not yet end-to-end verified**.
