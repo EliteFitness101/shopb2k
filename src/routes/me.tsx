@@ -38,11 +38,13 @@ async function canonicalRecommendation(a: Answers): Promise<Recommendation | nul
   if (!supabase && a.goal !== "reset") return null;
   try {
     const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get("session_id") || window.sessionStorage.getItem("resofit:assessment-session") || (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `assessment-${Date.now()}`);
-    window.sessionStorage.setItem("resofit:assessment-session", sessionId);
+    let storedSessionId: string | null = null;
+    try { storedSessionId = window.sessionStorage.getItem("resofit:assessment-session"); } catch { /* Storage can be unavailable in privacy-restricted browsers. */ }
+    const sessionId = (params.get("session_id") || storedSessionId || (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `assessment-${Date.now()}`)).slice(0, 128);
+    try { window.sessionStorage.setItem("resofit:assessment-session", sessionId); } catch { /* The request can proceed without session storage. */ }
     const attribution: Record<string, string> = {};
     for (const key of ["rsid", "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "ttclid", "funnel_origin"]) {
-      const value = params.get(key);
+      const value = params.get(key)?.slice(0, 200);
       if (value) attribution[key] = value;
     }
     if (a.goal === "reset") {
