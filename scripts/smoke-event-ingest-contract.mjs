@@ -6,7 +6,6 @@ const [ingest, tracking, revenueOS, pixels] = await Promise.all([
   fs.readFile(new URL("../src/lib/tracking.ts", import.meta.url), "utf8"),
   fs.readFile(new URL("../src/lib/revenueOS.ts", import.meta.url), "utf8"),
   fs.readFile(new URL("../src/lib/pixels.ts", import.meta.url), "utf8"),
-  fs.readFile(new URL("../src/lib/pixels.ts", import.meta.url), "utf8"),
 ]);
 
 const allowlistBlock = ingest.match(/const PUBLIC_EVENTS = new Set\(\[([\s\S]*?)\]\);/)?.[1] ?? "";
