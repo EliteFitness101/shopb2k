@@ -20,6 +20,26 @@ export const Route = createFileRoute("/product/$handle")({
     if (!product) throw notFound();
     return { product };
   },
+  head: ({ loaderData }) => {
+    const product = loaderData?.product;
+    if (!product) return { meta: [{ title: "Product — ResoFit" }] };
+    const canonicalUrl = \`https://www.resofit.fit/product/\${product.handle}\`;
+    const description = (product.description ?? "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
+    const image = product.images.edges[0]?.node.url;
+    return {
+      meta: [
+        { title: \`\${product.title} | ResoFit\` },
+        { name: "description", content: description || \`Explore \${product.title} from ResoFit. Review product details, price and delivery options.\` },
+        { property: "og:title", content: \`\${product.title} | ResoFit\` },
+        { property: "og:description", content: description || \`Explore \${product.title} from ResoFit.\` },
+        { property: "og:type", content: "product" },
+        { property: "og:url", content: canonicalUrl },
+        ...(image ? [{ property: "og:image", content: image }] : []),
+        { name: "twitter:card", content: image ? "summary_large_image" : "summary" },
+      ],
+      links: [{ rel: "canonical", href: canonicalUrl }],
+    };
+  },
   component: ProductPage,
   errorComponent: function ErrorComponent({ error, reset }) {
     const router = useRouter();
@@ -203,7 +223,25 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
     });
   }, [product.id, product.sku, selectedVariant]);
 
+  const productStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    description: (product.description ?? "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(),
+    ...(product.sku ? { sku: product.sku } : {}),
+    ...(product.vendor ? { brand: { "@type": "Brand", name: product.vendor } } : {}),
+    image: images.map((image) => image.url),
+    offers: variants.map((variant) => ({
+      "@type": "Offer",
+      priceCurrency: variant.price.currencyCode,
+      price: variant.price.amount,
+      availability: variant.availableForSale ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+      url: \`https://www.resofit.fit/product/\${product.handle}\`,
+    })),
+  };
   return <article className="mx-auto max-w-7xl px-6 py-12">
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productStructuredData).replace(/</g, "\\u003c") }} />
     <Link to="/shop" className="mb-8 inline-flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground hover:text-gold"><ArrowLeft className="h-3 w-3" /> Back to shop</Link>
     <div className="grid gap-10 lg:grid-cols-[1.08fr_.92fr] lg:gap-16">
       <div className="lg:sticky lg:top-6 lg:self-start"><div className="group relative overflow-hidden rounded-[1.5rem] border border-gold/15 bg-card shadow-2xl shadow-black/20"><ProductImage src={images[activeImg]?.url} alt={images[activeImg]?.altText || `${product.title} product image`} title={product.title} category={product.productType} productId={product.id} priority aspect="square" /><div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2"><span className="rounded-full border border-white/15 bg-black/70 px-3 py-1.5 text-[10px] text-white backdrop-blur">{images.length ? `Image ${activeImg + 1} of ${images.length}` : "Product preview"}</span><button type="button" onClick={() => setMediaViewerOpen(true)} aria-label="Open product media viewer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/75 px-3 py-2 text-[10px] uppercase tracking-wider text-white backdrop-blur transition hover:border-gold hover:text-gold"><Maximize2 className="h-3.5 w-3.5" /> Expand</button></div>{images.length > 1 && <><button type="button" onClick={previousImage} aria-label="Previous product image" className="absolute left-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur transition hover:border-gold hover:text-gold"><ChevronLeft className="h-5 w-5" /></button><button type="button" onClick={nextImage} aria-label="Next product image" className="absolute right-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur transition hover:border-gold hover:text-gold"><ChevronRight className="h-5 w-5" /></button></>}</div>{images.length > 1 && <div className="mt-3 flex gap-2 overflow-x-auto pb-2" aria-label="Product image gallery">{images.map((img, i) => <button key={img.url} type="button" onClick={() => setActiveImg(i)} aria-pressed={i === activeImg} aria-label={`View image ${i + 1}${img.altText ? `: ${img.altText}` : ""}`} className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition ${i === activeImg ? "border-gold ring-2 ring-gold/20" : "border-border/60 opacity-75 hover:opacity-100"}`}><ProductImage src={img.url} alt={img.altText || `${product.title} view ${i + 1}`} title={`${product.title} view ${i + 1}`} category={product.productType} tier={i === 0 ? "medium" : "low"} /></button>)}</div>}<p className="mt-2 text-[10px] text-muted-foreground">Product imagery may show details, scale or styling; confirm included items in the deliverables below.</p></div>
