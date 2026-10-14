@@ -25,3 +25,25 @@ test("product detail renders server-loaded product data without the client loadi
   await expect(page.getByRole("heading", { name: "ResoFlex Hips & Booty Oil" })).toBeVisible({ timeout: 15000 });
   await expect(page.getByText("Loading product details…")).toHaveCount(0);
 });
+
+test("homepage exposes clear assessment, programs, equipment, membership, wellness and coaching paths", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("http://127.0.0.1:4173/", { waitUntil: "domcontentloaded" });
+  const paths = page.locator("#revenue-paths").locator("xpath=..").locator("a");
+  await expect(paths.filter({ hasText: "Get My Personalized Plan" })).toHaveAttribute("href", "/me");
+  await expect(paths.filter({ hasText: "Build My Body" })).toHaveAttribute("href", "/programs");
+  await expect(paths.filter({ hasText: "Premium Home Training" })).toHaveAttribute("href", "/shop");
+  await expect(paths.filter({ hasText: "ResoLuxe Privé" })).toHaveAttribute("href", "/programs/resoluxe");
+  await expect(paths.filter({ hasText: "Find a Wellness Experience" })).toHaveAttribute("href", "/wellness");
+  await expect(paths.filter({ hasText: "Talk to CoachB2K" })).toHaveAttribute("href", /wa\.me/);
+});
+
+test("mobile menu opens and routes directly to the personalized assessment", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("http://127.0.0.1:4173/", { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: "Open menu" }).click();
+  const assessmentLink = page.getByRole("link", { name: "Start My Personalized Plan" });
+  await expect(assessmentLink).toBeVisible();
+  await assessmentLink.click();
+  await expect(page).toHaveURL(/\/me(?:[/?#]|$)/);
+});
