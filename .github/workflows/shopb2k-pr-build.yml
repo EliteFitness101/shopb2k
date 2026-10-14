@@ -1,0 +1,37 @@
+name: ShopB2K Pull Request Build Verification
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "package.json"
+      - "bun.lock"
+      - "vite.config.*"
+      - "tsconfig.json"
+      - ".github/workflows/shopb2k-pr-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shopb2k-pr-build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Frozen-lockfile production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+      - name: Build production bundle
+        run: bun run build
