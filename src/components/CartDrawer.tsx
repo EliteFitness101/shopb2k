@@ -74,7 +74,8 @@ export function CartDrawer() {
       localStorage.setItem("resofit-checkout-contact", JSON.stringify({ fullName, email, phone, address }));
       const attribution = getAttribution();
       track("checkout_start", {
-        product_id: items[0]?.product.id,
+        product_id: items.length === 1 ? checkoutItems[0]?.sku : items[0]?.product.id,
+        content_ids: checkoutItems.map((item) => item.sku),
         product_title: items.length === 1 ? items[0]?.product.title : "ResoFit cart",
         sku: items.length === 1 ? checkoutItems[0]?.sku : undefined,
         quantity: totalItems,
