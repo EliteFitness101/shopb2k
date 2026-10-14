@@ -15,6 +15,11 @@ import { useCartStore } from "@/stores/cartStore";
 import { track } from "@/lib/tracking";
 
 export const Route = createFileRoute("/product/$handle")({
+  loader: async ({ params }) => {
+    const product = await fetchProductByHandle(params.handle);
+    if (!product) throw notFound();
+    return { product };
+  },
   component: ProductPage,
   errorComponent: function ErrorComponent({ error, reset }) {
     const router = useRouter();
@@ -32,23 +37,8 @@ async function fetchProductByHandle(handle: string): Promise<ShopifyProductNode 
 }
 
 function ProductPage() {
-  const { handle } = Route.useParams();
-  const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["product", handle],
-    queryFn: () => fetchProductByHandle(handle),
-    retry: 1,
-  });
-
-  if (isLoading) {
-    return <div className="min-h-screen bg-background"><SiteHeader /><div className="flex flex-col items-center justify-center gap-3 py-32" role="status" aria-live="polite"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /><p className="text-sm text-muted-foreground">Loading product details…</p></div></div>;
-  }
-
-  if (isError) {
-    return <div className="min-h-screen bg-background"><SiteHeader /><div className="mx-auto max-w-3xl px-6 py-24 text-center"><h1 className="font-display text-3xl">Product temporarily unavailable</h1><p className="mt-4 text-muted-foreground">We couldn’t load this product right now. Your cart and payment details have not been changed.</p><div className="mt-8 flex flex-wrap justify-center gap-4"><button type="button" onClick={() => void refetch()} className="rounded-sm bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-widest text-gold-foreground">Try again</button><Link to="/shop" className="rounded-sm border border-border px-5 py-3 text-xs uppercase tracking-widest text-foreground">Back to shop</Link></div></div><SiteFooter /></div>;
-  }
-
-  if (!data) throw notFound();
-  return <div className="min-h-screen bg-background"><SiteHeader /><ProductDetail product={data} /><SiteFooter /></div>;
+  const { product } = Route.useLoaderData();
+  return <div className="min-h-screen bg-background"><SiteHeader /><ProductDetail product={product} /><SiteFooter /></div>;
 }
 
 function ProductDetail({ product }: { product: ShopifyProductNode }) {

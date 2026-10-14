@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const routes = ["/", "/me"] as const;
+const routes = ["/", "/me", "/product/resoflex-hips-booty-oil"] as const;
 
 for (const route of routes) {
   test(`built production app route ${route} renders without uncaught exceptions`, async ({ page }) => {
@@ -14,3 +14,34 @@ for (const route of routes) {
     expect(pageErrors, `${route} uncaught browser exceptions:\n${pageErrors.join("\n\n")}`).toEqual([]);
   });
 }
+
+test("product detail renders server-loaded product data without the client loading placeholder", async ({ page }) => {
+  const response = await page.goto("http://127.0.0.1:4173/product/resoflex-hips-booty-oil", {
+    waitUntil: "domcontentloaded",
+    timeout: 45000,
+  });
+  expect(response, "product detail should return an HTTP response").not.toBeNull();
+  expect(response!.status(), "product detail should not return a 5xx response").toBeLessThan(500);
+  await expect(page.getByRole("heading", { name: "ResoFlex Hips & Booty Oil" })).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText("Loading product details…")).toHaveCount(0);
+});
+
+test("homepage exposes clear assessment, programs, equipment, membership, wellness and coaching paths", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("http://127.0.0.1:4173/", { waitUntil: "domcontentloaded" });
+  const paths = page.locator('section[aria-labelledby="revenue-paths"] a');
+  await expect(paths.filter({ hasText: "Get My Personalized Plan" })).toHaveAttribute("href", "/me");
+  await expect(paths.filter({ hasText: "Build My Body" })).toHaveAttribute("href", "/programs");
+  await expect(paths.filter({ hasText: "Premium Home Training" })).toHaveAttribute("href", "/shop");
+  await expect(paths.filter({ hasText: "ResoLuxe Privé" })).toHaveAttribute("href", "/programs/resoluxe");
+  await expect(paths.filter({ hasText: "Find a Wellness Experience" })).toHaveAttribute("href", "/wellness");
+  await expect(paths.filter({ hasText: "Talk to CoachB2K" })).toHaveAttribute("href", /wa\.me/);
+});
+
+test("mobile navigation exposes the personalized assessment destination", async ({ page }) => {
+  await page.goto("http://127.0.0.1:4173/", { waitUntil: "domcontentloaded" });
+  const mobileMenu = page.locator("header details").filter({ has: page.locator('summary[aria-label="Open menu"]') });
+  await expect(mobileMenu).toHaveCount(1);
+  await expect(mobileMenu.locator('summary[aria-label="Open menu"]')).toHaveCount(1);
+  await expect(mobileMenu.locator('a[href="/me"]').filter({ hasText: "Start My Personalized Plan" })).toHaveAttribute("href", "/me");
+});
