@@ -56,4 +56,32 @@ async function emitCanonicalTelemetry(event: TrackEvent, payload: Record<string,
     await supabase.functions.invoke("resofit-event-ingest", { body });
   } catch { void 0; }
 }
-export function track(event: TrackEvent, payload: Record<string, unknown> = {}) { if (typeof window === "undefined") return; const eventId = typeof payload.event_id === "string" && payload.event_id ? payload.event_id : `${event}_${Date.now()}_${crypto.randomUUID()}`; const eventPayload = { ...payload, event_id: eventId }; void emitCanonicalTelemetry(event, eventPayload); try { pixelEvent(event, { value: typeof payload.value === "number" ? payload.value : undefined, currency: typeof payload.currency === "string" ? payload.currency : "NGN", content_ids: Array.isArray(payload.content_ids) ? payload.content_ids.filter((id): id is string => typeof id === "string" && id.trim().length > 0) : typeof payload.sku === "string" && payload.sku.trim() ? [payload.sku.trim()] : typeof payload.product_id === "string" && payload.product_id.trim() ? [payload.product_id.trim()] : undefined, contents: Array.isArray(payload.contents) ? payload.contents.filter((item): item is { content_id: string; content_name?: string; quantity: number; price?: number } => !!item && typeof item === "object" && typeof (item as Record<string, unknown>).content_id === "string" && typeof (item as Record<string, unknown>).quantity === "number") : undefined, content_name: typeof payload.product_title === "string" ? payload.product_title : undefined, content_type: "product", num_items: typeof payload.quantity === "number" ? payload.quantity : undefined, query: typeof payload.query === "string" ? payload.query : undefined, event_id: eventId }); } catch { void 0; } }
+export function track(event: TrackEvent, payload: Record<string, unknown> = {}) {
+  if (typeof window === "undefined") return;
+  const eventId = typeof payload.event_id === "string" && payload.event_id ? payload.event_id : `${event}_${Date.now()}_${crypto.randomUUID()}`;
+  const eventPayload = { ...payload, event_id: eventId };
+  void emitCanonicalTelemetry(event, eventPayload);
+  try {
+    const contentIds = Array.isArray(payload.content_ids)
+      ? payload.content_ids.filter((id): id is string => typeof id === "string" && id.trim().length > 0)
+      : typeof payload.sku === "string" && payload.sku.trim()
+        ? [payload.sku.trim()]
+        : typeof payload.product_id === "string" && payload.product_id.trim()
+          ? [payload.product_id.trim()]
+          : [];
+    const requiresCatalogId = ["product_view", "add_to_cart", "checkout_start", "purchase_success"].includes(event);
+    // Keep internal telemetry, but never send invalid commerce events to ad pixels without a catalog-matching content ID.
+    if (requiresCatalogId && contentIds.length === 0) return;
+    pixelEvent(event, {
+      value: typeof payload.value === "number" ? payload.value : undefined,
+      currency: typeof payload.currency === "string" ? payload.currency : "NGN",
+      content_ids: contentIds,
+      contents: Array.isArray(payload.contents) ? payload.contents.filter((item): item is { content_id: string; content_name?: string; quantity: number; price?: number } => !!item && typeof item === "object" && typeof (item as Record<string, unknown>).content_id === "string" && typeof (item as Record<string, unknown>).quantity === "number") : undefined,
+      content_name: typeof payload.product_title === "string" ? payload.product_title : undefined,
+      content_type: "product",
+      num_items: typeof payload.quantity === "number" ? payload.quantity : undefined,
+      query: typeof payload.query === "string" ? payload.query : undefined,
+      event_id: eventId
+    });
+  } catch { void 0; }
+}
