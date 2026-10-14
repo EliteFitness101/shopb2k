@@ -102,7 +102,10 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
   // One TikTok ViewContent per product-detail page visit; do not emit from reusable image components.
   useEffect(() => {
     track("product_view", {
-      product_id: product.sku || product.id,
+      product_id: product.sku || undefined,
+      sku: product.sku || undefined,
+      content_ids: product.sku ? [product.sku] : [],
+      contents: product.sku ? [{ content_id: product.sku, content_name: product.title, quantity: 1, price: Number(selectedVariant?.price.amount ?? 0) }] : [],
       product_title: product.title,
       value: Number(selectedVariant?.price.amount ?? 0),
       currency: selectedVariant?.price.currencyCode ?? "NGN",
@@ -137,7 +140,16 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
       return;
     }
     await addItem({ product: { id: product.id, title: product.title, handle: product.handle, sku: product.sku, images: product.images }, variantId: selectedVariant.id, variantTitle: selectedVariant.title, price: selectedVariant.price, quantity: qty, selectedOptions: selectedVariant.selectedOptions });
-    track("add_to_cart", { product_id: product.sku || product.id, product_title: product.title, quantity: qty, value: Number(selectedVariant.price.amount) * qty, currency: selectedVariant.price.currencyCode ?? "NGN" });
+    track("add_to_cart", {
+      product_id: product.sku || undefined,
+      sku: product.sku || undefined,
+      content_ids: product.sku ? [product.sku] : [],
+      contents: product.sku ? [{ content_id: product.sku, content_name: product.title, quantity: qty, price: Number(selectedVariant.price.amount) }] : [],
+      product_title: product.title,
+      quantity: qty,
+      value: Number(selectedVariant.price.amount) * qty,
+      currency: selectedVariant.price.currencyCode ?? "NGN",
+    });
     recordEngagement(product.id, "add_to_cart");
     toast.success(`Added ${qty}× ${product.title} to cart`, { position: "top-center" });
   };
