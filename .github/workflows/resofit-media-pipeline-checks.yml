@@ -1,0 +1,48 @@
+name: ResoFit media and publishing regression checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "supabase/functions/**"
+      - "cloudflare/media-router/**"
+      - "src/lib/assetResolver.ts"
+      - "src/lib/media.ts"
+      - "src/lib/shopify.ts"
+      - ".github/workflows/resofit-media-pipeline-checks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: resofit-media-pipeline-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  edge-function-typecheck:
+    name: Type-check patched Edge Functions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check Gemini content intelligence
+        run: deno check supabase/functions/content-intelligence-enricher/index.ts
+      - name: Check Drive archive recovery
+        run: deno check --config supabase/functions/drive-asset-archiver/deno.json supabase/functions/drive-asset-archiver/index.ts
+      - name: Check orchestrator telemetry
+        run: deno check supabase/functions/chatb2k-orchestrator/index.ts
+
+  web-build:
+    name: Build canonical web application
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
