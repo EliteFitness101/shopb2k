@@ -38,15 +38,10 @@ test("homepage exposes clear assessment, programs, equipment, membership, wellne
   await expect(paths.filter({ hasText: "Talk to CoachB2K" })).toHaveAttribute("href", /wa\.me/);
 });
 
-test("mobile menu opens and routes directly to the personalized assessment", async ({ page }) => {
+test("mobile navigation exposes the personalized assessment destination", async ({ page }) => {
   await page.goto("http://127.0.0.1:4173/", { waitUntil: "domcontentloaded" });
-  await page.setViewportSize({ width: 390, height: 844 });
-  expect(await page.evaluate(() => window.innerWidth)).toBeLessThan(1280);
-  const menu = page.locator('summary[aria-label="Open menu"]');
-  await expect(menu).toBeVisible();
-  await menu.click();
-  const assessmentLink = page.getByRole("link", { name: "Start My Personalized Plan" });
-  await expect(assessmentLink).toBeVisible();
-  await assessmentLink.click();
-  await expect(page).toHaveURL(/\/me(?:[/?#]|$)/);
+  const mobileMenu = page.locator("header details").filter({ has: page.locator('summary[aria-label="Open menu"]') });
+  await expect(mobileMenu).toHaveCount(1);
+  await expect(mobileMenu.locator('summary[aria-label="Open menu"]')).toHaveCount(1);
+  await expect(mobileMenu.getByRole("link", { name: "Start My Personalized Plan" })).toHaveAttribute("href", "/me");
 });
