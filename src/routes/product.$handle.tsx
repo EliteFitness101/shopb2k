@@ -57,8 +57,8 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
     if (!mediaViewerOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setMediaViewerOpen(false);
-      if (event.key === "ArrowRight") nextImage();
-      if (event.key === "ArrowLeft") previousImage();
+      if (event.key === "ArrowRight") setActiveImg((index) => images.length ? (index + 1) % images.length : 0);
+      if (event.key === "ArrowLeft") setActiveImg((index) => images.length ? (index - 1 + images.length) % images.length : 0);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
