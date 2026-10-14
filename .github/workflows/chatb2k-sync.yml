@@ -34,10 +34,10 @@ jobs:
 
       - name: Run Gemini CLI read-only audit
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_AUTOMATION_API_KEY }}
         run: |
           if [ -z "${GEMINI_API_KEY:-}" ]; then
-            echo "::error::Missing repository secret GEMINI_API_KEY. Add it in GitHub Actions secrets before enabling the Gemini audit."
+            echo "::error::Missing repository secret GEMINI_AUTOMATION_API_KEY. Add it in GitHub Actions secrets before running the Gemini audit."
             exit 1
           fi
           npx --yes @google/gemini-cli --output-format json -p "Read GEMINI.md and inspect the checked-out repository. Perform a READ-ONLY audit only. Do not edit files, call external infrastructure, or claim access to Supabase, GitHub settings, Vercel, Cloudflare, Neon, Make.com, or n8n unless evidence is present in the repository. Return JSON with: checked_files, configuration_findings, missing_evidence, risks, and next_actions. Explicitly state that repository inspection is not proof of live infrastructure synchronization." | tee gemini-audit.json
