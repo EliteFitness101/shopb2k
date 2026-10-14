@@ -95,7 +95,7 @@ Deno.serve(async req=>{
   let rows:any[]=[];
   if(batchMode){
    const q=await db.from("content_asset_drive_archives").select("id,content_asset_id,source_asset_id,source_url,blob_url,drive_root_folder_id,archive_class,archive_status,metadata").in("archive_status",["pending","failed"]).not("blob_url","is",null).order("created_at",{ascending:true}).limit(200);
-   if(q.error)throw q.error;rows=(q.data||[]).filter((r:any)=>Number(r.metadata?.attempt_count||0)<3&&!/\\b403\\b/.test(String(r.archive_reason||""))).slice(0,limit);
+   if(q.error)throw q.error;rows=(q.data||[]).filter((r:any)=>Number(r.metadata?.attempt_count||0)<3&&!/\b403\b/.test(String(r.archive_reason||""))).slice(0,limit);
   }else{
    const q=await db.from("content_asset_registry").select("id,source_asset_id,source_url,canonical_url,asset_type,mime_type,campaign,rights_status,commercial_status,qa_status").eq("id",String(b.content_asset_id||b.source_asset_id)).maybeSingle();
    if(q.error)throw q.error;if(!q.data)return out({error:"Asset not found"},404);
