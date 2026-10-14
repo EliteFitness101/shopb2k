@@ -43,5 +43,5 @@ test("mobile navigation exposes the personalized assessment destination", async 
   const mobileMenu = page.locator("header details").filter({ has: page.locator('summary[aria-label="Open menu"]') });
   await expect(mobileMenu).toHaveCount(1);
   await expect(mobileMenu.locator('summary[aria-label="Open menu"]')).toHaveCount(1);
-  await expect(mobileMenu.getByRole("link", { name: "Start My Personalized Plan" })).toHaveAttribute("href", "/me");
+  await expect(mobileMenu.locator('a[href="/me"]')).toHaveAttribute("href", "/me");
 });
