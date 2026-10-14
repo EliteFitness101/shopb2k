@@ -29,7 +29,7 @@ test("product detail renders server-loaded product data without the client loadi
 test("homepage exposes clear assessment, programs, equipment, membership, wellness and coaching paths", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("http://127.0.0.1:4173/", { waitUntil: "domcontentloaded" });
-  const paths = page.locator("#revenue-paths").locator("xpath=..").locator("a");
+  const paths = page.locator('section[aria-labelledby="revenue-paths"] a');
   await expect(paths.filter({ hasText: "Get My Personalized Plan" })).toHaveAttribute("href", "/me");
   await expect(paths.filter({ hasText: "Build My Body" })).toHaveAttribute("href", "/programs");
   await expect(paths.filter({ hasText: "Premium Home Training" })).toHaveAttribute("href", "/shop");
