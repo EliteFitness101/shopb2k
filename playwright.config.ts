@@ -7,9 +7,10 @@ export default defineConfig({
   reporter: "list",
   use: { ...devices["Desktop Chrome"], headless: true },
   webServer: {
-    // This repository builds a Nitro .output bundle; Vite preview incorrectly
-    // looks for dist/server/server.js. Preview the actual Nitro build instead.
-    command: "npx nitro preview --host 127.0.0.1 --port 4173",
+    // Run Nitro's generated server entry directly. The Nitro CLI preview
+    // command in this dependency version throws a TDZ ReferenceError before
+    // binding its HTTP listener, so Playwright can never reach the app.
+    command: "NITRO_HOST=127.0.0.1 NITRO_PORT=4173 node .output/server/index.mjs",
     url: "http://127.0.0.1:4173",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
