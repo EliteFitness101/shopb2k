@@ -39,9 +39,12 @@ test("homepage exposes clear assessment, programs, equipment, membership, wellne
 });
 
 test("mobile menu opens and routes directly to the personalized assessment", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("http://127.0.0.1:4173/", { waitUntil: "domcontentloaded" });
-  await page.locator('summary[aria-label="Open menu"]').click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => window.innerWidth)).toBeLessThan(1280);
+  const menu = page.locator('summary[aria-label="Open menu"]');
+  await expect(menu).toBeVisible();
+  await menu.click();
   const assessmentLink = page.getByRole("link", { name: "Start My Personalized Plan" });
   await expect(assessmentLink).toBeVisible();
   await assessmentLink.click();
