@@ -73,6 +73,42 @@ export function shopifySrcSet(src?: string | null): string | undefined {
   return SHOPIFY_IMAGE_WIDTHS.map((w) => `${shopifyImage(src!, w)} ${w}w`).join(", ");
 }
 
+/** True only for the official ImageKit delivery host; arbitrary media URLs are never rewritten. */
+export function isImageKitImage(src?: string | null): boolean {
+  if (!src || src.startsWith("data:") || src.startsWith("/")) return false;
+  try {
+    const host = new URL(src).hostname.toLowerCase();
+    return host === "ik.imagekit.io" || host.endsWith(".ik.imagekit.io");
+  } catch {
+    return false;
+  }
+}
+
+/** Add bounded responsive ImageKit transforms only when the URL has no existing transform. */
+export function imageKitImage(src: string, width: number): string {
+  if (!isImageKitImage(src)) return src;
+  try {
+    const url = new URL(src);
+    if (url.searchParams.has("tr")) return src;
+    url.searchParams.set("tr", `w-${width},q-80,f-auto`);
+    return url.toString();
+  } catch {
+    return src;
+  }
+}
+
+/** Responsive srcSet for supported commerce CDNs only; preserves existing transforms and arbitrary URLs. */
+export function responsiveImageSrcSet(src?: string | null): string | undefined {
+  if (isShopifyImage(src)) return shopifySrcSet(src);
+  if (!isImageKitImage(src)) return undefined;
+  try {
+    if (new URL(src!).searchParams.has("tr")) return undefined;
+  } catch {
+    return undefined;
+  }
+  return SHOPIFY_IMAGE_WIDTHS.map((width) => `${imageKitImage(src!, width)} ${width}w`).join(", ");
+}
+
 /** HEAD-probe an asset URL. Resolves false on any failure (safe by default). */
 export async function mediaExists(url?: string | null): Promise<boolean> {
   if (!url || typeof window === "undefined") return false;
