@@ -7,10 +7,10 @@ export default defineConfig({
   reporter: "list",
   use: { ...devices["Desktop Chrome"], headless: true },
   webServer: {
-    // The production build is Nitro output under .output/server. Vite preview
-    // routes through TanStack's default dist/server/server.js path, which this
-    // project does not generate. Launch the actual built server for smoke tests.
-    command: "PORT=4173 HOST=127.0.0.1 node .output/server/index.mjs",
+    // This build emits a Cloudflare Worker preset and wrangler.json under
+    // .output/server. Run that built worker locally instead of Vite's
+    // incompatible dist/server/server.js preview entry or Node worker import.
+    command: "bunx wrangler dev --config .output/server/wrangler.json --ip 127.0.0.1 --port 4173",
     url: "http://127.0.0.1:4173",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
