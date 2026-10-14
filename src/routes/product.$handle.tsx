@@ -53,6 +53,16 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
   const isHybrid = fulfillmentMode.includes("hybrid");
   const nextImage = () => setActiveImg((index) => images.length ? (index + 1) % images.length : 0);
   const previousImage = () => setActiveImg((index) => images.length ? (index - 1 + images.length) % images.length : 0);
+  useEffect(() => {
+    if (!mediaViewerOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMediaViewerOpen(false);
+      if (event.key === "ArrowRight") nextImage();
+      if (event.key === "ArrowLeft") previousImage();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mediaViewerOpen, images.length]);
   const selectedVariant = useMemo(() => variants.find((v) => v.id === variantId) ?? variants[0], [variantId, variants]);
   const { data: experience } = useQuery({
     queryKey: ["product-experience", product.sku],
