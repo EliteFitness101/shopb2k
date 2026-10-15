@@ -69,7 +69,7 @@ export function track(event: TrackEvent, payload: Record<string, unknown> = {}) 
         : typeof payload.product_id === "string" && payload.product_id.trim()
           ? [payload.product_id.trim()]
           : [];
-    const requiresCatalogId = ["product_view", "add_to_cart", "checkout_start", "purchase_success"].includes(event);
+    const requiresCatalogId = ["product_view", "add_to_cart", "checkout_start", "purchase_success", "wishlist_add"].includes(event);
     // Keep internal telemetry, but never send invalid commerce events to ad pixels without a catalog-matching content ID.
     if (requiresCatalogId && contentIds.length === 0) return;
     pixelEvent(event, {
