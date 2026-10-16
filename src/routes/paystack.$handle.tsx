@@ -34,11 +34,10 @@ export const Route = createFileRoute("/paystack/$handle")({
 });
 
 async function fetchOffer(handle: string): Promise<ShopifyProductNode | null> {
-  // Keep canonical offer URLs stable while resolving the active Shopify product handle.
-  const shopifyHandle = handle === "res-dig-reset" ? "resoflex-7-day-reset" : handle;
+  // The storefront client reads the canonical Supabase catalog; checkout uses its canonical SKU.
   const response = await storefrontApiRequest<{ product: ShopifyProductNode | null }>(
     PRODUCT_BY_HANDLE_QUERY,
-    { handle: shopifyHandle },
+    { handle },
   );
   return response?.data?.product ?? null;
 }
