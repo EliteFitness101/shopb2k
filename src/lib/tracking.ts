@@ -58,7 +58,8 @@ async function emitCanonicalTelemetry(event: TrackEvent, payload: Record<string,
 }
 export function track(event: TrackEvent, payload: Record<string, unknown> = {}) {
   if (typeof window === "undefined") return;
-  const eventId = typeof payload.event_id === "string" && payload.event_id ? payload.event_id : `${event}_${Date.now()}_${crypto.randomUUID()}`;
+  const paymentReference = [payload.reference, payload.paystack_ref, payload.payment_reference].find((value): value is string => typeof value === "string" && value.trim().length > 0)?.trim();
+  const eventId = typeof payload.event_id === "string" && payload.event_id ? payload.event_id : event === "purchase_success" && paymentReference ? `paystack:${paymentReference}` : `${event}_${Date.now()}_${crypto.randomUUID()}`;
   const eventPayload = { ...payload, event_id: eventId };
   void emitCanonicalTelemetry(event, eventPayload);
   try {
