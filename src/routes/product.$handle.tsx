@@ -32,7 +32,12 @@ export const Route = createFileRoute("/product/$handle")({
 });
 
 async function fetchProductByHandle(handle: string): Promise<ShopifyProductNode | null> {
-  const res = await storefrontApiRequest<{ product: ShopifyProductNode | null }>(PRODUCT_BY_HANDLE_QUERY, { handle });
+  // Keep the canonical ResoFit URL stable while resolving the currently active Shopify handle.
+  const shopifyHandle = handle === "res-dig-reset" ? "resoflex-7-day-reset" : handle;
+  const res = await storefrontApiRequest<{ product: ShopifyProductNode | null }>(
+    PRODUCT_BY_HANDLE_QUERY,
+    { handle: shopifyHandle },
+  );
   return res?.data?.product ?? null;
 }
 
