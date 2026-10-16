@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { preloadOnIdle, recordEngagement } from "@/lib/imagePriority";
 import { getCachedPerf } from "@/lib/productIntelligence";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Truck, ShieldCheck, Package, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, Truck, ShieldCheck, Package, Sparkles, Maximize2, ChevronLeft, ChevronRight, X, CheckCircle2 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ProductImage } from "@/components/ProductImage";
@@ -19,6 +19,26 @@ export const Route = createFileRoute("/product/$handle")({
     const product = await fetchProductByHandle(params.handle);
     if (!product) throw notFound();
     return { product };
+  },
+  head: ({ loaderData }) => {
+    const product = loaderData?.product;
+    if (!product) return { meta: [{ title: "Product — ResoFit" }] };
+    const canonicalUrl = \`https://www.resofit.fit/product/\${product.handle}\`;
+    const description = (product.description ?? "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
+    const image = product.images.edges[0]?.node.url;
+    return {
+      meta: [
+        { title: \`\${product.title} | ResoFit\` },
+        { name: "description", content: description || \`Explore \${product.title} from ResoFit. Review product details, price and delivery options.\` },
+        { property: "og:title", content: \`\${product.title} | ResoFit\` },
+        { property: "og:description", content: description || \`Explore \${product.title} from ResoFit.\` },
+        { property: "og:type", content: "product" },
+        { property: "og:url", content: canonicalUrl },
+        ...(image ? [{ property: "og:image", content: image }] : []),
+        { name: "twitter:card", content: image ? "summary_large_image" : "summary" },
+      ],
+      links: [{ rel: "canonical", href: canonicalUrl }],
+    };
   },
   component: ProductPage,
   errorComponent: function ErrorComponent({ error, reset }) {
@@ -47,6 +67,22 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
   const [variantId, setVariantId] = useState<string>((variants.find((v) => v.availableForSale) ?? variants[0])?.id ?? "");
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
+  const [mediaViewerOpen, setMediaViewerOpen] = useState(false);
+  const fulfillmentMode = (product.fulfillmentMode ?? "").toLowerCase();
+  const isDigitalOnly = fulfillmentMode.includes("digital") && !fulfillmentMode.includes("hybrid");
+  const isHybrid = fulfillmentMode.includes("hybrid");
+  const nextImage = () => setActiveImg((index) => images.length ? (index + 1) % images.length : 0);
+  const previousImage = () => setActiveImg((index) => images.length ? (index - 1 + images.length) % images.length : 0);
+  useEffect(() => {
+    if (!mediaViewerOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMediaViewerOpen(false);
+      if (event.key === "ArrowRight") setActiveImg((index) => images.length ? (index + 1) % images.length : 0);
+      if (event.key === "ArrowLeft") setActiveImg((index) => images.length ? (index - 1 + images.length) % images.length : 0);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mediaViewerOpen, images.length]);
   const selectedVariant = useMemo(() => variants.find((v) => v.id === variantId) ?? variants[0], [variantId, variants]);
   const { data: experience } = useQuery({
     queryKey: ["product-experience", product.sku],
@@ -187,10 +223,28 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
     });
   }, [product.id, product.sku, selectedVariant]);
 
+  const productStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    description: (product.description ?? "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(),
+    ...(product.sku ? { sku: product.sku } : {}),
+    ...(product.vendor ? { brand: { "@type": "Brand", name: product.vendor } } : {}),
+    image: images.map((image) => image.url),
+    offers: variants.map((variant) => ({
+      "@type": "Offer",
+      priceCurrency: variant.price.currencyCode,
+      price: variant.price.amount,
+      availability: variant.availableForSale ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+      url: \`https://www.resofit.fit/product/\${product.handle}\`,
+    })),
+  };
   return <article className="mx-auto max-w-7xl px-6 py-12">
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productStructuredData).replace(/</g, "\\u003c") }} />
     <Link to="/shop" className="mb-8 inline-flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground hover:text-gold"><ArrowLeft className="h-3 w-3" /> Back to shop</Link>
     <div className="grid gap-10 lg:grid-cols-[1.08fr_.92fr] lg:gap-16">
-      <div className="lg:sticky lg:top-6 lg:self-start"><div className="overflow-hidden rounded-[1.5rem] border border-gold/15 bg-card shadow-2xl shadow-black/20"><ProductImage src={images[activeImg]?.url} alt={images[activeImg]?.altText} title={product.title} category={product.productType} productId={product.id} priority aspect="square" /> </div>{images.length > 1 && <div className="grid grid-cols-5 gap-2">{images.map((img, i) => <button key={img.url} type="button" onClick={() => setActiveImg(i)} aria-label={`View image ${i + 1}`} className={`overflow-hidden border ${i === activeImg ? "border-gold" : "border-border/60"}`}><ProductImage src={img.url} alt={img.altText} title={`${product.title} view ${i + 1}`} category={product.productType} tier={i === 0 ? "medium" : "low"} /></button>)}</div>}</div>
+      <div className="lg:sticky lg:top-6 lg:self-start"><div className="group relative overflow-hidden rounded-[1.5rem] border border-gold/15 bg-card shadow-2xl shadow-black/20"><ProductImage src={images[activeImg]?.url} alt={images[activeImg]?.altText || `${product.title} product image`} title={product.title} category={product.productType} productId={product.id} priority aspect="square" /><div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2"><span className="rounded-full border border-white/15 bg-black/70 px-3 py-1.5 text-[10px] text-white backdrop-blur">{images.length ? `Image ${activeImg + 1} of ${images.length}` : "Product preview"}</span><button type="button" onClick={() => setMediaViewerOpen(true)} aria-label="Open product media viewer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/75 px-3 py-2 text-[10px] uppercase tracking-wider text-white backdrop-blur transition hover:border-gold hover:text-gold"><Maximize2 className="h-3.5 w-3.5" /> Expand</button></div>{images.length > 1 && <><button type="button" onClick={previousImage} aria-label="Previous product image" className="absolute left-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur transition hover:border-gold hover:text-gold"><ChevronLeft className="h-5 w-5" /></button><button type="button" onClick={nextImage} aria-label="Next product image" className="absolute right-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur transition hover:border-gold hover:text-gold"><ChevronRight className="h-5 w-5" /></button></>}</div>{images.length > 1 && <div className="mt-3 flex gap-2 overflow-x-auto pb-2" aria-label="Product image gallery">{images.map((img, i) => <button key={img.url} type="button" onClick={() => setActiveImg(i)} aria-pressed={i === activeImg} aria-label={`View image ${i + 1}${img.altText ? `: ${img.altText}` : ""}`} className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition ${i === activeImg ? "border-gold ring-2 ring-gold/20" : "border-border/60 opacity-75 hover:opacity-100"}`}><ProductImage src={img.url} alt={img.altText || `${product.title} view ${i + 1}`} title={`${product.title} view ${i + 1}`} category={product.productType} tier={i === 0 ? "medium" : "low"} /></button>)}</div>}<p className="mt-2 text-[10px] text-muted-foreground">Product imagery may show details, scale or styling; confirm included items in the deliverables below.</p></div>
       <div className="pt-2">
         <div className="flex flex-wrap gap-2 text-[9px] uppercase tracking-[.22em]">{product.productType && <span className="rounded-full border border-gold/30 bg-gold/5 px-3 py-1.5 text-gold">{product.productType}</span>}<span className="rounded-full border border-border/60 px-3 py-1.5 text-muted-foreground">{((product.fulfillmentMode ?? "").toLowerCase().includes("digital") && !(product.fulfillmentMode ?? "").toLowerCase().includes("hybrid")) ? "Digital delivery" : (product.fulfillmentMode ?? "").toLowerCase().includes("hybrid") ? "Physical + digital delivery" : "Physical delivery"}</span>{selectedVariant?.availableForSale && <span className="rounded-full border border-emerald-500/20 bg-emerald-500/5 px-3 py-1.5 text-emerald-300">Available now</span>}</div>
         <h1 className="mt-3 font-display text-5xl leading-tight md:text-6xl">{product.title}</h1>
@@ -198,6 +252,7 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
         <div className="mt-7 flex flex-wrap items-end gap-x-5 gap-y-2"><p className="font-display text-4xl text-gold">{formatMoney(selectedVariant.price)}</p><p className="text-sm uppercase tracking-widest text-muted-foreground">≈ {approxUSD(selectedVariant.price)}</p></div>
         {specialOffer && specialOffer.finalPrice < Number(selectedVariant.price.amount) && <div className="mt-4 rounded-2xl border border-gold/40 bg-gold/10 p-4"><div className="flex items-center justify-between gap-4"><div><p className="text-[10px] uppercase tracking-[.25em] text-gold">ChatB2K™ special offer</p><p className="mt-1 text-sm text-muted-foreground">Verified offer · {specialOffer.offer_code}</p></div><p className="font-display text-2xl text-gold">₦{specialOffer.finalPrice.toLocaleString("en-NG")}</p></div><p className="mt-2 text-xs text-muted-foreground">Offer pricing is validated by the ResoFit commercial-offer authority.</p></div>}
         {product.descriptionHtml ? <div className="prose prose-invert mt-8 max-w-none text-muted-foreground" dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} /> : <p className="mt-8 whitespace-pre-line text-muted-foreground">{product.description}</p>}
+        <section className="mt-8 rounded-2xl border border-border/70 bg-card/40 p-5"><div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-gold" /><p className="text-[10px] uppercase tracking-[0.25em] text-gold">What this product includes</p></div><h2 className="mt-2 font-display text-2xl">Clear deliverables before checkout</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">{isHybrid ? "This is a hybrid offer. Review both the digital and physical inclusions in the product description before purchase." : isDigitalOnly ? "This is a digital product. Review the product description for the exact guide, plan, access or downloadable items included." : "Review the product description for the exact equipment, accessories and quantities included in this purchase."}</p><ul className="mt-4 grid gap-3 text-sm sm:grid-cols-2"><li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-gold" /><span>{isHybrid ? "Digital component: as explicitly listed in the product description" : isDigitalOnly ? "Digital contents: as explicitly listed in the product description" : "Physical item: product and quantity as listed above"}</span></li><li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-gold" /><span>{isHybrid ? "Physical component: as explicitly listed in the product description" : isDigitalOnly ? "Delivery method: digital; no physical shipping required" : "Shipping options and charges are confirmed at checkout"}</span></li><li className="flex items-start gap-2"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-gold" /><span>Secure payment through ResoFit checkout; payment status is confirmed by the payment provider</span></li><li className="flex items-start gap-2"><Package className="mt-0.5 h-4 w-4 shrink-0 text-gold" /><span>{isDigitalOnly ? "Access and delivery instructions depend on the configured product fulfillment" : "Delivery coverage and timing depend on the selected destination and checkout options"}</span></li></ul></section>
         {experience?.experience && <section className="mt-8 rounded-2xl border border-gold/25 bg-gold/5 p-5">
           <p className="text-[10px] uppercase tracking-[0.25em] text-gold">ResoFit Personalized Experience</p>
           <h2 className="mt-2 font-display text-2xl">{experience.experience.teaser?.headline ?? "Built around your goals, meals and movement."}</h2>
@@ -214,6 +269,7 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
         <div className="mt-8 border-t border-border/60 pt-6 text-sm">{!((product.fulfillmentMode ?? "").toLowerCase().includes("digital") && !(product.fulfillmentMode ?? "").toLowerCase().includes("hybrid")) && <div className="space-y-3"><div className="flex items-start gap-3"><Truck className="mt-0.5 h-4 w-4 text-gold"/><span><strong className="text-foreground">Nigeria delivery:</strong> <span className="text-muted-foreground">Shipping options and charges are confirmed at checkout.</span></span></div><div className="flex items-start gap-3"><Truck className="mt-0.5 h-4 w-4 text-gold"/><span><strong className="text-foreground">International:</strong> <span className="text-muted-foreground">International fulfillment where supported.</span></span></div></div>}{((product.fulfillmentMode ?? "").toLowerCase().includes("digital") && !(product.fulfillmentMode ?? "").toLowerCase().includes("hybrid")) && <div className="flex items-start gap-3"><Package className="mt-0.5 h-4 w-4 text-gold"/><span><strong className="text-foreground">Digital delivery:</strong> <span className="text-muted-foreground">No physical shipping required.</span></span></div>}<div className="mt-3 flex items-start gap-3"><ShieldCheck className="mt-0.5 h-4 w-4 text-gold"/><span><strong className="text-foreground">Secure checkout:</strong> <span className="text-muted-foreground">ResoFit Paystack checkout · payment options shown at checkout.</span></span></div></div>
       </div>
     </div>
+    {mediaViewerOpen && images.length > 0 && <div role="dialog" aria-modal="true" aria-label={`${product.title} image viewer`} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-3 sm:p-8" onClick={() => setMediaViewerOpen(false)}><div className="relative flex max-h-full w-full max-w-6xl flex-col" onClick={(event) => event.stopPropagation()}><div className="mb-3 flex items-center justify-between gap-4"><div className="min-w-0"><p className="truncate text-sm text-white">{product.title}</p><p className="text-xs text-white/60">{activeImg + 1} / {images.length}</p></div><button type="button" onClick={() => setMediaViewerOpen(false)} aria-label="Close product image viewer" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/20 text-white hover:border-gold hover:text-gold"><X className="h-5 w-5" /></button></div><div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-neutral-950"><div className="w-full max-w-3xl"><ProductImage src={images[activeImg]?.url} alt={images[activeImg]?.altText || `${product.title} enlarged product image`} title={product.title} category={product.productType} productId={product.id} priority aspect="square" /></div>{images.length > 1 && <><button type="button" onClick={previousImage} aria-label="Previous product image" className="absolute left-2 sm:left-5 grid h-11 w-11 place-items-center rounded-full border border-white/20 bg-black/75 text-white hover:border-gold hover:text-gold"><ChevronLeft className="h-6 w-6" /></button><button type="button" onClick={nextImage} aria-label="Next product image" className="absolute right-2 sm:right-5 grid h-11 w-11 place-items-center rounded-full border border-white/20 bg-black/75 text-white hover:border-gold hover:text-gold"><ChevronRight className="h-6 w-6" /></button></>}</div>{images.length > 1 && <div className="mt-3 flex gap-2 overflow-x-auto pb-1">{images.map((img, i) => <button key={img.url} type="button" onClick={() => setActiveImg(i)} aria-label={`Show enlarged image ${i + 1}`} aria-pressed={i === activeImg} className={`h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 ${i === activeImg ? "border-gold" : "border-white/20 opacity-70"}`}><ProductImage src={img.url} alt={img.altText || `${product.title} thumbnail ${i + 1}`} title={`${product.title} thumbnail ${i + 1}`} category={product.productType} tier="low" /></button>)}</div>}</div></div>}
     <RecommendedProducts currentHandle={product.handle} productTitle={product.title} productType={product.productType} title="Pairs well with" />
     <RecentlyViewed excludeHandle={product.handle} />
   </article>;
