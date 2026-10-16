@@ -392,3 +392,15 @@ img, video, svg, canvas {
     max-width: 22rem;
   }
 }
+
+/* RESOFIT PITCH-NOIR COMMERCE v4 — touch-native rails, rounded cards and restrained GPU hints */
+:root { --rf-commerce-radius: 1.5rem; --rf-commerce-border: rgba(212,175,55,.24); }
+.reso-card, .reso-grid-item { transform: translateZ(0); backface-visibility: hidden; }
+.reso-card { border-radius: var(--rf-commerce-radius); transition: transform .42s var(--rf-motion), border-color .35s ease, box-shadow .42s ease; }
+.reso-pill-rail, .reso-gallery-rail { -webkit-overflow-scrolling: touch; overscroll-behavior-inline: contain; scroll-padding-inline: 1rem; scrollbar-width: none; }
+.reso-pill-rail::-webkit-scrollbar, .reso-gallery-rail::-webkit-scrollbar { display: none; }
+.reso-pill, .reso-gallery-thumb { backface-visibility: hidden; transform: translateZ(0); }
+.reso-product-grid > * { min-width: 0; }
+@media (hover: hover) and (pointer: fine) { .reso-card:hover { will-change: transform, opacity; } }
+@media (max-width: 639px) { .reso-card { border-radius: 1.1rem; } .reso-pill-rail { margin-inline: -.25rem; padding-inline: .25rem; } }
+@media (prefers-reduced-motion: reduce) { .reso-card, .reso-pill, .reso-gallery-thumb { transition: none !important; } }

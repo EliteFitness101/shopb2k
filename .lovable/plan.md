@@ -82,3 +82,25 @@ Every production change follows:
 `Audit → additive patch → build/deployment verification → route/runtime verification → database/transaction verification where applicable → report.`
 
 Historical documentation remains historical evidence. Current runtime/deployment/database evidence overrides stale plan text when they conflict; the architecture document is then updated to reflect the verified state.
+
+
+## Premium commerce UX execution contract — 2026-10-16
+
+### Product activation eligibility
+- A draft or archived product may be activated only when its live Shopify record has a price strictly above ₦1,000, at least one real product image, and a non-empty meaningful description.
+- Products failing any gate remain draft/archived; never fabricate specifications, images, bonuses, reviews, purchase counts, stock, or seller claims.
+- Preserve exact SKU/variant identity, prices, status evidence and fulfillment mode. Distinct SKUs remain distinct even when product titles are similar.
+- A Shopify ACTIVE status is not proof that the storefront channel, dynamic page, checkout or fulfillment is working. Verify each independently.
+
+### Pitch-Noir Glass storefront standard
+- Obsidian/pitch-black surfaces, champagne-gold accents, translucent glass panels, soft-rounded cards, responsive 2-column mobile product grids, horizontally scrollable category pills and snap-aligned product-image galleries.
+- Native overflow scrolling and CSS scroll snap take precedence over continuous JavaScript gesture listeners. Honor `prefers-reduced-motion`, avoid global permanent `will-change`, and prevent layout shift with explicit image aspect ratios.
+- Product cards and product pages use current canonical catalog/SKU/variant data, responsive Shopify CDN `srcset` where supported, lazy loading off-screen and high fetch priority only for above-the-fold media.
+- Product pages render verified description/features, delivery mode, exact variant/price, recently viewed and related products where canonical data exists. Do not infer “recently bought”, “frequently bought” or social proof without verified events.
+- Preserve mobile thumb reachability, keyboard/focus visibility, reduced-motion support, and stable loading/error/empty states.
+
+### Checkout, email and CDN acceptance gates
+- Checkout CTA must preserve SKU/variant, quantity, RSID/session/UTM attribution and funnel origin; validate payment only from verified provider webhook/server-side state.
+- Confirmation, receipt, delivery and account emails must be driven by confirmed transaction/entitlement events, use the canonical `no-reply@resofit.fit` sender, and never expose credentials or claim fulfillment before its event is confirmed.
+- Image CDN work must preserve canonical asset URLs and alt text, use responsive widths/format negotiation when provider-supported, lazy-load offscreen images and avoid cache policies that can serve stale price/inventory/checkout data.
+- Acceptance requires lint/build, product-page and SEO smoke tests, live route checks for `resofit.fit/shop`, `resofit.fit/product/:handle`, `shop.resofit.fit`, `store.resofit.fit`, `catalog.resofit.fit`, plus checkout/webhook/email traces. Code/documentation changes alone are not production verification.

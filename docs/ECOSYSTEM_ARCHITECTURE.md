@@ -152,3 +152,16 @@ Browser attribution may be persisted locally for SPA navigation, but production-
 ## 8. Documentation precedence
 
 This document defines current architecture rules. `.lovable/plan.md` is the current execution plan and must remain consistent with this document. Historical audits such as `docs/PRODUCTION_READINESS_AUDIT_2026-08-31.md` are evidence records, not current architecture authority.
+
+
+## 9. Product publication and premium storefront contract (2026-10-16)
+
+A draft or archived Shopify product is eligible for activation only when its live record has all three: price strictly above ₦1,000, a real product image, and a meaningful non-empty description. Incomplete records remain non-active until reconciled. Do not fabricate images, product specifications, included bonuses, reviews, popularity claims or stock.
+
+Customer-facing shop, catalog and product pages should use the Pitch-Noir Glass design language: obsidian surfaces, champagne-gold accents, rounded glass panels, native horizontally scrollable category pills, responsive 2-column mobile product grids and snap-aligned image galleries. Use canonical catalog/SKU/variant identity, responsive CDN image delivery and lazy loading; reserve high image priority for above-the-fold assets. Respect reduced-motion preferences and accessibility semantics.
+
+Related/recently viewed cards may be shown from verified catalog and session signals. “Recently bought”, “frequently bought”, “also bought”, scarcity, review and popularity claims require real event-backed evidence; never display fabricated social proof. Product features, what-you-get, bonuses and bundles must be sourced from canonical product metadata, not inferred from the title.
+
+Checkout must preserve SKU/variant, quantity, RSID/session/UTM and funnel origin. Payment confirmation and email delivery must depend on verified provider/webhook state. Transaction, receipt, delivery and entitlement emails use `no-reply@resofit.fit` and must not claim success before the corresponding event is confirmed.
+
+Image/CDN caching must never cache dynamic checkout, payment, inventory or personalized account state as immutable content. CDN and client caching are for versioned media and safe catalog presentation only. Production certification requires build/lint, product/SEO smoke tests, domain-route checks and a real checkout-to-webhook-to-email/entitlement trace.

@@ -21,7 +21,7 @@ import { track } from "@/lib/tracking";
 
 type SortKey = "featured" | "newest" | "price_asc" | "price_desc";
 
-const SHOP_URL = "https://www.resofit.fit/shop";
+const SHOP_URL = "https://resofit.fit/shop";
 
 export const Route = createFileRoute("/shop")({
   loader: async () => {
@@ -191,6 +191,14 @@ function ShopGrid() {
   return (
     <section className="py-16">
       <div className="mx-auto max-w-7xl px-6">
+        {productTypes.length > 0 && (
+          <nav aria-label="Shop categories" className="reso-pill-rail mb-7 flex gap-2 overflow-x-auto pb-3 snap-x snap-mandatory">
+            <button type="button" onClick={() => updateSearch({ type: undefined })} aria-pressed={!search.type} className={!search.type ? "reso-pill shrink-0 snap-start rounded-full border border-gold bg-gold/10 px-4 py-2 text-xs uppercase tracking-wider text-gold" : "reso-pill shrink-0 snap-start rounded-full border border-border/70 bg-card/50 px-4 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:border-gold/50 hover:text-foreground"}>All</button>
+            {productTypes.map((type) => (
+              <button key={type} type="button" onClick={() => updateSearch({ type: search.type === type ? undefined : type })} aria-pressed={search.type === type} className={search.type === type ? "reso-pill shrink-0 snap-start rounded-full border border-gold bg-gold/10 px-4 py-2 text-xs uppercase tracking-wider text-gold" : "reso-pill shrink-0 snap-start rounded-full border border-border/70 bg-card/50 px-4 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:border-gold/50 hover:text-foreground"}>{type}</button>
+            ))}
+          </nav>
+        )}
         {data && data.length > 0 && (
           <div className="mb-10 flex flex-wrap items-end gap-4 border-b border-border/60 pb-6">
             {productTypes.length > 0 && (
@@ -280,7 +288,7 @@ function ShopGrid() {
         )}
 
         {filtered.length > 0 && (
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="reso-product-grid grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
             {filtered.map((p, i) => (
               <ProductCard key={p.node.id} product={p} placement={i} />
             ))}
@@ -409,7 +417,7 @@ function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; pla
   };
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-gold/20 bg-gradient-to-br from-card/90 via-background/90 to-gold/5 shadow-lg shadow-black/20 transition-all duration-300 hover:-translate-y-1 hover:border-gold/60 hover:shadow-[0_24px_70px_rgba(0,0,0,.35)]">
+    <article className="reso-card group flex min-w-0 flex-col overflow-hidden rounded-[1.25rem] border border-gold/20 bg-gradient-to-br from-card/90 via-background/90 to-gold/5 shadow-lg shadow-black/20 transition-all duration-300 hover:-translate-y-1 hover:border-gold/60 hover:shadow-[0_24px_70px_rgba(0,0,0,.35)]">
       <Link to="/product/$handle" params={{ handle: node.handle }} className="relative block">
         <ProductImage
           src={image?.url}
@@ -426,18 +434,18 @@ function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; pla
           </span>
         )}
       </Link>
-      <div className="flex flex-1 flex-col p-6">
+      <div className="flex flex-1 flex-col p-3 sm:p-5">
         <Link to="/product/$handle" params={{ handle: node.handle }}>
-          <h2 className="font-display text-2xl leading-tight hover:text-gold">{node.title}</h2>
+          <h2 className="font-display text-lg leading-tight hover:text-gold sm:text-2xl">{node.title}</h2>
         </Link>
         {node.description && (
-          <p className="mt-3 flex-1 line-clamp-3 text-sm text-muted-foreground">
+          <p className="mt-2 flex-1 line-clamp-3 text-xs text-muted-foreground sm:mt-3 sm:text-sm">
             {node.description}
           </p>
         )}
-        <div className="mt-6 flex items-end justify-between gap-4 border-t border-border/60 pt-5">
+        <div className="mt-4 flex items-end justify-between gap-2 border-t border-border/60 pt-4 sm:mt-6 sm:gap-4 sm:pt-5">
           <div>
-            <p className="font-display text-2xl text-gold">{formatMoney(price)}</p>
+            <p className="font-display text-lg text-gold sm:text-2xl">{formatMoney(price)}</p>
             <p className="text-xs uppercase tracking-widest text-muted-foreground">
               ≈ {approxUSD(price)}
             </p>
@@ -446,7 +454,7 @@ function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; pla
             type="button"
             onClick={handleAdd}
             disabled={busy || isLoading || !firstAvail?.availableForSale}
-            className="inline-flex h-11 items-center justify-center rounded-sm bg-foreground px-5 text-xs font-semibold uppercase tracking-widest text-background transition-colors hover:bg-gold hover:text-gold-foreground disabled:opacity-50"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-foreground px-3 text-[10px] font-semibold uppercase tracking-wider text-background transition-colors hover:bg-gold hover:text-gold-foreground disabled:opacity-50 sm:px-5 sm:text-xs sm:tracking-widest"
           >
             {busy ? (
               <Loader2 className="h-4 w-4 animate-spin" />
