@@ -93,8 +93,8 @@ export function pixelEvent(event: string, payload: PixelEventPayload = {}) {
     const contentIds = payload.content_ids ?? [];
     const contents = payload.contents ?? contentIds.map((id) => ({ content_id:id, quantity:payload.num_items ?? 1, ...(typeof payload.value === "number" && contentIds.length === 1 ? {price:payload.value} : {}) }));
     const shared = { value:payload.value, currency:payload.currency ?? "NGN", content_type:payload.content_type ?? "product", content_ids:contentIds, contents, ...(payload.content_name ? {content_name:payload.content_name}:{}), ...(payload.num_items ? {num_items:payload.num_items}:{}), ...(payload.query ? {query:payload.query}:{}), ...(payload.event_id ? {event_id:payload.event_id}: {}) };
-    const meta = META_MAP[event]; if (meta) window.fbq?.("track", meta, shared);
-    const tt = TIKTOK_MAP[event]; if (tt) window.ttq?.track(tt, shared);
+    const meta = META_MAP[event]; if (meta) window.fbq?.("track", meta, shared, payload.event_id ? { eventID: payload.event_id } : undefined);
+    const tt = TIKTOK_MAP[event]; if (tt) window.ttq?.track(tt, shared, payload.event_id ? { event_id: payload.event_id } : undefined);
     const ga = GA4_MAP[event];
     if (ga && window.gtag) window.gtag("event", ga, { value:payload.value, currency:payload.currency ?? "NGN", items:contents.map((content)=>({item_id:content.content_id,item_name:content.content_name,quantity:content.quantity,price:content.price})) });
   } catch { void 0; }
