@@ -94,10 +94,11 @@ function DirectOfferCheckout() {
         | { authorization_url?: string; reference?: string; error?: string }
         | null;
       if (!response.ok || !payload?.authorization_url) {
+        const reason = payload?.message ?? payload?.error;
         throw new Error(
-          payload?.error === "product_not_found"
-            ? "This offer is temporarily unavailable."
-            : payload?.error ?? "Unable to start secure checkout. Please try again.",
+          typeof reason === "string" && reason.trim()
+            ? reason.replaceAll("_", " ")
+            : "Secure checkout could not start. No payment was taken.",
         );
       }
       // Keep the buyer's checkout email only for the same-browser return flow.
