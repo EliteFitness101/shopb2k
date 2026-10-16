@@ -32,11 +32,10 @@ export const Route = createFileRoute("/product/$handle")({
 });
 
 async function fetchProductByHandle(handle: string): Promise<ShopifyProductNode | null> {
-  // Keep the canonical ResoFit URL stable while resolving the currently active Shopify handle.
-  const shopifyHandle = handle === "res-dig-reset" ? "resoflex-7-day-reset" : handle;
+  // The storefront client reads the canonical Supabase catalog; route handles must stay canonical.
   const res = await storefrontApiRequest<{ product: ShopifyProductNode | null }>(
     PRODUCT_BY_HANDLE_QUERY,
-    { handle: shopifyHandle },
+    { handle },
   );
   return res?.data?.product ?? null;
 }
