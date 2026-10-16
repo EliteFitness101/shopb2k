@@ -91,7 +91,7 @@ function DirectOfferCheckout() {
         }),
       });
       const payload = (await response.json().catch(() => null)) as
-        | { authorization_url?: string; reference?: string; error?: string }
+        | { authorization_url?: string; reference?: string; error?: string; message?: string }
         | null;
       if (!response.ok || !payload?.authorization_url) {
         const reason = payload?.message ?? payload?.error;
