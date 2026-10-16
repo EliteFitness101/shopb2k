@@ -91,7 +91,7 @@ function DirectOfferCheckout() {
         }),
       });
       const payload = (await response.json().catch(() => null)) as
-        | { authorization_url?: string; error?: string }
+        | { authorization_url?: string; reference?: string; error?: string }
         | null;
       if (!response.ok || !payload?.authorization_url) {
         throw new Error(
@@ -100,6 +100,9 @@ function DirectOfferCheckout() {
             : payload?.error ?? "Unable to start secure checkout. Please try again.",
         );
       }
+      // Keep the buyer's checkout email only for the same-browser return flow.
+      window.sessionStorage.setItem("resofit_checkout_email", email.trim().toLowerCase());
+      if (payload.reference) window.sessionStorage.setItem("resofit_checkout_reference", payload.reference);
       window.location.assign(payload.authorization_url);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to start secure checkout.");
