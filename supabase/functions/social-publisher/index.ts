@@ -47,7 +47,7 @@ Deno.serve(async req=>{
     if(!stale)continue;
     try{const token=await vault(d.auth_secret_ref);const me=await tg(token,"getMe",{});const expected=String(d.metadata?.bot_username||"").toLowerCase();const actual=String(me.username||"").toLowerCase();const state=expected&&expected===actual?"bot_identity_verified":"bot_identity_mismatch";await db.from("social_destinations").update({last_verified_at:new Date().toISOString(),metadata:{...(d.metadata||{}),bot_username:me.username,bot_id:me.id,verification_state:state}}).eq("id",d.id)}catch(e){await db.from("social_destinations").update({last_verified_at:new Date().toISOString(),metadata:{...(d.metadata||{}),verification_state:"bot_identity_check_failed",verification_error:e instanceof Error?e.message:String(e)}}).eq("id",d.id)}
    }
-  }catch(_e){}
+  }catch(_e){console.warn("social-publisher-bot-identity-reconciliation-incomplete");}
   if(b.diagnostic){
    const {data:ds}=await db.from("social_destinations").select("id,provider,platform,external_channel_id,display_name,active,auth_secret_ref,last_verified_at,capabilities");
    const out:any[]=[];
