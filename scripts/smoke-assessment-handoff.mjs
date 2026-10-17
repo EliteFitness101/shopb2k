@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const handoff = read("../src/routes/api.assessment-handoff.ts");
+const shopifyProxy = read("../src/routes/api.shopify-app-proxy.ts");
 const product = read("../src/routes/product.$handle.tsx");
 const cart = read("../src/stores/cartStore.ts");
 const assessment = read("../src/routes/me.tsx");
