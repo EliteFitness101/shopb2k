@@ -23,6 +23,7 @@ const COLUMNS = [
       { to: "/auth", label: "Member Login" },
       { to: "/me", label: "ChatB2K™" },
       { href: "https://forge.resofit.fit", label: "ResoForge" },
+      { href: "https://1024terabox.com/s/1c7KDd1s4lQOKg_ABnYCg0Q", label: "Terabox offer · Affiliate link", rel: "sponsored nofollow noopener noreferrer" },
     ],
   },
   {
@@ -93,7 +94,7 @@ export function SiteFooter() {
               <div key={c.heading}>
                 <p className="text-xs uppercase tracking-[0.25em] text-gold">{c.heading}</p>
                 <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-                  {c.links.map((l) => <li key={l.label}>{"href" in l ? <a href={l.href} target="_blank" rel="noopener noreferrer" className="hover:text-foreground focus-visible:outline-2 focus-visible:outline-gold">{l.label}</a> : <Link to={l.to as never} className="hover:text-foreground focus-visible:outline-2 focus-visible:outline-gold">{l.label}</Link>}</li>)}
+                  {c.links.map((l) => <li key={l.label}>{"href" in l ? <a href={l.href} target="_blank" rel={"rel" in l ? l.rel : "noopener noreferrer"} className="hover:text-foreground focus-visible:outline-2 focus-visible:outline-gold">{l.label}</a> : <Link to={l.to as never} className="hover:text-foreground focus-visible:outline-2 focus-visible:outline-gold">{l.label}</Link>}</li>)}
                 </ul>
               </div>
             ))}
