@@ -43,7 +43,7 @@ async function invokeMediaGenerator(action:string,jobId:string){
 async function latestVersion(sku:string){const {data}=await db.from("digital_product_factory_jobs").select("version").eq("product_sku",sku).order("version",{ascending:false}).limit(1).maybeSingle();return Number(data?.version||0)+1;}
 async function run(req:Request){
  const user=await adminUser(req); if(!user)return out({ok:false,error:"forbidden"},403);
- const body:any=await req.json().catch(()=>({})); const action=String(body.action||"status"); if(action==="start_generation"){const gate=await automationKillReason();if(gate.blocked)return out({ok:false,error:"CHATB2K_GLOBAL_KILL_SWITCH_ACTIVE",reason:gate.reason},503);}
+ const body:any=await req.json().catch(()=>({})); const action=String(body.action||"status"); if(action==="start_generation"||action==="create_job"){const gate=await automationKillReason();if(gate.blocked)return out({ok:false,error:"CHATB2K_GLOBAL_KILL_SWITCH_ACTIVE",reason:gate.reason},503);}
  if(action==="start_generation"||action==="poll_generation"){
   const jobId=String(body.job_id||"").trim();if(!jobId)return out({ok:false,error:"job_id_required"},400);
   const {data:job,error}=await db.from("digital_product_factory_jobs").select("id,product_sku,provider,status,generation_spec").eq("id",jobId).maybeSingle();
