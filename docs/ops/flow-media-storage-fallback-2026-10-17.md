@@ -5,7 +5,7 @@ Review-only mirror of active `flow-generation-gate` v14. This patch does not dep
 
 ## Fix proposed
 - Vercel Blob remains the preferred storage path when its write token is configured.
-- If the token is absent or the Blob upload fails, the generated MP4 is uploaded to the existing `digital-product-media` Supabase Storage bucket using the function's existing service-role client.
+- If the token is absent or the Blob upload fails, the generated MP4 is uploaded to the existing `resofit-catalog-media` public Supabase Storage bucket using the function's existing service-role client.
 - The fallback requires the existing bucket to exist and be writable; it does not create or reconfigure storage buckets.
 - The selected provider/path is recorded in asset intelligence and flow-generation event metadata.
 - Generation remains blocked when the Gemini key is missing. A successful provider response is not treated as complete unless storage upload and registry persistence succeed.
