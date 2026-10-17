@@ -46,13 +46,8 @@ async function ingest(requestId:string,pillar:string,prompt:string,blobBytes:Arr
   const bucketName="digital-product-media";
   const bucket=db.storage.from(bucketName);
   const bytes=new Uint8Array(blobBytes);
-  let uploaded=await bucket.upload(pathname,bytes,{contentType:"video/mp4",upsert:true,cacheControl:"3600"});
-  if(uploaded.error){
-   const created=await db.storage.createBucket(bucketName,{public:true,fileSizeLimit:524288000});
-   if(created.error&&!/already exists/i.test(created.error.message))throw created.error;
-   uploaded=await bucket.upload(pathname,bytes,{contentType:"video/mp4",upsert:true,cacheControl:"3600"});
-  }
-  if(uploaded.error)throw uploaded.error;
+  const uploaded=await bucket.upload(pathname,bytes,{contentType:"video/mp4",upsert:true,cacheControl:"3600"});
+  if(uploaded.error)throw new Error("supabase_storage_upload_failed:"+uploaded.error.message);
   canonicalUrl=bucket.getPublicUrl(pathname).data.publicUrl;
   if(!canonicalUrl)throw new Error("supabase_storage_public_url_missing");
  }
