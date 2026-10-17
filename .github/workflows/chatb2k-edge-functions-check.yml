@@ -7,6 +7,15 @@ on:
       - "supabase/functions/chatb2k-ecosystem-tool-gateway/**"
       - "supabase/functions/flow-generation-gate/**"
       - "supabase/functions/digital-product-delivery-worker/**"
+      - "supabase/functions/digital-product-media-generator/**"
+      - "supabase/functions/youtube-growth-engine/**"
+      - "supabase/functions/chatb2k-sourcing-engine/**"
+      - "supabase/functions/chatb2k-membership-autopilot/**"
+      - "supabase/functions/chatb2k-agent-router/**"
+      - "supabase/functions/content-asset-ingestion/**"
+      - "supabase/functions/content-intelligence-enricher/**"
+      - "supabase/functions/buffer-publisher/**"
+      - "supabase/functions/resofit-ecosystem-autopilot/**"
       - ".github/workflows/chatb2k-edge-functions-check.yml"
 
 permissions:
@@ -30,3 +39,21 @@ jobs:
         run: deno check --config supabase/functions/flow-generation-gate/deno.json supabase/functions/flow-generation-gate/index.ts
       - name: Type-check digital delivery worker
         run: deno check --config supabase/functions/digital-product-delivery-worker/deno.json supabase/functions/digital-product-delivery-worker/index.ts
+      - name: Type-check resofit-ecosystem-autopilot
+        run: deno check --config supabase/functions/resofit-ecosystem-autopilot/deno.json supabase/functions/resofit-ecosystem-autopilot/index.ts
+      - name: Type-check buffer-publisher
+        run: deno check --config supabase/functions/buffer-publisher/deno.json supabase/functions/buffer-publisher/index.ts
+      - name: Type-check content-intelligence-enricher
+        run: deno check --config supabase/functions/content-intelligence-enricher/deno.json supabase/functions/content-intelligence-enricher/index.ts
+      - name: Type-check content-asset-ingestion
+        run: deno check --config supabase/functions/content-asset-ingestion/deno.json supabase/functions/content-asset-ingestion/index.ts
+      - name: Type-check chatb2k-agent-router
+        run: deno check --config supabase/functions/chatb2k-agent-router/deno.json supabase/functions/chatb2k-agent-router/index.ts
+      - name: Type-check chatb2k-membership-autopilot
+        run: deno check --import-map=supabase/functions/chatb2k-membership-autopilot/import_map.json supabase/functions/chatb2k-membership-autopilot/index.ts
+      - name: Type-check chatb2k-sourcing-engine
+        run: deno check --config supabase/functions/chatb2k-sourcing-engine/deno.json supabase/functions/chatb2k-sourcing-engine/index.ts
+      - name: Type-check youtube-growth-engine
+        run: deno check --config supabase/functions/youtube-growth-engine/deno.json supabase/functions/youtube-growth-engine/index.ts
+      - name: Type-check digital-product-media-generator
+        run: deno check --config supabase/functions/digital-product-media-generator/deno.json supabase/functions/digital-product-media-generator/index.ts
