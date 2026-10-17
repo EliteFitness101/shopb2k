@@ -143,7 +143,12 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
       }
       return;
     }
-    await addItem({ product: { id: product.id, title: product.title, handle: product.handle, sku: product.sku, images: product.images }, variantId: selectedVariant.id, variantTitle: selectedVariant.title, price: selectedVariant.price, quantity: qty, selectedOptions: selectedVariant.selectedOptions });
+    try {
+      await addItem({ product: { id: product.id, title: product.title, handle: product.handle, sku: product.sku, images: product.images }, variantId: selectedVariant.id, variantTitle: selectedVariant.title, price: selectedVariant.price, quantity: qty, selectedOptions: selectedVariant.selectedOptions });
+    } catch (error) {
+      toast.error(error instanceof Error ? `Unable to confirm cart save: ${error.message}` : "Unable to confirm cart save. Please try again.", { position: "top-center" });
+      return;
+    }
     track("add_to_cart", {
       product_id: product.sku || undefined,
       sku: product.sku || undefined,
