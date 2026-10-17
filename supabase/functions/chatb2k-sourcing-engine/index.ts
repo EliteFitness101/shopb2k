@@ -85,7 +85,7 @@ Deno.serve(async req=>{
   try {
     const { data, error } = await db.rpc("get_buffer_cron_secret");
     if (!error && data) expectedSecrets.push(String(data));
-  } catch {}
+  } catch (e) { console.error("sourcing-cron-secret-fallback-failed", e instanceof Error ? e.message : "unknown"); }
   const supplied = req.headers.get("x-sourcing-cron-secret") || req.headers.get("x-content-cron-secret") || req.headers.get("x-buffer-cron-secret") || "";
   if (!supplied || expectedSecrets.length === 0 || !expectedSecrets.includes(supplied)) return json({error:"unauthorized"},401);
   const gate=await automationKillReason();if(gate.blocked)return json({error:"CHATB2K_GLOBAL_KILL_SWITCH_ACTIVE",reason:gate.reason},503);
