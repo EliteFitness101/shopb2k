@@ -1,0 +1,428 @@
+{
+  "registry_version": "1.0.0",
+  "canonical_production_domain": "https://www.resofit.fit",
+  "repo": "EliteFitness101/shopb2k",
+  "branch": "feat/omni-experience-gateway-v56",
+  "policy": "Registry only. A listed Library asset is not a production asset until its final approved media URL is verified. Do not publish concept claims, composite collection artwork as SKU images, or unverified prices.",
+  "assets": [
+    {
+      "id": "RF-VIS-001",
+      "source_filename": "ResoFit Wellness Ecosystem Landing Page.png",
+      "library_file_id": "file_00000000d3f081f4aad67d3a3703ca30",
+      "optimized_filename": "resofit-wellness-ecosystem-landing-page.webp",
+      "category": "experience-reference",
+      "destination": "www.resofit.fit",
+      "use": "Homepage visual reference; rebuild/crop approved sections",
+      "status": "materialized-optimized-not-uploaded",
+      "publish_guard": "Do not publish entire mockup as live page content",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-002",
+      "source_filename": "ResoFlex Premium Fitness Collection.png",
+      "library_file_id": "file_000000009a60820c91fb464195c390b3",
+      "optimized_filename": "resoflex-premium-fitness-collection.webp",
+      "category": "collection-campaign",
+      "destination": "shop.resofit.fit",
+      "use": "Premium collection campaign",
+      "status": "materialized-optimized-not-uploaded",
+      "publish_guard": "Composite artwork only; not individual SKU imagery",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-003",
+      "source_filename": "ResoFlex Elite Performance Collection.png",
+      "library_file_id": "file_00000000948481f580127e8592441c81",
+      "optimized_filename": "resoflex-elite-performance-collection.webp",
+      "category": "collection-campaign",
+      "destination": "shop.resofit.fit",
+      "use": "Elite performance collection campaign",
+      "status": "materialized-optimized-not-uploaded",
+      "publish_guard": "Verify product names and SKUs before publication",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-004",
+      "source_filename": "ResoFit Wellness Spa Storyboard.png",
+      "library_file_id": "file_0000000027e081f69d4f168cb04548ab",
+      "optimized_filename": "resofit-wellness-spa-storyboard.webp",
+      "category": "wellness-recovery-concept",
+      "destination": "www.resofit.fit",
+      "use": "Wellness and recovery service concept",
+      "status": "materialized-optimized-not-uploaded",
+      "publish_guard": "Verify real services and booking availability; concept CTA is not proof of service",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-005",
+      "source_filename": "NaijaFit 7-Day Wellness Meal Plan.png",
+      "library_file_id": "file_0000000015e0820aa70f182887f02841",
+      "optimized_filename": "naijafit-7-day-wellness-meal-plan.webp",
+      "category": "nutrition-promotion",
+      "destination": "www.resofit.fit",
+      "use": "NaijaFit meal-plan promotion",
+      "status": "materialized-optimized-not-uploaded",
+      "publish_guard": "Artwork shows ₦1,000; verify against canonical commerce offer before use",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-006",
+      "source_filename": "ResoFit Platform Architecture Map.png",
+      "library_file_id": "file_00000000dba0820a88e3d5c9327a12fe",
+      "optimized_filename": null,
+      "category": "internal-architecture",
+      "destination": "internal-docs",
+      "use": "Technical reference only",
+      "status": "library-identified-not-materialized",
+      "publish_guard": "Do not use as customer-facing hero",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-007",
+      "source_filename": "Resoflex Mobile Wellness Experience.png",
+      "library_file_id": "file_00000000ca5c81f4a203464f1cf60417",
+      "optimized_filename": null,
+      "category": "mobile-wellness-concept",
+      "destination": "www.resofit.fit",
+      "use": "Mobile wellness campaign concept",
+      "status": "library-identified-not-materialized",
+      "publish_guard": "Validate specifications and claims before public use",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-008",
+      "source_filename": "Luxury Wellness Trailer Arrival.png",
+      "library_file_id": "file_000000009484824391021f7b0d2feb7e",
+      "optimized_filename": null,
+      "category": "mobile-wellness-concept",
+      "destination": "www.resofit.fit",
+      "use": "Mobile wellness arrival/deployment concept",
+      "status": "library-identified-not-materialized",
+      "publish_guard": "Validate operational claims before public use",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-009",
+      "source_filename": "Portable gym and spa design.png",
+      "library_file_id": "file_000000009f4881f4897ab0140c8fb1ff",
+      "optimized_filename": null,
+      "category": "facility-concept",
+      "destination": "internal-docs",
+      "use": "Facility planning reference",
+      "status": "library-identified-not-materialized",
+      "publish_guard": "Concept only; not a verified specification",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-010",
+      "source_filename": "Luxury Mobile Wellness Hub Blueprint.png",
+      "library_file_id": "file_00000000048881f4bbc7094d74154dd0",
+      "optimized_filename": null,
+      "category": "facility-concept",
+      "destination": "internal-docs",
+      "use": "Wellness hub layout reference",
+      "status": "library-identified-not-materialized",
+      "publish_guard": "Validate dimensions and facility capabilities",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-011",
+      "source_filename": "Black and Gold Wellness Trailer in Motion.png",
+      "library_file_id": "file_00000000df0481f48d3a641ed6076203",
+      "optimized_filename": null,
+      "category": "campaign-concept",
+      "destination": "www.resofit.fit",
+      "use": "Mobile wellness campaign creative",
+      "status": "library-identified-not-materialized",
+      "publish_guard": "Review overlap with other trailer artwork",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-012",
+      "source_filename": "Candéra Aura Luxury Wellness Ritual.png",
+      "library_file_id": "file_00000000e38c81f6aa577ecfa6458e8a",
+      "optimized_filename": null,
+      "category": "external-brand-reference",
+      "destination": "internal-review",
+      "use": "Luxury wellness style reference",
+      "status": "library-identified-not-materialized",
+      "publish_guard": "Do not present as ResoFit-owned branding without approval",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-013",
+      "source_filename": "Luxury Wellness Trailer Deployment.png",
+      "library_file_id": "file_000000005d208210a83fec4968edf2f5",
+      "optimized_filename": null,
+      "category": "mobile-wellness-concept",
+      "destination": "www.resofit.fit",
+      "use": "Deployment campaign concept",
+      "status": "library-identified-not-materialized",
+      "publish_guard": "Review for duplicate panels and unsupported claims",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-014",
+      "source_filename": "Spa Zone Mobile Wellness Trailer.png",
+      "library_file_id": "file_00000000b5d082438cc30519b130df0c",
+      "optimized_filename": null,
+      "category": "wellness-recovery-concept",
+      "destination": "www.resofit.fit",
+      "use": "Spa-zone campaign concept",
+      "status": "library-identified-not-materialized",
+      "publish_guard": "Verify service availability and brand claims",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-015",
+      "source_filename": "Cardio Zone Trailer Presentation.png",
+      "library_file_id": "file_00000000101c8246be6f00adbfb9a628",
+      "optimized_filename": null,
+      "category": "fitness-zone-concept",
+      "destination": "www.resofit.fit",
+      "use": "Cardio-zone concept",
+      "status": "library-identified-not-materialized",
+      "publish_guard": "Concept imagery only",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-016",
+      "source_filename": "Luxury portable gym and spa design.png",
+      "library_file_id": "file_0000000045f881f4968330a96b9f2e10",
+      "optimized_filename": null,
+      "category": "facility-concept",
+      "destination": "internal-docs",
+      "use": "Alternative facility design reference",
+      "status": "library-identified-not-materialized",
+      "publish_guard": "Compare against similar concepts before upload",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-017",
+      "source_filename": "Portable gym and spa concept design.png",
+      "library_file_id": "file_0000000087c4824689bac89dd69ef515",
+      "optimized_filename": null,
+      "category": "facility-concept",
+      "destination": "internal-docs",
+      "use": "Alternative facility concept",
+      "status": "library-identified-not-materialized",
+      "publish_guard": "Compare against similar concepts before upload",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-018",
+      "source_filename": "Luxurious portable gym, spa, and bar.png",
+      "library_file_id": "file_0000000030a881f49518ee286ae51366",
+      "optimized_filename": null,
+      "category": "facility-concept",
+      "destination": "internal-docs",
+      "use": "Combined gym, spa and nutrition concept",
+      "status": "library-identified-not-materialized",
+      "publish_guard": "Concept only; do not imply operational availability",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-019",
+      "source_filename": "Exclusive wellness experience with ResoLuxe.png",
+      "library_file_id": "file_000000003e507246ab6ab52ac5c9bf00",
+      "optimized_filename": null,
+      "category": "external-brand-reference",
+      "destination": "internal-review",
+      "use": "Luxury wellness style reference",
+      "status": "library-identified-not-materialized",
+      "publish_guard": "Confirm brand ownership and naming rights",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-020",
+      "source_filename": "Makaveli Wellness Hub: Luxury Fitness & Spa Poster.png",
+      "library_file_id": "file_0000000044148210b5cb6743529ba0bf",
+      "optimized_filename": null,
+      "category": "external-brand-reference",
+      "destination": "internal-review",
+      "use": "Style reference only",
+      "status": "library-identified-not-materialized",
+      "publish_guard": "Do not publish as ResoFit-branded artwork without approval",
+      "production_url": null
+    },
+    {
+      "id": "RF-VIS-021",
+      "source_filename": "Luxury fitness branding storyboard.png",
+      "library_file_id": "file_00000000668871f4a62485886190bb0f",
+      "optimized_filename": null,
+      "category": "brand-reference",
+      "destination": "internal-review",
+      "use": "Brand/campaign reference",
+      "status": "library-identified-not-materialized",
+      "publish_guard": "Review ownership and duplicate content",
+      "production_url": null
+    }
+  ],
+  "storage_mapping": {
+    "provider": "Vercel Blob",
+    "team_id": "team_iRyfIbkZpnmY0x43nnOI0Q9I",
+    "store_id": "store_aB2ttlKn9NO0tuoa",
+    "store_display_name": null,
+    "env_keys": [
+      "BLOB_STORE_ID",
+      "BLOB_READ_WRITE_TOKEN",
+      "BLOB_WEBHOOK_PUBLIC_KEY"
+    ],
+    "secret_handling": "BLOB_READ_WRITE_TOKEN is stored as a sensitive/encrypted Vercel environment variable; never serialize token values into this registry or client bundles.",
+    "endpoint_configuration": {
+      "resolution": "Vercel Blob SDK uses the store-scoped read/write token; no separate BLOB_ENDPOINT variable was verified.",
+      "standalone_endpoint": null,
+      "note": "Do not invent an endpoint or substitute another media provider. Verify SDK/runtime behavior before upload."
+    },
+    "mapping_status": "environment-variable records verified for all listed projects; runtime upload/read delivery not yet verified",
+    "store_metadata_status": "Vercel store-detail lookup returned 404; store identity is corroborated by matching BLOB_STORE_ID values and existing Vercel Blob credential metadata in source projects.",
+    "asset_upload_status": "not_uploaded",
+    "public_asset_url_verification": "pending",
+    "runtime_write_read_smoke_test": "pending",
+    "production_publish_authorized": false,
+    "verified_at_utc": "2026-10-08T23:44:32.341Z",
+    "projects": [
+      {
+        "name": "reso-web",
+        "project_id": "prj_7raCDyL4cxB5PDvhlBnCssRI3r3r",
+        "domain": "https://www.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "chatb2k",
+        "project_id": "prj_Ts9QF7ahMFOCzeKGflikM5G0FNLA",
+        "domain": "https://chatb2k.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "reso-dash",
+        "project_id": "prj_fmHnZvuSxFELERlCqJB27tNcNqyR",
+        "domain": "https://dashboard.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "shop-resoflex",
+        "project_id": "prj_QeiXB0eBuRCiFBCL0gpIpckFxwWG",
+        "domain": "https://store.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "resocatalog",
+        "project_id": "prj_oP6hbhU0v6KUTWWNZcGXk8V3hvxQ",
+        "domain": null,
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "resofit-api",
+        "project_id": "prj_b6IVjIos1q2RaXhihICrhj5hEOgL",
+        "domain": "https://api.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "resonance-fitness-automation",
+        "project_id": "prj_ouN3SxrXoz5wEHejPkgqQTbqsxWt",
+        "domain": null,
+        "targets": [
+          "development",
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "redzone-recruit",
+        "project_id": "prj_mUnYg6xCjlsv4tv5JY9eSdtTercv",
+        "domain": null,
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "reso-flex",
+        "project_id": "prj_x6bXD6kHO8RITNyDXVHHWmPHcm2w",
+        "domain": null,
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "elite",
+        "project_id": "prj_KaehH0OfGQhLyQ1f9xkree0SmCqL",
+        "domain": "https://elite.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "bellyfat",
+        "project_id": "prj_7GJxhgopuq2fNgbX3PxQk1PLEGFO",
+        "domain": "https://bellyfat.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "reset-resofit-fit",
+        "project_id": "prj_BgWWdYB88ov7Nc5hvmqql4jCsaWw",
+        "domain": "https://reset.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "martial-x",
+        "project_id": "prj_HdRvtuW9nVcHUu53nqnb6qH8mw1Z",
+        "domain": "https://martial.resofit.fit",
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      },
+      {
+        "name": "resofit-os",
+        "project_id": "prj_bO4CvJ2IxA02LnCPmBcINCVYnp2Q",
+        "domain": null,
+        "targets": [
+          "preview",
+          "production"
+        ],
+        "mapping_status": "verified"
+      }
+    ]
+  }
+}

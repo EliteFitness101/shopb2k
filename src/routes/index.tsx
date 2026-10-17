@@ -13,6 +13,7 @@ import { PRODUCTS_QUERY, approxUSD, formatMoney, storefrontApiRequest, type Shop
 import { trackEvent } from "@/lib/revenueOS";
 import { preloadOnIdle } from "@/lib/imagePriority";
 import { CTA } from "@/lib/ctas";
+import { OmniExperiencePaths } from "@/components/OmniExperiencePaths";
 
 const CANONICAL_ORIGIN = "https://www.resofit.fit";
 
@@ -64,6 +65,7 @@ function Index() {
       <SiteHeader />
       <main>
       <CinematicWellnessExperience />
+      <OmniExperiencePaths />
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0">
           <img src={heroImg} alt="Loaded olympic barbell in dramatic studio light" width={1536} height={1280} fetchPriority="high" decoding="async" className="h-full w-full object-cover opacity-70" />
