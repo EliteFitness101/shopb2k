@@ -110,10 +110,10 @@ async function fetchVerifiedVariant(shop: string, variantId: string) {
   };
   if (result.errors?.length) throw new Error("Shopify Admin GraphQL returned errors");
   const variant = result.data?.productVariant;
-  if (!variant || !variant.id || !variant.product?.id || !variant.price?.amount || !variant.price?.currencyCode) return null;
-  const amount = Number(variant.price.amount);
+  if (!variant || !variant.id || !variant.product?.id || !variant.price || !result.data?.shop?.currencyCode) return null;
+  const amount = Number(variant.price);
   if (!Number.isFinite(amount) || amount < 0) throw new Error("Shopify returned an invalid variant price");
-  return { ...variant, priceAmount: amount };
+  return { ...variant, priceAmount: amount, currencyCode: result.data.shop.currencyCode };
 }
 
 export const Route = createFileRoute("/api/shopify-app-proxy")({
