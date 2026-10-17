@@ -184,7 +184,7 @@ export const Route = createFileRoute("/api/assessment-handoff")({
             correlation_id: correlationId,
             session_id: cart.session_id,
             user_id: cart.user_id ?? null,
-            anonymous_id: cart.anonymous_id ?? anonymousId || null,
+            anonymous_id: (cart.anonymous_id ?? anonymousId) || null,
             rsid: cart.rsid ?? null,
             funnel_origin: cart.funnel_origin ?? null,
             utm: cart.utm ?? {},
