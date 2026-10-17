@@ -143,7 +143,12 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
       }
       return;
     }
-    await addItem({ product: { id: product.id, title: product.title, handle: product.handle, sku: product.sku, images: product.images }, variantId: selectedVariant.id, variantTitle: selectedVariant.title, price: selectedVariant.price, quantity: qty, selectedOptions: selectedVariant.selectedOptions });
+    try {
+      await addItem({ product: { id: product.id, title: product.title, handle: product.handle, sku: product.sku, images: product.images }, variantId: selectedVariant.id, variantTitle: selectedVariant.title, price: selectedVariant.price, quantity: qty, selectedOptions: selectedVariant.selectedOptions });
+    } catch (error) {
+      toast.error(error instanceof Error ? `Unable to confirm cart save: ${error.message}` : "Unable to confirm cart save. Please try again.", { position: "top-center" });
+      return;
+    }
     track("add_to_cart", {
       product_id: product.sku || undefined,
       sku: product.sku || undefined,
@@ -156,40 +161,46 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
     });
     recordEngagement(product.id, "add_to_cart");
     toast.success(`Added ${qty}× ${product.title} to cart`, { position: "top-center" });
-  };
 
-  useEffect(() => {
-    if (typeof window === "undefined" || !selectedVariant?.availableForSale) return;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("assessment") !== "1") return;
-    if (!product.sku) return;
-    if (sessionStorage.getItem("resofit:assessment_checkout_started") === selectedVariant.id) return;
-    const saved = localStorage.getItem("resofit-checkout-contact");
-    if (!saved) return;
-    let contact: { fullName?: string; email?: string; phone?: string; address?: string };
-    try { contact = JSON.parse(saved); } catch { return; }
-    if (!contact.fullName?.trim() || !contact.email?.trim() || !contact.phone?.trim()) return;
-    sessionStorage.setItem("resofit:assessment_checkout_started", selectedVariant.id);
-    recordEngagement(product.id, "add_to_cart");
-    void fetch(`${RESOFIT_SUPABASE_URL}/functions/v1/paystack-init`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        items: [{ sku: product.sku, quantity: 1 }],
-        name: contact.fullName.trim(),
-        email: contact.email.trim().toLowerCase(),
-        phone: contact.phone.trim(),
-        address: contact.address?.trim() ?? "",
-      }),
-    }).then(async (response) => {
-      const payload = await response.json().catch(() => null) as { authorization_url?: string; error?: string } | null;
-      if (!response.ok || !payload?.authorization_url) throw new Error(payload?.error ?? "Unable to start secure checkout");
-      window.location.assign(payload.authorization_url);
-    }).catch((error) => {
-      sessionStorage.removeItem("resofit:assessment_checkout_started");
-      toast.error(error instanceof Error ? error.message : "Unable to start secure checkout");
-    });
-  }, [product.id, product.sku, selectedVariant]);
+    // The assessment campaign is deliberately opt-in; normal add-to-cart behavior is unchanged.
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("assessment") === "1") {
+      try {
+        const cartToken = useCartStore.getState().cartId;
+        if (!cartToken || !product.sku) throw new Error("Cart or product identity is unavailable.");
+        const sessionId = sessionStorage.getItem("resofit:session_id") ?? (() => {
+          const id = crypto.randomUUID();
+          sessionStorage.setItem("resofit:session_id", id);
+          return id;
+        })();
+        const anonymousId = localStorage.getItem("resofit:anonymous_id") ?? (() => {
+          const id = crypto.randomUUID();
+          localStorage.setItem("resofit:anonymous_id", id);
+          return id;
+        })();
+        const response = await fetch("/api/assessment-handoff", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cartToken,
+            sessionId,
+            anonymousId,
+            sku: product.sku,
+            variantId: selectedVariant.id,
+            requestId: crypto.randomUUID(),
+          }),
+        });
+        const handoff = await response.json().catch(() => null) as { ok?: boolean; redirectUrl?: string; error?: string } | null;
+        if (!response.ok || handoff?.ok !== true || typeof handoff.redirectUrl !== "string") {
+          throw new Error(handoff?.error ?? "Unable to verify the cart-to-assessment handoff.");
+        }
+        window.location.assign(handoff.redirectUrl);
+      } catch (error) {
+        toast.error(error instanceof Error
+          ? `Item saved to cart, but assessment could not open: ${error.message}`
+          : "Item saved to cart, but assessment could not open.", { position: "top-center" });
+      }
+    }
+  };
 
   return <article className="mx-auto max-w-7xl px-6 py-12">
     <Link to="/shop" className="mb-8 inline-flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground hover:text-gold"><ArrowLeft className="h-3 w-3" /> Back to shop</Link>
