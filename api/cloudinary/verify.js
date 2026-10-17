@@ -7,10 +7,11 @@ const json = (body, status = 200) => new Response(JSON.stringify(body, null, 2),
 });
 
 const MAX_RESULTS = 100;
-const MAX_PAGES = 2;
+const MAX_ASSETS = 100;
+const CONCURRENCY = 4;
 const REQUEST_TIMEOUT_MS = 5000;
 
-function getConfig() {
+function getCloudinaryConfig() {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
   const apiKey = process.env.CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
@@ -29,12 +30,13 @@ function getConfig() {
   return { cloudName: fallbackCloudName, apiKey: fallbackApiKey, apiSecret: fallbackApiSecret };
 }
 
-function headerValue(request, name) {
-  const headers = request?.headers;
-  if (!headers) return null;
-  if (typeof headers.get === "function") return headers.get(name);
-  const value = headers[name] ?? headers[name.toLowerCase()];
-  return Array.isArray(value) ? value[0] : value ?? null;
+function getSupabaseConfig() {
+  const url = "https://vbqjvmnhdtdhmeeudqnn.supabase.co";
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) {
+    throw new Error("Canonical Supabase server-side service role key is required");
+  }
+  return { url, serviceRoleKey };
 }
 
 async function sha1(value) {
@@ -74,6 +76,29 @@ async function cloudinarySearch(config, expression, nextCursor) {
   return data;
 }
 
+async function loadCanonicalAssets(supabase) {
+  const query = new URLSearchParams({
+    select: "asset_key,canonical_path,cloudinary_public_id,cloudinary_resource_type,status,delivery_url",
+    order: "asset_key.asc",
+    limit: String(MAX_ASSETS),
+  });
+  const response = await fetch(`${supabase.url}/rest/v1/resofit_cloudinary_visual_assets?${query}`, {
+    headers: {
+      apikey: supabase.serviceRoleKey,
+      authorization: `Bearer ${supabase.serviceRoleKey}`,
+      accept: "application/json",
+    },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
+  const rows = await response.json().catch(() => null);
+  if (!response.ok || !Array.isArray(rows)) {
+    const error = new Error(`Canonical Cloudinary registry read failed (HTTP ${response.status})`);
+    error.status = response.status;
+    throw error;
+  }
+  return rows.filter((row) => row?.asset_key && row?.cloudinary_public_id && row?.cloudinary_resource_type);
+}
+
 function normaliseResource(resource) {
   return {
     assetId: resource.asset_id ?? null,
@@ -91,69 +116,154 @@ function normaliseResource(resource) {
   };
 }
 
-async function collect(config, expression) {
-  const resources = [];
-  const seenCursors = new Set();
-  let nextCursor;
-  for (let page = 0; page < MAX_PAGES; page += 1) {
-    const data = await cloudinarySearch(config, expression, nextCursor);
-    if (Array.isArray(data.resources)) resources.push(...data.resources);
-    if (!data.next_cursor || seenCursors.has(data.next_cursor)) break;
-    seenCursors.add(data.next_cursor);
-    nextCursor = data.next_cursor;
+async function verifyRegistryAsset(config, row) {
+  try {
+    const escapedId = String(row.cloudinary_public_id).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    const data = await cloudinarySearch(config, `public_id:"${escapedId}"`);
+    const resource = (Array.isArray(data.resources) ? data.resources : []).find(
+      (item) => item.public_id === row.cloudinary_public_id,
+    ) ?? null;
+    const asset = resource ? normaliseResource(resource) : null;
+    const expectedResourceType = row.cloudinary_resource_type;
+    const expectedFormatMatch = String(row.delivery_url || "").match(/\.([a-z0-9]{2,5})(?:\?|$)/i);
+    const expectedFormat = expectedFormatMatch?.[1]?.toLowerCase() ?? null;
+    const found = Boolean(asset);
+    const live = Boolean(asset?.secureUrl);
+    const resourceTypeMatches = Boolean(asset && asset.resourceType === expectedResourceType);
+    const formatMatches = !expectedFormat || asset?.format?.toLowerCase() === expectedFormat;
+    return {
+      key: row.asset_key,
+      canonicalPath: row.canonical_path ?? null,
+      publicId: row.cloudinary_public_id,
+      expectedResourceType,
+      expectedFormat,
+      found,
+      live,
+      resourceTypeMatches,
+      formatMatches,
+      actualFormat: asset?.format ?? null,
+      secureUrl: asset?.secureUrl ?? null,
+      asset,
+      registryStatus: row.status ?? null,
+      error: !found ? "Canonical public ID not found in Cloudinary" :
+        !live ? "Cloudinary resource has no secure delivery URL" :
+        !resourceTypeMatches ? "Cloudinary resource type differs from the canonical registry" :
+        !formatMatches ? "Cloudinary delivery format differs from the canonical registry" : null,
+    };
+  } catch (error) {
+    return {
+      key: row.asset_key,
+      canonicalPath: row.canonical_path ?? null,
+      publicId: row.cloudinary_public_id,
+      expectedResourceType: row.cloudinary_resource_type,
+      expectedFormat: null,
+      found: false,
+      live: false,
+      resourceTypeMatches: false,
+      formatMatches: false,
+      actualFormat: null,
+      secureUrl: null,
+      asset: null,
+      registryStatus: row.status ?? null,
+      error: error instanceof Error ? error.message : "Cloudinary verification failed",
+    };
   }
-  return resources.slice(0, MAX_RESULTS * MAX_PAGES);
 }
 
-async function verifyRequested(config, publicIds) {
-  const results = [];
-  for (const publicId of publicIds) {
-    try {
-      const resources = await collect(config, `public_id:\"${publicId.replace(/\"/g, "\\\"")}\"`);
-      const resource = resources.find((item) => item.public_id === publicId) ?? resources[0];
-      results.push({ publicId, found: Boolean(resource), live: Boolean(resource?.secure_url), asset: resource ? normaliseResource(resource) : null, error: null });
-    } catch (error) {
-      results.push({ publicId, found: false, live: false, asset: null, error: error instanceof Error ? error.message : "Cloudinary verification failed" });
+async function mapConcurrent(items, concurrency, mapper) {
+  const output = new Array(items.length);
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (true) {
+      const index = cursor++;
+      if (index >= items.length) return;
+      output[index] = await mapper(items[index]);
     }
-  }
-  return results;
+  });
+  await Promise.all(workers);
+  return output;
 }
 
 export default async function handler(request) {
   if (request.method !== "GET") return json({ error: "Method Not Allowed" }, 405);
 
-  let config;
+  let cloudinary;
+  let supabase;
   try {
-    config = getConfig();
+    cloudinary = getCloudinaryConfig();
+    supabase = getSupabaseConfig();
   } catch (error) {
-    return json({ status: "CONFIG_ERROR", message: error instanceof Error ? error.message : "Cloudinary configuration is incomplete" }, 500);
+    return json({
+      status: "CONFIG_ERROR",
+      message: error instanceof Error ? error.message : "Server configuration is incomplete",
+    }, 500);
   }
-
-  const forwardedHost = headerValue(request, "x-forwarded-host") || headerValue(request, "host");
-  const forwardedProto = headerValue(request, "x-forwarded-proto") || "https";
-  const base = forwardedHost ? `${forwardedProto}://${forwardedHost}` : "https://resofit.fit";
-  const url = new URL(request.url || "/api/cloudinary/verify", base);
-  const publicIdsParam = url.searchParams.get("public_ids");
-  const folder = (url.searchParams.get("folder") || "resofit").trim().replace(/^\/+|\/+$/g, "");
-
-  if (!folder || folder === "resofit-cdn" || (!folder.startsWith("resofit") && !publicIdsParam)) {
-    return json({ status: "INVALID_REQUEST", message: "folder must resolve under the production Cloudinary resofit root." }, 400);
-  }
-
-  const requestedIds = publicIdsParam ? [...new Set(publicIdsParam.split(",").map((id) => id.trim()).filter(Boolean))].slice(0, 25) : [];
 
   try {
+    const url = new URL(request.url || "/api/cloudinary/verify", "https://resofit.fit");
+    const requestedIds = [...new Set((url.searchParams.get("public_ids") || "")
+      .split(",").map((id) => id.trim()).filter(Boolean))].slice(0, 25);
+    const registry = await loadCanonicalAssets(supabase);
+    const selected = requestedIds.length
+      ? registry.filter((row) => requestedIds.includes(row.cloudinary_public_id))
+      : registry;
+
     if (requestedIds.length) {
-      const results = await verifyRequested(config, requestedIds);
-      const live = results.filter((result) => result.live).length;
-      return json({ status: live === results.length ? "PASS" : "FAIL", mode: "requested", cloudName: config.cloudName, checked: results.length, live, missing: results.length - live, complete: `${live}/${results.length}`, generatedAt: new Date().toISOString(), assets: results }, live === results.length ? 200 : 502);
+      const registeredIds = new Set(selected.map((row) => row.cloudinary_public_id));
+      const unknownIds = requestedIds.filter((id) => !registeredIds.has(id));
+      if (unknownIds.length) {
+        return json({
+          status: "INVALID_REQUEST",
+          message: "Only public IDs present in the canonical Supabase asset registry can be verified.",
+          unknownIds,
+          canonical: registry.length,
+        }, 400);
+      }
     }
 
-    const assets = (await collect(config, `asset_folder:\"${folder.replace(/\"/g, "\\\"")}\"`)).map(normaliseResource);
-    const live = assets.filter((asset) => Boolean(asset.secureUrl)).length;
-    return json({ status: "PASS", mode: "discovery", cloudName: config.cloudName, folder, discovered: assets.length, live, capped: assets.length === MAX_RESULTS * MAX_PAGES, generatedAt: new Date().toISOString(), assets });
+    if (!selected.length) {
+      return json({
+        status: "FAIL",
+        canonical: registry.length,
+        checked: 0,
+        live: 0,
+        missing: registry.length,
+        formatErrors: 0,
+        complete: `0/${registry.length}`,
+        canonicalComplete: false,
+        message: "The canonical Cloudinary registry returned no verifiable assets.",
+        generatedAt: new Date().toISOString(),
+        assets: [],
+      }, 502);
+    }
+
+    const assets = await mapConcurrent(selected, CONCURRENCY, (row) => verifyRegistryAsset(cloudinary, row));
+    const live = assets.filter((asset) => asset.live && asset.resourceTypeMatches).length;
+    const formatErrors = assets.filter((asset) => !asset.formatMatches).length;
+    const missing = assets.length - live;
+    const canonicalComplete = assets.length === registry.length && live === registry.length && formatErrors === 0;
+    const pass = live === assets.length && formatErrors === 0;
+    return json({
+      status: pass ? "PASS" : "FAIL",
+      mode: requestedIds.length ? "requested-canonical" : "canonical-registry",
+      cloudName: cloudinary.cloudName,
+      canonical: registry.length,
+      checked: assets.length,
+      live,
+      missing,
+      formatErrors,
+      complete: `${live}/${assets.length}`,
+      canonicalComplete,
+      generatedAt: new Date().toISOString(),
+      assets,
+    }, pass ? 200 : 502);
   } catch (error) {
-    const status = error?.name === "TimeoutError" || error?.name === "AbortError" ? 504 : (error?.status === 401 || error?.status === 403 ? 502 : 500);
-    return json({ status: "ERROR", error: "Cloudinary resource verification failed", details: { message: error instanceof Error ? error.message : "Unknown error" } }, status);
+    const status = error?.name === "TimeoutError" || error?.name === "AbortError" ? 504 :
+      (error?.status === 401 || error?.status === 403 ? 502 : 500);
+    return json({
+      status: "ERROR",
+      error: "Canonical Cloudinary verification failed",
+      details: { message: error instanceof Error ? error.message : "Unknown error" },
+    }, status);
   }
 }
