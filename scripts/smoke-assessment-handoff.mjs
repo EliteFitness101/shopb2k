@@ -10,6 +10,9 @@ const revenue = read("../src/lib/revenueOS.ts");
 
 assert.match(handoff, /createFileRoute\("\/api\/assessment-handoff"\)/);
 assert.match(handoff, /HANDOFF_TTL_MS = 30 \* 60 \* 1000/);
+assert.match(handoff, /!cartToken \|\| \/\\s\//);
+assert.match(handoff, /https:\/\/resofit\.fit\/me\?correlation_id=/);
+assert.match(handoff, /source: clean\(body\.source, 40\)/);
 assert.match(handoff, /\.eq\("cart_token", cartToken\)/);
 assert.match(handoff, /cart\.session_id !== sessionId/);
 assert.match(handoff, /metadata\.variantId === variantId/);
