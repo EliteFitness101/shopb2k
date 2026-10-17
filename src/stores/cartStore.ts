@@ -27,14 +27,14 @@ async function syncCanonicalCart(items:CartItem[],cartToken:string|null){
     anonymousId:stableId("resofit:anonymous_id"),
     sessionId:sessionStorage.getItem("resofit:session_id")??(()=>{const id=crypto.randomUUID();sessionStorage.setItem("resofit:session_id",id);return id;})(),
     attribution:getAttribution(),
-    items:items.map(i=>({sku:i.product.sku||i.variantId,title:i.product.title,variantId:i.variantId,quantity:i.quantity,unitPrice:Number(i.price.amount)||0,currency:i.price.currencyCode,metadata:{handle:i.product.handle,variantTitle:i.variantTitle,selectedOptions:i.selectedOptions}}))
+    items:items.map(i=>({sku:i.product.sku||i.variantId,title:i.product.title,variantId:i.variantId,quantity:i.quantity,unitPrice:Number(i.price.amount)||0,currency:i.price.currencyCode,metadata:{handle:i.product.handle,variantId:i.variantId,variantTitle:i.variantTitle,selectedOptions:i.selectedOptions}}))
   })});
   if(!response.ok) throw new Error("Canonical cart sync failed");
 }
 
 export const useCartStore=create<CartStore>()(persist((set,get)=>({
  items:[],cartId:null,checkoutUrl:null,isLoading:false,isSyncing:false,
- addItem:async(item)=>{set({isLoading:true});try{const current=get().items;const existing=current.find(i=>i.variantId===item.variantId);const next=existing?current.map(i=>i.variantId===item.variantId?{...i,quantity:i.quantity+item.quantity}:i):[...current,{...item,lineId:crypto.randomUUID()}];const cartId=get().cartId??crypto.randomUUID();set({items:next,cartId,checkoutUrl:null});void get().syncCart();}finally{set({isLoading:false});}},
+ addItem:async(item)=>{set({isLoading:true});try{const current=get().items;const existing=current.find(i=>i.variantId===item.variantId);const next=existing?current.map(i=>i.variantId===item.variantId?{...i,quantity:i.quantity+item.quantity}:i):[...current,{...item,lineId:crypto.randomUUID()}];const cartId=get().cartId??crypto.randomUUID();set({items:next,cartId,checkoutUrl:null});await get().syncCart();}finally{set({isLoading:false});}},
  updateQuantity:async(variantId,quantity)=>{if(quantity<=0){await get().removeItem(variantId);return;}set({isLoading:true});try{set({items:get().items.map(i=>i.variantId===variantId?{...i,quantity}:i),checkoutUrl:null});void get().syncCart();}finally{set({isLoading:false});}},
  removeItem:async(variantId)=>{set({isLoading:true});try{const next=get().items.filter(i=>i.variantId!==variantId);set({items:next,cartId:get().cartId,checkoutUrl:null});void get().syncCart();}finally{set({isLoading:false});}},
  clearCart:()=>{set({items:[],checkoutUrl:null});void get().syncCart();},
