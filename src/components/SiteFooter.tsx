@@ -23,7 +23,7 @@ const COLUMNS = [
       { to: "/auth", label: "Member Login" },
       { to: "/me", label: "ChatB2K™" },
       { href: "https://forge.resofit.fit", label: "ResoForge" },
-      { href: "https://1024terabox.com/s/1c7KDd1s4lQOKg_ABnYCg0Q", label: "Terabox offer · Affiliate link", rel: "sponsored nofollow noopener noreferrer" },
+      { href: "https://1024terabox.com/s/1c7KDd1s4lQOKg_ABnYCg0Q", label: "Terabox offer · Affiliate link (sponsored)", rel: "sponsored nofollow noopener noreferrer" },
     ],
   },
   {
