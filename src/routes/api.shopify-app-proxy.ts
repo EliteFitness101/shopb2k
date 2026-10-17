@@ -94,9 +94,10 @@ async function fetchVerifiedVariant(shop: string, variantId: string) {
       query: `query VerifyAssessmentVariant($id: ID!) {
         productVariant(id: $id) {
           id
-          price { amount currencyCode }
+          price
           product { id title }
         }
+        shop { currencyCode }
       }`,
       variables: { id: variantId },
     }),
@@ -104,7 +105,7 @@ async function fetchVerifiedVariant(shop: string, variantId: string) {
   });
   if (!response.ok) throw new Error(`Shopify Admin API returned ${response.status}`);
   const result = await response.json() as {
-    data?: { productVariant?: { id: string; price: { amount: string; currencyCode: string }; product: { id: string; title: string } } | null };
+    data?: { productVariant?: { id: string; price: string; product: { id: string; title: string } } | null; shop?: { currencyCode: string } };
     errors?: Array<{ message?: string }>;
   };
   if (result.errors?.length) throw new Error("Shopify Admin GraphQL returned errors");
@@ -172,7 +173,7 @@ export const Route = createFileRoute("/api/shopify-app-proxy")({
             product_gid: variant.product.id,
             quantity: params.quantity,
             unit_price: variant.price.amount,
-            currency: variant.price.currencyCode,
+            currency: variant.currencyCode,
             product_title: variant.product.title,
             destination: "/me",
             expires_at: expiresAt,
