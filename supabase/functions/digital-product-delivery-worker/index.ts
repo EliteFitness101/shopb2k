@@ -9,6 +9,7 @@ const db = createClient(url, serviceKey, { auth: { persistSession: false, autoRe
 const BUCKET = "resofit-paid-deliverables";
 const SIGNED_TTL_SECONDS = 7 * 24 * 60 * 60;
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { "cache-control": "no-store" } });
+function asArrayBuffer(bytes: Uint8Array): ArrayBuffer { const copy = new Uint8Array(bytes.byteLength); copy.set(bytes); return copy.buffer; }
 
 function wrap(text: string, font: any, size: number, maxWidth: number): string[] {
   const words = String(text ?? "").split(/\s+/).filter(Boolean);
@@ -217,7 +218,7 @@ async function buildApprovedMediaBundle(productSku: string, pdfBytes: Uint8Array
   }
   if (!included.length) return null;
   const bytes = await zip.generateAsync({ type: "uint8array", compression: "STORE" });
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  const digest = await crypto.subtle.digest("SHA-256", asArrayBuffer(bytes));
   const sha256 = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
   return { bytes, sha256, asset_ids: included, asset_count: included.length, factory_job_id: factoryJob.id };
 }
@@ -248,7 +249,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     if (body?.action === "self_test") {
       const sample = await makeDigitalPdf("ResoFit QA", "QA-NO-PAYMENT", "ResoFit 7-Day Meal & Workout Reset", "res-dig-reset", "Digital", {});
-      const digest = await crypto.subtle.digest("SHA-256", sample);
+      const digest = await crypto.subtle.digest("SHA-256", asArrayBuffer(sample));
       const sha256 = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
       const fromEmail = Deno.env.get("RESOFIT_FROM_EMAIL") ?? "no-reply@resofit.fit";
       return json({ ok: true, status: "self_test", byte_length: sample.length, output_sha256: sha256, resend_configured: Boolean(Deno.env.get("RESEND_API_KEY")), from_email_configured: /^[^\s@]+@resofit\.fit$/i.test(fromEmail), from_email_source: Deno.env.get("RESOFIT_FROM_EMAIL") ? "environment" : "verified-default" });
@@ -268,7 +269,7 @@ Deno.serve(async (req) => {
     const name = String(payment.metadata?.customer_name ?? payment.metadata?.name ?? payment.customer_email?.split("@")[0] ?? "ResoFit Customer").trim().slice(0, 100) || "ResoFit Customer";
     const { data: experience } = await db.from("resofit_product_experience_config").select("promise,plan,meal_workout,lifestyle_hacks").eq("product_sku", product.sku).maybeSingle();
     const bytes = await makeDigitalPdf(name, String(job.payment_reference), product.title, product.sku, product.product_type ?? "", experience);
-    const digest = await crypto.subtle.digest("SHA-256", bytes);
+    const digest = await crypto.subtle.digest("SHA-256", asArrayBuffer(bytes));
     const sha256 = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
     const folder = String(product.sku).replace(/[^A-Za-z0-9_-]/g, "_");
     const path = folder + "/" + job.id + ".pdf";
