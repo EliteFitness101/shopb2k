@@ -22,7 +22,7 @@ In the registered Shopify app configuration, set:
 - Subpath: `chatb2k`
 - Proxy URL: `https://resofit.fit/api/shopify-app-proxy`
 
-The resulting storefront endpoint is `/apps/chatb2k`. Append `/orchestrate` only if the app configuration and deployed route are deliberately adjusted together; the current server handler is the exact endpoint `/api/shopify-app-proxy`, so the initial configuration should proxy the selected prefix/subpath directly to that URL.
+The resulting storefront endpoint is exactly `/apps/chatb2k`; this route does not use an `/orchestrate` suffix. Proxy the selected prefix/subpath directly to `https://resofit.fit/api/shopify-app-proxy`.
 
 Call the proxy with signed query parameters `variant_id`, `quantity`, and a UUID `request_id`; UTM values may also be sent as query parameters. Shopify appends its signed `shop`, `timestamp`, `path_prefix`, `logged_in_customer_id`, and `signature` parameters. The handler validates the HMAC, timestamp, exact shop allow-list, request fields, and variant through the Admin GraphQL API before issuing an opaque correlation ID.
 
