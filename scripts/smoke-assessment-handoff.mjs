@@ -45,7 +45,7 @@ assert.match(shopifyProxy, /SHOPIFY_ALLOWED_SHOP_DOMAINS/);
 assert.match(shopifyProxy, /X-Shopify-Access-Token/);
 assert.match(shopifyProxy, /productVariant\(id: \$id\)/);
 assert.match(shopifyProxy, /unit_price: variant\.price,/);
-assert.match(shopifyProxy, /currency: variant\.price\.currencyCode/);
+assert.match(shopifyProxy, /currency: variant\.currencyCode/);
 assert.match(shopifyProxy, /idempotency_key: idempotencyKey/);
 assert.match(shopifyProxy, /assessment_redirect_url/);
 assert.doesNotMatch(shopifyProxy, /body\.unit_price|body\.price/);
