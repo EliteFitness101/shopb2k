@@ -49,7 +49,7 @@ Deno.serve(async req=>{
    }
   }catch(_e){console.warn("social-publisher-bot-identity-reconciliation-incomplete");}
   if(b.diagnostic){
-   const {data:ds}=await db.from("social_destinations").select("id,provider,platform,external_channel_id,display_name,active,auth_secret_ref,last_verified_at,capabilities");
+   const {data:ds}=await db.from("social_destinations").select("id,provider,platform,external_channel_id,display_name,active,auth_secret_ref,last_verified_at,capabilities,metadata");
    const out:any[]=[];
    for(const d of ds||[]){
     let state="not_checked";
