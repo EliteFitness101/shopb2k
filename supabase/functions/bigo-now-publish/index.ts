@@ -2,7 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 const url=Deno.env.get("SUPABASE_URL")!; const key=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const QUEUE_ID="48ef6e46-9eed-4e4e-aef1-d48aa9687f05";
 const CRON_SECRET=Deno.env.get("BUFFER_CRON_SECRET")||Deno.env.get("CONTENT_CRON_SECRET")||"";
-async function authorized(req:Request){const supplied=req.headers.get("x-buffer-cron-secret")||req.headers.get("x-content-cron-secret")||"";return Boolean(CRON_SECRET&&supplied===CRON_SECRET);}
+async function authorized(req:Request){const supplied=req.headers.get("x-buffer-cron-secret")||req.headers.get("x-content-cron-secret")||"";const bearer=(req.headers.get("authorization")||"").replace(/^Bearer\\s+/i,"");return Boolean((CRON_SECRET&&supplied===CRON_SECRET)||(key&&bearer===key));}
 async function automationKillReason(){
  try{const r=await fetch(url+"/rest/v1/chatb2k_control_plane?select=kill_switch_enabled,kill_switch_reason&id=eq.true&limit=1",{headers:{apikey:key,Authorization:"Bearer "+key}});if(!r.ok)return {blocked:true,reason:"Control plane unavailable; automation paused"};const rows=await r.json();const row=rows[0];if(!row)return {blocked:true,reason:"Control plane unavailable; automation paused"};return {blocked:row.kill_switch_enabled===true,reason:String(row.kill_switch_reason||"Orchestration globally paused")};}catch{return {blocked:true,reason:"Control plane unavailable; automation paused"}}
 }
