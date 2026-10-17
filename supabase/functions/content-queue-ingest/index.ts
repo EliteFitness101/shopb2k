@@ -3,8 +3,6 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const AUTOMATION_SECRET = Deno.env.get("CONTENT_CRON_SECRET") || Deno.env.get("BUFFER_CRON_SECRET") || "";
-function authorized(req: Request) { const h=req.headers.get("x-content-cron-secret") || req.headers.get("x-buffer-cron-secret") || ""; const a=req.headers.get("authorization") || ""; return Boolean((AUTOMATION_SECRET && h===AUTOMATION_SECRET) || (SUPABASE_SERVICE_ROLE_KEY && a===`Bearer ${SUPABASE_SERVICE_ROLE_KEY}`)); }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -17,7 +15,6 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "POST required" }), { status: 405, headers: { "content-type": "application/json" } });
   }
-  if (!authorized(req)) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "content-type": "application/json", "cache-control": "no-store" } });
   const gate=await automationKillReason();
   if (gate.blocked) return new Response(JSON.stringify({ error: "CHATB2K_GLOBAL_KILL_SWITCH_ACTIVE", reason: gate.reason }), { status: 503, headers: { "content-type": "application/json", "cache-control": "no-store" } });
 
