@@ -82,7 +82,8 @@ function accessUrl(token: string): string {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: { "access-control-allow-origin": "https://resofit.fit", "access-control-allow-methods": "GET,POST,OPTIONS", "access-control-allow-headers": "content-type", "vary": "origin" } });
   const origin = req.headers.get("origin");
-  if (origin && origin !== "https://resofit.fit" && origin !== "https://www.resofit.fit") return json({ ok: false, error: "Origin not allowed" }, 403);
+  const allowedOrigins = new Set([new URL(url).origin, "https://resofit.fit", "https://www.resofit.fit"]);
+  if (origin && !allowedOrigins.has(origin)) return json({ ok: false, error: "Origin not allowed" }, 403);
   const tokenFromUrl = new URL(req.url).searchParams.get("token") ?? "";
   if (req.method === "GET") {
     const session = await findSession(tokenFromUrl);
