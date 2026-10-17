@@ -1,0 +1,32 @@
+name: ChatB2K Edge Function type checks
+
+on:
+  pull_request:
+    paths:
+      - "supabase/functions/chatb2k-orchestrator/**"
+      - "supabase/functions/chatb2k-ecosystem-tool-gateway/**"
+      - "supabase/functions/flow-generation-gate/**"
+      - "supabase/functions/digital-product-delivery-worker/**"
+      - ".github/workflows/chatb2k-edge-functions-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  deno-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check ChatB2K orchestrator
+        run: deno check --config supabase/functions/chatb2k-orchestrator/deno.json supabase/functions/chatb2k-orchestrator/index.ts
+      - name: Type-check ecosystem tool gateway
+        run: deno check --config supabase/functions/chatb2k-ecosystem-tool-gateway/deno.json supabase/functions/chatb2k-ecosystem-tool-gateway/index.ts
+      - name: Type-check Flow generation gate
+        run: deno check --config supabase/functions/flow-generation-gate/deno.json supabase/functions/flow-generation-gate/index.ts
+      - name: Type-check digital delivery worker
+        run: deno check --config supabase/functions/digital-product-delivery-worker/deno.json supabase/functions/digital-product-delivery-worker/index.ts
