@@ -19,6 +19,8 @@ assert.match(handoff, /!isLive\(data\.payload\)/);
 assert.match(handoff, /redirectFor\(correlationId\)/);
 
 assert.match(cart, /await get\(\)\.syncCart\(\)/);
+assert.match(cart, /canonical sync failed",error\);throw error/);
+assert.match(cart, /syncCart\(\)\.catch\(\(error\)/);
 assert.match(cart, /variantId:i\.variantId/);
 assert.ok(product.indexOf("await addItem(") < product.indexOf('fetch("/api/assessment-handoff"'));
 assert.match(product, /get\("assessment"\) === "1"/);
