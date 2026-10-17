@@ -98,7 +98,7 @@ Deno.serve(async r=>{
  }catch(e){
   const safeError=e instanceof Error?e.message:String(e);
   if(reservationMade&&activeRequestId&&(activeAction==="generate"||activeAction==="intake")){
-   try{await complete(activeRequestId,"failed",null,null,null,{stage:activeAction,error:safeError.slice(0,240),recovered_by:"flow-generation-gate-catch"});}catch(_terminalError){}
+   try{await complete(activeRequestId,"failed",null,null,null,{stage:activeAction,error:safeError.slice(0,240),recovered_by:"flow-generation-gate-catch"});}catch(terminalError){console.error("flow-generation-terminal-status-update-failed",terminalError instanceof Error?terminalError.message:"unknown");}
   }
   return out({ok:false,request_id:activeRequestId,error:safeError},500)
  }
