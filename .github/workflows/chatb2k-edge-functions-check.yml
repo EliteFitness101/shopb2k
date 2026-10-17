@@ -58,7 +58,7 @@ jobs:
       - name: Type-check chatb2k-agent-router
         run: deno check --config supabase/functions/chatb2k-agent-router/deno.json supabase/functions/chatb2k-agent-router/index.ts
       - name: Type-check chatb2k-membership-autopilot
-        run: deno check --import-map=supabase/functions/chatb2k-membership-autopilot/import_map.json supabase/functions/chatb2k-membership-autopilot/index.ts
+        run: deno check --config supabase/functions/chatb2k-membership-autopilot/deno.json supabase/functions/chatb2k-membership-autopilot/index.ts
       - name: Type-check chatb2k-sourcing-engine
         run: deno check --config supabase/functions/chatb2k-sourcing-engine/deno.json supabase/functions/chatb2k-sourcing-engine/index.ts
       - name: Type-check youtube-growth-engine
