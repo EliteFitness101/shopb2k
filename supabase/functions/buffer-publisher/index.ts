@@ -52,7 +52,7 @@ const isVideo=(u:string)=>/^https?:\/\//i.test(u)&&/(?:\.mp4(?:$|[?#])|\.mov(?:$
 const isImage=(u:string)=>/^https?:\/\//i.test(u)&&/(?:\.jpg(?:$|[?#])|\.jpeg(?:$|[?#])|\.png(?:$|[?#])|\.webp(?:$|[?#])|\.heic(?:$|[?#]))/i.test(u);
 function platformQa(item:any,platform:string){const qaPlatform=platform==="tiktok_recruit"?"tiktok":platform; const q=item?.metadata?.platform_qa?.[qaPlatform];if(q&&q.status&&q.status!=="pass")return {ok:false,reason:String(q.reason||"platform QA not passed")};return {ok:true};}
 async function automationKillReason(): Promise<{blocked:boolean;reason:string}> {
- const {data,error}=await db.from("chatb2k_control_plane").select("kill_switch_enabled,kill_switch_reason").eq("id",true).maybeSingle();
+ const {data,error}=await supabase.from("chatb2k_control_plane").select("kill_switch_enabled,kill_switch_reason").eq("id",true).maybeSingle();
  if(error||!data)return {blocked:true,reason:"Control plane unavailable; automation paused"};
  return {blocked:data.kill_switch_enabled===true,reason:String(data.kill_switch_reason||"Orchestration globally paused")};
 }
