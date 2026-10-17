@@ -116,7 +116,7 @@ export const Route = createFileRoute("/api/assessment-handoff")({
           const sku = clean(body.sku, 200);
           const variantId = clean(body.variantId, 255);
           const requestId = clean(body.requestId, 64);
-          if (!cartToken || /\s/.test(cartToken) || /[\u0000-\u001f]/.test(cartToken) || !UUID.test(sessionId) || !UUID.test(requestId) || !sku || !variantId) {
+          if (!cartToken || /\s/.test(cartToken) || cartToken.split("").some((character) => character.charCodeAt(0) < 32) || !UUID.test(sessionId) || !UUID.test(requestId) || !sku || !variantId) {
             return json({ ok: false, error: "Cart, session, request, SKU and variant identifiers are required." }, 400, origin);
           }
 
