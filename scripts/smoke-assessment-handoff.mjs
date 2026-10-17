@@ -37,4 +37,17 @@ assert.match(revenue, /assessment_complete: "assessment\.completed"/);
 assert.match(revenue, /correlation_id: context\?\.correlationId/);
 assert.match(revenue, /assessment_id: context\.assessmentId/);
 
+assert.match(shopifyProxy, /createFileRoute\("\/api\/shopify-app-proxy"\)/);
+assert.match(shopifyProxy, /verifyAppProxySignature\(url\.searchParams, SHOPIFY_APP_SECRET\)/);
+assert.match(shopifyProxy, /timingSafeEqual/);
+assert.match(shopifyProxy, /SIGNATURE_MAX_AGE_SECONDS = 5 \* 60/);
+assert.match(shopifyProxy, /SHOPIFY_ALLOWED_SHOP_DOMAINS/);
+assert.match(shopifyProxy, /X-Shopify-Access-Token/);
+assert.match(shopifyProxy, /productVariant\(id: \$id\)/);
+assert.match(shopifyProxy, /unit_price: variant\.price\.amount/);
+assert.match(shopifyProxy, /currency: variant\.price\.currencyCode/);
+assert.match(shopifyProxy, /idempotency_key: idempotencyKey/);
+assert.match(shopifyProxy, /assessment_redirect_url/);
+assert.doesNotMatch(shopifyProxy, /body\.unit_price|body\.price/);
+
 console.log("Assessment handoff source smoke checks passed.");
