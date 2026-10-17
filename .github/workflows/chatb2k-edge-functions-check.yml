@@ -10,6 +10,10 @@ on:
       - "supabase/functions/digital-product-delivery-worker/**"
       - "supabase/functions/digital-product-media-generator/**"
       - "supabase/functions/chatb2k-publishing-router/**"
+      - "supabase/functions/bigo-live-pipeline/**"
+      - "supabase/functions/drive-asset-archiver/**"
+      - "supabase/functions/chatb2k-professional-authority-sync/**"
+      - "supabase/functions/resofit-story-generator/**"
       - "supabase/functions/resofit-story-autopilot/**"
       - "supabase/functions/social-publisher/**"
       - "supabase/functions/digital-product-media-generator-free/**"
@@ -82,3 +86,11 @@ jobs:
         run: deno check --config supabase/functions/resofit-story-autopilot/deno.json supabase/functions/resofit-story-autopilot/index.ts
       - name: Type-check chatb2k-publishing-router
         run: deno check --config supabase/functions/chatb2k-publishing-router/deno.json supabase/functions/chatb2k-publishing-router/index.ts
+      - name: Type-check resofit-story-generator
+        run: deno check --config supabase/functions/resofit-story-generator/deno.json supabase/functions/resofit-story-generator/index.ts
+      - name: Type-check chatb2k-professional-authority-sync
+        run: deno check --config supabase/functions/chatb2k-professional-authority-sync/deno.json supabase/functions/chatb2k-professional-authority-sync/index.ts
+      - name: Type-check drive-asset-archiver
+        run: deno check --config supabase/functions/drive-asset-archiver/deno.json supabase/functions/drive-asset-archiver/index.ts
+      - name: Type-check bigo-live-pipeline
+        run: deno check --config supabase/functions/bigo-live-pipeline/deno.json supabase/functions/bigo-live-pipeline/index.ts
