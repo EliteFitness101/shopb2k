@@ -8,6 +8,14 @@ on:
       - "supabase/functions/flow-generation-gate/**"
       - "supabase/functions/digital-product-delivery-worker/**"
       - "supabase/functions/digital-product-media-generator/**"
+      - "supabase/functions/chatb2k-publishing-router/**"
+      - "supabase/functions/resofit-story-autopilot/**"
+      - "supabase/functions/social-publisher/**"
+      - "supabase/functions/digital-product-media-generator-free/**"
+      - "supabase/functions/digital-product-media-factory/**"
+      - "supabase/functions/bigo-now-publish/**"
+      - "supabase/functions/martial-content-enricher/**"
+      - "supabase/functions/content-queue-ingest/**"
       - "supabase/functions/youtube-growth-engine/**"
       - "supabase/functions/chatb2k-sourcing-engine/**"
       - "supabase/functions/chatb2k-membership-autopilot/**"
@@ -57,3 +65,19 @@ jobs:
         run: deno check --config supabase/functions/youtube-growth-engine/deno.json supabase/functions/youtube-growth-engine/index.ts
       - name: Type-check digital-product-media-generator
         run: deno check --config supabase/functions/digital-product-media-generator/deno.json supabase/functions/digital-product-media-generator/index.ts
+      - name: Type-check content-queue-ingest
+        run: deno check --config supabase/functions/content-queue-ingest/deno.json supabase/functions/content-queue-ingest/index.ts
+      - name: Type-check martial-content-enricher
+        run: deno check --config supabase/functions/martial-content-enricher/deno.json supabase/functions/martial-content-enricher/index.ts
+      - name: Type-check bigo-now-publish
+        run: deno check --config supabase/functions/bigo-now-publish/deno.json supabase/functions/bigo-now-publish/index.ts
+      - name: Type-check digital-product-media-factory
+        run: deno check --config supabase/functions/digital-product-media-factory/deno.json supabase/functions/digital-product-media-factory/index.ts
+      - name: Type-check digital-product-media-generator-free
+        run: deno check --config supabase/functions/digital-product-media-generator-free/deno.json supabase/functions/digital-product-media-generator-free/index.ts
+      - name: Type-check social-publisher
+        run: deno check --config supabase/functions/social-publisher/deno.json supabase/functions/social-publisher/index.ts
+      - name: Type-check resofit-story-autopilot
+        run: deno check --config supabase/functions/resofit-story-autopilot/deno.json supabase/functions/resofit-story-autopilot/index.ts
+      - name: Type-check chatb2k-publishing-router
+        run: deno check --config supabase/functions/chatb2k-publishing-router/deno.json supabase/functions/chatb2k-publishing-router/index.ts
