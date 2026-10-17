@@ -12,7 +12,7 @@ function auth(r:Request){const h=r.headers.get("x-content-cron-secret")||r.heade
 async function sha(s:string){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join("")} async function shaBytes(b:ArrayBuffer){const h=await crypto.subtle.digest("SHA-256",b);return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,"0")).join("")}
 async function reserve(requestId:string,pillar:string,promptHash:string){const {data,error}=await db.rpc("reserve_flow_generation",{p_request_id:requestId,p_content_pillar:pillar,p_prompt_hash:promptHash});if(error)throw error;return data}
 async function complete(requestId:string,status:string,assetId:string|null,url:string|null,duration:number|null,metadata:any={}){const {data,error}=await db.rpc("complete_flow_generation",{p_request_id:requestId,p_status:status,p_asset_id:assetId,p_canonical_url:url,p_duration_seconds:duration,p_metadata:metadata});if(error)throw error;return data}
-async function generate(prompt:string){
+async function generate(prompt:string):Promise<{ok:true;operation:string;bytes:ArrayBuffer}|{ok:false;reason:string;operation?:string}>{
  if(!GEMINI_KEY)return {ok:false,reason:"GEMINI_API_KEY_missing"};
  const start=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:predictLongRunning`,{method:"POST",headers:{"x-goog-api-key":GEMINI_KEY,"Content-Type":"application/json"},body:JSON.stringify({instances:[{prompt}],parameters:{aspectRatio:"9:16",durationSeconds:"8",resolution:"720p",numberOfVideos:1}})});
  if(!start.ok)return {ok:false,reason:`Veo_HTTP_${start.status}`};
@@ -90,8 +90,8 @@ Deno.serve(async r=>{
   if(action==="generate"){
    if(!GEMINI_KEY){await complete(requestId,"failed",null,null,null,{reason:"GEMINI_API_KEY_missing"});return out({ok:false,request_id:requestId,reason:"GEMINI_API_KEY_missing"},503);}
    
-   const g=await generate(prompt); if(!g.ok){await complete(requestId,"failed",null,null,null,g);return out({ok:false,request_id:requestId,...g},502);}
-   const result=await ingest(requestId,pillar,prompt,g.bytes,g.operation); return out({ok:true,request_id:requestId,pillar,model:MODEL,generated:true,...result});
+   const g=await generate(prompt); if(g.ok===false){await complete(requestId,"failed",null,null,null,{reason:g.reason,operation:g.operation});return out({ok:false,request_id:requestId,reason:g.reason,...(g.operation?{operation:g.operation}:{})},502);}
+   const result=await ingest(requestId,pillar,prompt,g.bytes,g.operation); return out({request_id:requestId,pillar,model:MODEL,generated:true,...result});
   }
   if(action==="intake"){
    const url=String(b.canonical_url||"").trim(); if(!/^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\/buffer\/assets\//i.test(url))return out({ok:false,error:"approved_public_blob_url_required"},400);
