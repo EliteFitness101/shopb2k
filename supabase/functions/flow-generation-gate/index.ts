@@ -43,9 +43,10 @@ async function ingest(requestId:string,pillar:string,prompt:string,blobBytes:Arr
  }
  if(!canonicalUrl){
   storageProvider="supabase_storage";
-  const bucketName="digital-product-media";
+  const bucketName="resofit-catalog-media";
   const bucket=db.storage.from(bucketName);
   const bytes=new Uint8Array(blobBytes);
+  if(bytes.byteLength>15728640)throw new Error("supabase_storage_fallback_size_limit_15mb");
   const uploaded=await bucket.upload(pathname,bytes,{contentType:"video/mp4",upsert:true,cacheControl:"3600"});
   if(uploaded.error)throw new Error("supabase_storage_upload_failed:"+uploaded.error.message);
   canonicalUrl=bucket.getPublicUrl(pathname).data.publicUrl;
