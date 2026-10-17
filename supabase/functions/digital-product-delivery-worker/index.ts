@@ -220,11 +220,11 @@ Deno.serve(async (req) => {
       const tokenHash = Array.from(new Uint8Array(tokenDigest)).map((b) => b.toString(16).padStart(2, "0")).join("");
       const { error: sessionError } = await db.from("resofit_digital_access_sessions").insert({ delivery_job_id: job.id, token_hash: tokenHash, expires_at: accessExpires });
       if (sessionError) throw sessionError;
-      const accessUrl = (url.replace(/\\/$/, "") + "/functions/v1/digital-product-delivery-access?token=" + accessToken);
+      const accessUrl = (url.replace(/\/$/, "") + "/functions/v1/digital-product-delivery-access?token=" + accessToken);
       const from = Deno.env.get("RESOFIT_FROM_EMAIL") ?? "no-reply@resofit.fit";
       const greeting = name.replace(/[&<>"]/g, "");
       const safeTitle = product.title.replace(/[&<>"]/g, "");
-      const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: "Bearer " + resendKey, "Content-Type": "application/json" }, body: JSON.stringify({ from, to: [buyerEmail], subject: "Your " + product.title + " download", html: "<p>Hello " + greeting + ",</p><p>Your payment is verified and your " + safeTitle + " guide is ready.</p><p><a href=\\"" + accessUrl + "\\">Open your private ResoFit download</a>. This access link expires in 30 days; each download URL expires after five minutes.</p><p>If the access link expires, open it and verify your purchase email to request a fresh link. Keep the link private.</p><p>ResoFit / ResoFlex</p>" }) });
+      const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: "Bearer " + resendKey, "Content-Type": "application/json" }, body: JSON.stringify({ from, to: [buyerEmail], subject: "Your " + product.title + " download", html: "<p>Hello " + greeting + ",</p><p>Your payment is verified and your " + safeTitle + " guide is ready.</p><p><a href=\"" + accessUrl + "\">Open your private ResoFit download</a>. This access link expires in 30 days; each download URL expires after five minutes.</p><p>If the access link expires, open it and verify your purchase email to request a fresh link. Keep the link private.</p><p>ResoFit / ResoFlex</p>" }) });
       emailSent = response.ok;
       if (!response.ok) console.error("delivery email failed", { status: response.status, job_id: job.id });
       if (emailSent) {
