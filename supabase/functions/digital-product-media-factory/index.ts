@@ -36,7 +36,7 @@ async function invokeMediaGenerator(action:string,jobId:string){
  const signature=Array.from(new Uint8Array(mac)).map(x=>x.toString(16).padStart(2,"0")).join("");
  const base=Deno.env.get("SUPABASE_URL")||"";
  const r=await fetch(base+"/functions/v1/digital-product-media-generator",{method:"POST",headers:{"content-type":"application/json","x-resofit-factory-ts":ts,"x-resofit-factory-signature":signature,"x-resofit-factory-action":action,"x-resofit-factory-job":jobId},body:JSON.stringify({action,job_id:jobId})});
- const text=await r.text();let dataOut:any=null;try{dataOut=JSON.parse(text)}catch{}
+ const text=await r.text();let dataOut:any=null;try{dataOut=JSON.parse(text)}catch(e){console.error("media-generator-response-parse-failed",e instanceof Error?e.message:"unknown");}
  if(!r.ok||dataOut?.ok===false)return out({ok:false,error:"media_generator_dispatch_failed",status:r.status,action,job_id:jobId,detail:dataOut||text.slice(0,500)},502);
  return out({ok:true,action,job_id:jobId,generator:dataOut});
 }
