@@ -113,7 +113,7 @@ async function fetchVerifiedVariant(shop: string, variantId: string) {
   if (!variant || !variant.id || !variant.product?.id || !variant.price || !result.data?.shop?.currencyCode) return null;
   const amount = Number(variant.price);
   if (!Number.isFinite(amount) || amount < 0) throw new Error("Shopify returned an invalid variant price");
-  return { ...variant, priceAmount: amount, currencyCode: result.data.shop.currencyCode };
+  return { ...variant, currencyCode: result.data.shop.currencyCode };
 }
 
 export const Route = createFileRoute("/api/shopify-app-proxy")({
@@ -172,7 +172,7 @@ export const Route = createFileRoute("/api/shopify-app-proxy")({
             variant_id: variant.id,
             product_gid: variant.product.id,
             quantity: params.quantity,
-            unit_price: variant.price.amount,
+            unit_price: variant.price,
             currency: variant.currencyCode,
             product_title: variant.product.title,
             destination: "/me",
