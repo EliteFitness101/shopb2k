@@ -189,7 +189,7 @@ export const Route = createFileRoute("/api/assessment-handoff")({
             rsid: cart.rsid ?? null,
             funnel_origin: cart.funnel_origin ?? null,
             utm: cart.utm ?? {},
-            payload,
+            payload: { ...payload, source: clean(body.source, 40) === "shopify_theme" ? "shopify_theme" : "resofit_app" },
           });
           if (insertError) {
             // Concurrent retries can race the unique idempotency index; return the winning handoff.
