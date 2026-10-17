@@ -66,6 +66,12 @@ async function ingest(requestId:string,pillar:string,prompt:string,blobBytes:Arr
  await complete(requestId,"completed",asset.id,canonicalUrl,8,{blob_pathname:pathname,storage_provider:storageProvider,operation_id:operation,provider:MODEL});
  return {ok:true,asset_id:asset.id,canonical_url:canonicalUrl,blob_pathname:pathname,storage_provider:storageProvider};
 }
+async function automationKillReason(): Promise<{blocked:boolean;reason:string}> {
+ const {data,error}=await db.from("chatb2k_control_plane").select("kill_switch_enabled,kill_switch_reason").eq("id",true).maybeSingle();
+ if(error||!data)return {blocked:true,reason:"Control plane unavailable; automation paused"};
+ return {blocked:data.kill_switch_enabled===true,reason:String(data.kill_switch_reason||"Orchestration globally paused")};
+}
+
 Deno.serve(async r=>{
  if(r.method!=="POST")return out({error:"POST required"},405);
  if(!auth(r))return out({error:"Unauthorized"},401);
@@ -73,7 +79,7 @@ Deno.serve(async r=>{
  let activeAction="";
  let reservationMade=false;
  try{
-  const b:any=await r.json().catch(()=>({})); const action=String(b.action||"status"); activeAction=action;  if(action==="generate"&&!GEMINI_KEY)return out({ok:false,status:"blocked_configuration",reason:"GEMINI_API_KEY_missing"},503);
+  const b:any=await r.json().catch(()=>({})); const action=String(b.action||"status"); activeAction=action; if(["reserve","generate","intake"].includes(action)){const gate=await automationKillReason();if(gate.blocked)return out({ok:false,error:"CHATB2K_GLOBAL_KILL_SWITCH_ACTIVE",reason:gate.reason},503);}  if(action==="generate"&&!GEMINI_KEY)return out({ok:false,status:"blocked_configuration",reason:"GEMINI_API_KEY_missing"},503);
   if(action==="status"){const {data:g}=await db.from("flow_generation_gate").select("*").eq("gate_key","default").single();const {data:events}=await db.from("flow_generation_events").select("id,request_id,status,content_pillar,duration_seconds,canonical_url,reserved_at,completed_at,failed_at").eq("gate_key","default").order("reserved_at",{ascending:false}).limit(20);return out({ok:true,gate:g,events:events||[]})}
   if(!["reserve","generate","intake","complete"].includes(action))return out({ok:false,error:"unsupported_action"},400);
   const requestId=String(b.request_id||crypto.randomUUID()); activeRequestId=requestId;
