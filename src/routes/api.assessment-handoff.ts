@@ -12,9 +12,10 @@ function allowedOrigin(origin: string | null): origin is string {
   if (!origin) return false;
   try {
     const url = new URL(origin);
-    return url.protocol === "https:"
-      && (/^(?:[a-z0-9-]+\.)*resofit\.fit$/i.test(url.hostname)
-        || /^localhost$/.test(url.hostname) && /^\d+$/.test(url.port));
+    const productionHost = /^(?:[a-z0-9-]+\.)*resofit\.fit$/i.test(url.hostname);
+    const localHost = /^localhost$/.test(url.hostname) && /^\d+$/.test(url.port);
+    return (url.protocol === "https:" && productionHost)
+      || (url.protocol === "http:" && localHost);
   } catch {
     return false;
   }
@@ -146,7 +147,7 @@ export const Route = createFileRoute("/api/assessment-handoff")({
             const metadata = item.metadata && typeof item.metadata === "object" && !Array.isArray(item.metadata)
               ? item.metadata as Record<string, unknown>
               : {};
-            return Number(item.quantity) > 0 && (item.sku === sku || item.sku === variantId || metadata.variantId === variantId);
+            return Number(item.quantity) > 0 && ((item.sku === sku && metadata.variantId === variantId) || item.sku === variantId && sku === variantId);
           });
           if (!itemExists) return json({ ok: false, error: "The selected product is not present in the saved cart." }, 409, origin);
 
