@@ -223,7 +223,8 @@ async function run() {
   const now=new Date(); now.setUTCMinutes(Math.floor(now.getUTCMinutes()/5)*5,0,0); const runKey="chatb2k-membership-"+now.toISOString().slice(0,16);
   const { data: existing }=await db.from("chatb2k_automation_runs").select("id,status").eq("run_key",runKey).maybeSingle();
   if(existing) return {ok:true,duplicate:true,run_id:existing.id};
-  const { data: runRow }=await db.from("chatb2k_automation_runs").insert({run_key:runKey,engine:"ChatB2K membership + referral + network + learning orchestrator"}).select("id").single();
+  const { data: runRow, error: runInsertError }=await db.from("chatb2k_automation_runs").insert({run_key:runKey,engine:"ChatB2K membership + referral + network + learning orchestrator"}).select("id").single();
+  if(runInsertError||!runRow)throw runInsertError||new Error("automation_run_insert_failed");
   try {
     const attributions=await processPaymentAttributions();
     const members=await syncMembers();
