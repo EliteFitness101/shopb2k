@@ -38,7 +38,6 @@ function requestedKey(request: Request): string | null {
     key.length > 500 ||
     key.includes("..") ||
     key.includes("\\") ||
-    /[\u0000-\u001f\u007f]/.test(key) ||
     !/^public\/[a-zA-Z0-9][a-zA-Z0-9._/-]*$/.test(key)
   ) {
     return null;
