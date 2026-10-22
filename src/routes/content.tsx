@@ -350,14 +350,14 @@ function ContentEnginePage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-sm font-semibold">Approved media · R2 CDN</h2>
-              <p className="mt-1 text-xs text-muted-foreground">Upload an image, video, audio file, or PDF to the public media pipeline. Admin authorization is enforced server-side.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Upload an approved image or video directly to the Cloudflare media Worker. The Worker must verify your Supabase session and admin role.</p>
             </div>
             <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-gold px-4 py-3 text-xs font-semibold uppercase tracking-widest text-black disabled:opacity-50">
               <Video className="h-4 w-4" /> {mediaUploading ? "Uploading…" : "Upload media"}
               <input
                 type="file"
                 className="sr-only"
-                accept="image/jpeg,image/png,image/webp,image/avif,image/gif,video/mp4,video/webm,audio/mpeg,audio/mp4,audio/wav,application/pdf"
+                accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml,video/mp4,video/webm,video/ogg"
                 disabled={mediaUploading}
                 onChange={(event) => {
                   const file = event.currentTarget.files?.[0];
