@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { MARTIAL_VIDEOS } from "@/content/martialVideos";
+import { uploadMedia } from "@/lib/mediaClient";
 
 const BUFFER_API = "https://api.buffer.com";
 const BUFFER_CHANNELS = {
@@ -27,8 +28,10 @@ const BUFFER_MEDIA_PREFIX = "/buffer/assets/";
 function assertBufferMediaUrl(mediaUrl: string) {
   let parsed: URL;
   try { parsed = new URL(mediaUrl); } catch { throw new Error("Media URL must be a valid HTTPS Buffer asset URL"); }
-  if (parsed.protocol !== "https:" || parsed.hostname !== BUFFER_MEDIA_HOST || !parsed.pathname.startsWith(BUFFER_MEDIA_PREFIX)) {
-    throw new Error("Only public Vercel Blob URLs under /buffer/assets/ are allowed for content media");
+  const isBlobAsset = parsed.hostname === BUFFER_MEDIA_HOST && parsed.pathname.startsWith(BUFFER_MEDIA_PREFIX);
+  const isR2Asset = parsed.hostname === "media.resofit.fit" && parsed.pathname.startsWith("/public/");
+  if (parsed.protocol !== "https:" || (!isBlobAsset && !isR2Asset)) {
+    throw new Error("Only approved HTTPS Vercel Blob or media.resofit.fit/public assets are allowed for content media");
   }
   return parsed.toString();
 }
@@ -267,6 +270,9 @@ function ContentEnginePage() {
   const { user, loading } = useAuth();
   const [running, setRunning] = useState<string | null>(null);
   const [results, setResults] = useState<Record<string, string>>({});
+  const [mediaUploading, setMediaUploading] = useState(false);
+  const [mediaUploadMessage, setMediaUploadMessage] = useState("");
+  const [uploadedMediaUrl, setUploadedMediaUrl] = useState("");
 
   const queue = useQuery({
     queryKey: ["content-engine", "queue"],
@@ -303,6 +309,27 @@ function ContentEnginePage() {
     }
   }
 
+  async function uploadApprovedMedia(file?: File) {
+    if (!file) return;
+    setMediaUploading(true);
+    setMediaUploadMessage("");
+    setUploadedMediaUrl("");
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      if (!token) throw new Error("Sign in required");
+      const safeName = file.name.normalize("NFKD").replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 100) || "asset";
+      const result = await uploadMedia(`public/content/${Date.now()}-${safeName}`, file, token);
+      if (!result.publicUrl) throw new Error("Upload completed without a public URL.");
+      setUploadedMediaUrl(result.publicUrl);
+      setMediaUploadMessage("Upload complete. The public URL is ready for approved content workflows.");
+    } catch (error) {
+      setMediaUploadMessage(error instanceof Error ? error.message : "Media upload failed.");
+    } finally {
+      setMediaUploading(false);
+    }
+  }
+
   async function runAll() {
     for (const asset of MARTIAL_VIDEOS) await runAsset(asset.id);
   }
@@ -318,6 +345,31 @@ function ContentEnginePage() {
           <div><h1 className="font-display text-4xl">ResoFit Content Command</h1><p className="mt-2 max-w-2xl text-sm text-muted-foreground">Canonical content intake, Gemini enrichment and direct Buffer syndication. Martial-X is the first controlled production stream.</p></div>
           <button onClick={runAll} disabled={Boolean(running)} className="inline-flex items-center justify-center gap-2 rounded-md bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-widest text-black disabled:opacity-50"><Send className="h-4 w-4" /> Run Martial Pipeline</button>
         </div>
+
+        <section className="mt-8 rounded-xl border border-border bg-card p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold">Approved media · R2 CDN</h2>
+              <p className="mt-1 text-xs text-muted-foreground">Upload an image, video, audio file, or PDF to the public media pipeline. Admin authorization is enforced server-side.</p>
+            </div>
+            <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-gold px-4 py-3 text-xs font-semibold uppercase tracking-widest text-black disabled:opacity-50">
+              <Video className="h-4 w-4" /> {mediaUploading ? "Uploading…" : "Upload media"}
+              <input
+                type="file"
+                className="sr-only"
+                accept="image/jpeg,image/png,image/webp,image/avif,image/gif,video/mp4,video/webm,audio/mpeg,audio/mp4,audio/wav,application/pdf"
+                disabled={mediaUploading}
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  void uploadApprovedMedia(file);
+                  event.currentTarget.value = "";
+                }}
+              />
+            </label>
+          </div>
+          {mediaUploadMessage && <p className="mt-3 text-xs text-muted-foreground">{mediaUploadMessage}</p>}
+          {uploadedMediaUrl && <a className="mt-2 block break-all text-xs text-gold underline" href={uploadedMediaUrl} target="_blank" rel="noreferrer">{uploadedMediaUrl}</a>}
+        </section>
 
         <section className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {MARTIAL_VIDEOS.map((asset) => (
