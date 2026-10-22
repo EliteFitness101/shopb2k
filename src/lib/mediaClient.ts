@@ -28,7 +28,10 @@ function safeKey(key: string): string {
     normalized.length > 500 ||
     normalized.includes("..") ||
     normalized.includes("\\") ||
-    /[\u0000-\u001f\u007f]/.test(normalized) ||
+    normalized.split("").some((character) => {
+      const code = character.charCodeAt(0);
+      return code < 32 || code === 127;
+    }) ||
     !/^public\/[a-zA-Z0-9][a-zA-Z0-9._/-]*$/.test(normalized)
   ) {
     throw new Error("Media key must be a safe path under public/.");
