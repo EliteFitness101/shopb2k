@@ -1,14 +1,16 @@
-const MEDIA_BASE_URL = "https://media.resofit.fit";
-const MAX_BYTES = 100_000_000;
+const MAX_BYTES = 50 * 1024 * 1024;
 const ALLOWED_TYPES = new Set([
   "image/jpeg",
   "image/png",
-  "image/gif",
   "image/webp",
-  "image/svg+xml",
+  "image/avif",
+  "image/gif",
   "video/mp4",
   "video/webm",
-  "video/ogg",
+  "audio/mpeg",
+  "audio/mp4",
+  "audio/wav",
+  "application/pdf",
 ]);
 
 type MediaResult = {
@@ -43,16 +45,16 @@ async function parseResponse(response: Response, key: string, includePublicUrl =
     ...payload,
     ok: true,
     key: typeof payload?.key === "string" ? payload.key : key,
-    ...(includePublicUrl
-      ? { publicUrl: typeof payload?.publicUrl === "string" ? payload.publicUrl : `${MEDIA_BASE_URL}/${key}` }
+    ...(includePublicUrl && typeof payload?.publicUrl !== "string"
+      ? { publicUrl: `https://media.resofit.fit/${key}` }
       : {}),
   } as MediaResult;
 }
 
 /**
- * Upload approved public media directly to the Cloudflare Worker.
- * The Supabase access token is verified by the Worker; no storage credential
- * is sent to or embedded in the browser.
+ * Upload approved media through the same-origin server endpoint.
+ * The server validates the Supabase session/admin role and keeps the R2
+ * write credential server-side; no storage credential enters the browser.
  */
 export async function uploadMedia(
   key: string,
@@ -62,14 +64,13 @@ export async function uploadMedia(
   const objectKey = safeKey(key);
   if (!accessToken) throw new Error("Sign in with an authorized ResoFit admin account.");
   if (file.size === 0) throw new Error("Cannot upload an empty file.");
-  if (file.size > MAX_BYTES) throw new Error("File exceeds the 100 MB limit.");
+  if (file.size > MAX_BYTES) throw new Error("File exceeds the 50 MiB limit.");
   const contentType = (file.type || "").split(";")[0].trim().toLowerCase();
   if (!ALLOWED_TYPES.has(contentType)) throw new Error("Unsupported media type.");
 
-  const response = await fetch(`${MEDIA_BASE_URL}/${objectKey}`, {
+  const response = await fetch(`/api/media?key=${encodeURIComponent(objectKey)}`, {
     method: "PUT",
-    mode: "cors",
-    credentials: "omit",
+    credentials: "same-origin",
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": contentType,
@@ -79,15 +80,14 @@ export async function uploadMedia(
   return parseResponse(response, objectKey, true);
 }
 
-/** Delete approved public media directly through the authenticated Cloudflare Worker. */
+/** Delete approved media through the authenticated same-origin server endpoint. */
 export async function deleteMedia(key: string, accessToken: string): Promise<MediaResult> {
   const objectKey = safeKey(key);
   if (!accessToken) throw new Error("Sign in with an authorized ResoFit admin account.");
 
-  const response = await fetch(`${MEDIA_BASE_URL}/${objectKey}`, {
+  const response = await fetch(`/api/media?key=${encodeURIComponent(objectKey)}`, {
     method: "DELETE",
-    mode: "cors",
-    credentials: "omit",
+    credentials: "same-origin",
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   return parseResponse(response, objectKey);
@@ -95,5 +95,5 @@ export async function deleteMedia(key: string, accessToken: string): Promise<Med
 
 /** Build a public URL for displaying approved assets. */
 export function publicMediaUrl(key: string): string {
-  return `${MEDIA_BASE_URL}/${safeKey(key)}`;
+  return `https://media.resofit.fit/${safeKey(key)}`;
 }
