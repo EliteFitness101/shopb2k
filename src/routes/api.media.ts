@@ -56,19 +56,12 @@ async function authorizedUser(request: Request) {
   const { data, error } = await client.auth.getUser(header.slice(7));
   if (error || !data.user) return { configured: true as const, userId: null };
 
-  const metadata = data.user.app_metadata ?? {};
-  const roles = Array.isArray(metadata.roles) ? metadata.roles : [];
-  const role = typeof metadata.role === "string" ? metadata.role : "";
-  const allowlistedIds = (process.env.MEDIA_ADMIN_USER_IDS ?? "")
-    .split(",")
-    .map((id) => id.trim())
-    .filter(Boolean);
-  const isAdmin =
-    ["admin", "owner"].includes(role.toLowerCase()) ||
-    roles.some((item: unknown) => typeof item === "string" && ["admin", "owner"].includes(item.toLowerCase())) ||
-    allowlistedIds.includes(data.user.id);
-
-  return { configured: true as const, userId: isAdmin ? data.user.id : null };
+  const { data: isAdmin, error: roleError } = await client.rpc("has_role", {
+    _user_id: data.user.id,
+    _role: "admin",
+  });
+  if (roleError || !isAdmin) return { configured: true as const, userId: null };
+  return { configured: true as const, userId: data.user.id };
 }
 
 async function proxy(request: Request, method: "PUT" | "DELETE") {
