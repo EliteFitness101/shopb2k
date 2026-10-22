@@ -357,7 +357,7 @@ function ContentEnginePage() {
               <input
                 type="file"
                 className="sr-only"
-                accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml,video/mp4,video/webm,video/ogg"
+                accept="image/jpeg,image/png,image/webp,image/avif,image/gif,video/mp4,video/webm,audio/mpeg,audio/mp4,audio/wav,application/pdf"
                 disabled={mediaUploading}
                 onChange={(event) => {
                   const file = event.currentTarget.files?.[0];
