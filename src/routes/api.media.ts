@@ -1,12 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-const SUPABASE_URL =
-  process.env.SUPABASE_URL ??
-  process.env.VITE_SUPABASE_URL ??
-  "https://vbqjvmnhdtdhmeeudqnn.supabase.co";
-const SERVICE_ROLE =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
 const R2_WRITE_TOKEN = process.env.R2_WRITE_TOKEN;
 const MEDIA_DOMAIN = "https://media.resofit.fit";
 const MAX_BYTES = 50 * 1024 * 1024;
@@ -46,31 +40,30 @@ function requestedKey(request: Request): string | null {
 }
 
 async function authorizedUser(request: Request) {
-  if (!SERVICE_ROLE) return { configured: false as const, userId: null };
   const header = request.headers.get("authorization") ?? "";
   if (!header.startsWith("Bearer ")) return { configured: true as const, userId: null };
 
-  const client = createClient(SUPABASE_URL, SERVICE_ROLE, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-  const { data, error } = await client.auth.getUser(header.slice(7));
-  if (error || !data.user) return { configured: true as const, userId: null };
+  try {
+    const { data, error } = await supabaseAdmin.auth.getUser(header.slice(7));
+    if (error || !data.user) return { configured: true as const, userId: null };
 
-  const { data: isAdmin, error: roleError } = await client.rpc("has_role", {
-    _user_id: data.user.id,
-    _role: "admin",
-  });
-  if (roleError || !isAdmin) return { configured: true as const, userId: null };
-  return { configured: true as const, userId: data.user.id };
+    const { data: isAdmin, error: roleError } = await supabaseAdmin.rpc("has_role", {
+      _user_id: data.user.id,
+      _role: "admin",
+    });
+    if (roleError || !isAdmin) return { configured: true as const, userId: null };
+    return { configured: true as const, userId: data.user.id };
+  } catch (error) {
+    console.error("ResoFit media auth configuration failure", error);
+    return { configured: false as const, userId: null };
+  }
 }
 
 async function proxy(request: Request, method: "PUT" | "DELETE") {
-  if (!SERVICE_ROLE) return json({ ok: false, error: "Media authentication is not configured." }, 503);
-  if (!R2_WRITE_TOKEN) return json({ ok: false, error: "Media storage credentials are not configured." }, 503);
-
   const auth = await authorizedUser(request);
   if (!auth.configured) return json({ ok: false, error: "Media authentication is not configured." }, 503);
   if (!auth.userId) return json({ ok: false, error: "Admin authorization required." }, 403);
+  if (!R2_WRITE_TOKEN) return json({ ok: false, error: "Media storage credentials are not configured." }, 503);
 
   const key = requestedKey(request);
   if (!key) return json({ ok: false, error: "A valid public/ media key is required." }, 400);
