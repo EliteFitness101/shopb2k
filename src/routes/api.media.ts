@@ -27,18 +27,29 @@ function json(data: unknown, status = 200) {
 
 function requestedKey(request: Request): string | null {
   const key = new URL(request.url).searchParams.get("key")?.trim() ?? "";
+  const segments = key.split("/");
   if (
-    !key.startsWith("public/") ||
+    !["public", "chatb2k"].includes(segments[0]) ||
     key.length > 500 ||
     key.includes("..") ||
     key.includes("\\") ||
-    !/^public\/[a-zA-Z0-9][a-zA-Z0-9._/-]*$/.test(key)
+    /[\u0000-\u001f\u007f]/.test(key) ||
+    segments.length < 2 ||
+    segments.some((segment) =>
+      !segment ||
+      segment === "." ||
+      segment === ".." ||
+      !/^[a-zA-Z0-9][a-zA-Z0-9 ._-]*$/.test(segment)
+    )
   ) {
     return null;
   }
   return key;
 }
 
+function encodeObjectKey(key: string): string {
+  return key.split("/").map(encodeURIComponent).join("/");
+}
 async function authorizedUser(request: Request) {
   const header = request.headers.get("authorization") ?? "";
   if (!header.startsWith("Bearer ")) return { configured: true as const, userId: null };
@@ -66,7 +77,7 @@ async function proxy(request: Request, method: "PUT" | "DELETE") {
   if (!R2_WRITE_TOKEN) return json({ ok: false, error: "Media storage credentials are not configured." }, 503);
 
   const key = requestedKey(request);
-  if (!key) return json({ ok: false, error: "A valid public/ media key is required." }, 400);
+  if (!key) return json({ ok: false, error: "A valid public/ or chatb2k/ media key is required." }, 400);
 
   const headers = new Headers({ Authorization: `Bearer ${R2_WRITE_TOKEN}` });
   let body: ArrayBuffer | undefined;
@@ -84,7 +95,7 @@ async function proxy(request: Request, method: "PUT" | "DELETE") {
   }
 
   try {
-    const upstream = await fetch(`${MEDIA_DOMAIN}/${key}`, {
+    const upstream = await fetch(`${MEDIA_DOMAIN}/${encodeObjectKey(key)}`, {
       method,
       headers,
       body,
@@ -99,7 +110,7 @@ async function proxy(request: Request, method: "PUT" | "DELETE") {
     return json({
       ok: true,
       key,
-      ...(method === "PUT" ? { publicUrl: `${MEDIA_DOMAIN}/${key}` } : {}),
+      ...(method === "PUT" ? { publicUrl: `${MEDIA_DOMAIN}/${encodeObjectKey(key)}` } : {}),
       result: payload,
     });
   } catch (error) {
