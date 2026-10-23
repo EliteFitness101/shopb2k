@@ -4,6 +4,12 @@
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/server.ts",
+  "routes": [
+    {
+      "pattern": "media.resofit.fit/*",
+      "zone_name": "resofit.fit"
+    }
+  ],
   "r2_buckets": [
     {
       "binding": "MEDIA_BUCKET",
