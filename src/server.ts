@@ -87,7 +87,7 @@ function mediaKey(pathname: string): string | null {
   try {
     // Decode URL-escaped spaces while preserving "/" as the object-key separator.
     // Malformed percent escapes are rejected.
-    key = decodeURIComponent(pathname.replace(/^\\/+/, ""));
+    key = decodeURIComponent(pathname.replace(/^\/+/, ""));
   } catch {
     return null;
   }
@@ -95,8 +95,8 @@ function mediaKey(pathname: string): string | null {
   if (
     key.length === 0 ||
     key.length > 500 ||
-    key.includes("\\\\") ||
-    /[\\u0000-\\u001f\\u007f]/.test(key) ||
+    key.includes("\\") ||
+    /[\u0000-\u001f\u007f]/.test(key) ||
     key.includes("..")
   ) return null;
 
