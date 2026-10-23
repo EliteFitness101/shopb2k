@@ -23,22 +23,29 @@ type MediaResult = {
 
 function safeKey(key: string): string {
   const normalized = key.trim();
+  const segments = normalized.split("/");
   if (
-    !normalized.startsWith("public/") ||
+    !["public", "chatb2k"].includes(segments[0]) ||
     normalized.length > 500 ||
     normalized.includes("..") ||
     normalized.includes("\\") ||
-    normalized.split("").some((character) => {
-      const code = character.charCodeAt(0);
-      return code < 32 || code === 127;
-    }) ||
-    !/^public\/[a-zA-Z0-9][a-zA-Z0-9._/-]*$/.test(normalized)
+    /[\u0000-\u001f\u007f]/.test(normalized) ||
+    segments.length < 2 ||
+    segments.some((segment) =>
+      !segment ||
+      segment === "." ||
+      segment === ".." ||
+      !/^[a-zA-Z0-9][a-zA-Z0-9 ._-]*$/.test(segment)
+    )
   ) {
-    throw new Error("Media key must be a safe path under public/.");
+    throw new Error("Media key must be a safe path under public/ or chatb2k/.");
   }
   return normalized;
 }
 
+function encodeObjectKey(key: string): string {
+  return key.split("/").map(encodeURIComponent).join("/");
+}
 async function parseResponse(response: Response, key: string, includePublicUrl = false): Promise<MediaResult> {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload?.ok === false) {
@@ -49,7 +56,7 @@ async function parseResponse(response: Response, key: string, includePublicUrl =
     ok: true,
     key: typeof payload?.key === "string" ? payload.key : key,
     ...(includePublicUrl && typeof payload?.publicUrl !== "string"
-      ? { publicUrl: `https://media.resofit.fit/${key}` }
+      ? { publicUrl: `https://media.resofit.fit/${encodeObjectKey(key)}` }
       : {}),
   } as MediaResult;
 }
@@ -98,5 +105,5 @@ export async function deleteMedia(key: string, accessToken: string): Promise<Med
 
 /** Build a public URL for displaying approved assets. */
 export function publicMediaUrl(key: string): string {
-  return `https://media.resofit.fit/${safeKey(key)}`;
+  return `https://media.resofit.fit/${encodeObjectKey(safeKey(key))}`;
 }
