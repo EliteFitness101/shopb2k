@@ -85,21 +85,35 @@ function json(data: Record<string, unknown>, status = 200): Response {
 function mediaKey(pathname: string): string | null {
   let key: string;
   try {
-    key = decodeURIComponent(pathname.replace(/^\/+/, ""));
+    // Decode URL-escaped spaces while preserving "/" as the object-key separator.
+    // Malformed percent escapes are rejected.
+    key = decodeURIComponent(pathname.replace(/^\\/+/, ""));
   } catch {
     return null;
   }
+
   if (
-    !key.startsWith("public/") ||
+    key.length === 0 ||
     key.length > 500 ||
-    key.includes("..") ||
-    key.includes("\\") ||
-    /[\u0000-\u001f\u007f]/.test(key) ||
-    !/^public\/[a-zA-Z0-9][a-zA-Z0-9._/-]*$/.test(key)
+    key.includes("\\\\") ||
+    /[\\u0000-\\u001f\\u007f]/.test(key) ||
+    key.includes("..")
   ) return null;
+
+  const segments = key.split("/");
+  if (
+    !["public", "chatb2k"].includes(segments[0]) ||
+    segments.length < 2 ||
+    segments.some((segment) =>
+      !segment ||
+      segment === "." ||
+      segment === ".." ||
+      !/^[a-zA-Z0-9][a-zA-Z0-9 ._-]*$/.test(segment)
+    )
+  ) return null;
+
   return key;
 }
-
 function constantTimeEqual(a: string, b: string): boolean {
   const encoder = new TextEncoder();
   const left = encoder.encode(a);
