@@ -29,9 +29,9 @@ function assertBufferMediaUrl(mediaUrl: string) {
   let parsed: URL;
   try { parsed = new URL(mediaUrl); } catch { throw new Error("Media URL must be a valid HTTPS Buffer asset URL"); }
   const isBlobAsset = parsed.hostname === BUFFER_MEDIA_HOST && parsed.pathname.startsWith(BUFFER_MEDIA_PREFIX);
-  const isR2Asset = parsed.hostname === "media.resofit.fit" && parsed.pathname.startsWith("/public/");
+  const isR2Asset = parsed.hostname === "media.resofit.fit" && (parsed.pathname.startsWith("/public/") || parsed.pathname.startsWith("/chatb2k/"));
   if (parsed.protocol !== "https:" || (!isBlobAsset && !isR2Asset)) {
-    throw new Error("Only approved HTTPS Vercel Blob or media.resofit.fit/public assets are allowed for content media");
+    throw new Error("Only approved HTTPS Vercel Blob or media.resofit.fit/public or chatb2k assets are allowed for content media");
   }
   return parsed.toString();
 }
