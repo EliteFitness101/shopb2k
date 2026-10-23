@@ -5,7 +5,9 @@ on:
     branches: [main]
     paths:
       - "wrangler.jsonc"
-      - "src/server.ts"
+      - "src/**"
+      - "vite.config.ts"
+      - "scripts/generate-sitemap.mjs"
       - ".github/workflows/deploy-media-worker.yml"
       - "package.json"
       - "package-lock.json"
@@ -21,7 +23,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - name: Checkout production source
         uses: actions/checkout@v4
@@ -31,10 +33,13 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies (repair stale lockfile in runner)
+      - name: Install dependencies
         run: npm install --include=dev --no-audit --no-fund
 
-      - name: Deploy Worker and media hostname route
+      - name: Build TanStack Start with the configured Vite/Cloudflare integration
+        run: npm run build
+
+      - name: Deploy generated Worker configuration and media hostname route
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -42,4 +47,6 @@ jobs:
           set -euo pipefail
           test -n "${CLOUDFLARE_API_TOKEN:-}" || { echo "::error::Missing CLOUDFLARE_API_TOKEN repository secret"; exit 1; }
           test -n "${CLOUDFLARE_ACCOUNT_ID:-}" || { echo "::error::Missing CLOUDFLARE_ACCOUNT_ID repository secret"; exit 1; }
-          npx --yes wrangler@4 deploy --config wrangler.jsonc
+          # The Cloudflare Vite plugin generates the deploy config during build.
+          # Do not pass --config here: that would bypass generated TanStack aliases.
+          npx --yes wrangler@4 deploy
