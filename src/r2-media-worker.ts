@@ -179,7 +179,10 @@ async function handleMedia(request: Request, env: WorkerEnv): Promise<Response> 
 export default {
   async fetch(request: Request, env: WorkerEnv): Promise<Response> {
     const hostname = new URL(request.url).hostname.toLowerCase();
+    // workers.dev is the authenticated upload fallback when the custom domain is challenged at the zone edge.
+    // Never expose public reads on workers.dev; only the existing token-protected POST upload handler is allowed.
     if (hostname === "upload.resofit.fit") return handleUpload(request, env);
+    if (hostname.endsWith(".workers.dev")) return handleUpload(request, env);
     if (hostname === "media.resofit.fit" || hostname === "content.resofit.fit") {
       return handleMedia(request, env);
     }
