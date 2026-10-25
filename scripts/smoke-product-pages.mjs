@@ -28,6 +28,7 @@ async function check(product) {
     const response = await fetch(url, {
       redirect: "follow",
       headers: { "user-agent": "ResoFit-66-Product-Smoke/1.0" },
+      signal: AbortSignal.timeout(10000),
     });
 
     result.status = response.status;
