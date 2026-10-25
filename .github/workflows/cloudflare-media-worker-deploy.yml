@@ -48,7 +48,7 @@ jobs:
 
       - name: Diagnose Worker script visibility without blocking deployment
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.SHOPB2K_WORKERS_DEPLOY_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.SHOPB2K_WORKERS_DEPLOY_TOKEN }}
         run: |
           set -euo pipefail
           code="$(curl --silent --show-error -o /tmp/worker-scripts.json -w '%{http_code}' \
@@ -64,7 +64,7 @@ jobs:
 
       - name: Verify Cloudflare identity and deploy Worker routes
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.SHOPB2K_WORKERS_DEPLOY_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.SHOPB2K_WORKERS_DEPLOY_TOKEN }}
         run: |
           set -euo pipefail
           npx wrangler whoami
@@ -72,7 +72,7 @@ jobs:
 
       - name: Configure Worker R2 write secret
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.SHOPB2K_WORKERS_DEPLOY_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.SHOPB2K_WORKERS_DEPLOY_TOKEN }}
           R2_WRITE_TOKEN: ${{ secrets.R2_WRITE_TOKEN }}
         run: |
           set -euo pipefail
@@ -81,7 +81,7 @@ jobs:
 
       - name: Verify deployed Worker service and routes
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.SHOPB2K_WORKERS_DEPLOY_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.SHOPB2K_WORKERS_DEPLOY_TOKEN }}
         run: |
           set -euo pipefail
           response="$(curl --fail --silent --show-error \
