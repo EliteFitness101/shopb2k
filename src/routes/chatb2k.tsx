@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ArrowRight, Search, Sparkles, ShieldCheck, Dumbbell, ShoppingBag, Radio, PlayCircle, Send } from "lucide-react";
 
 export const Route = createFileRoute("/chatb2k")({
@@ -32,6 +32,8 @@ function classifyIntent(query: string): Intent | null {
 }
 
 function ChatB2KAssistLoop() {
+  const heroVideoRef = useRef<HTMLVideoElement>(null);
+  const [audioEnabled, setAudioEnabled] = useState(false);
   const [query, setQuery] = useState("");
   const [intent, setIntent] = useState<Intent | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -45,6 +47,24 @@ function ChatB2KAssistLoop() {
       utm_campaign: params.get("utm_campaign") ?? "",
     };
   }, []);
+  const toggleHeroAudio = async () => {
+    const video = heroVideoRef.current;
+    if (!video) return;
+    if (audioEnabled) {
+      video.muted = true;
+      setAudioEnabled(false);
+      return;
+    }
+    video.volume = 0.33;
+    video.muted = false;
+    try {
+      await video.play();
+      setAudioEnabled(true);
+    } catch {
+      video.muted = true;
+      setAudioEnabled(false);
+    }
+  };
   const inferred = classifyIntent(query);
   const selected = intent ?? inferred;
   const destination = intentCards.find((card) => card.id === selected);
@@ -60,19 +80,21 @@ function ChatB2KAssistLoop() {
           <Link to="/" className="font-display text-xl tracking-wide">RESOFIT<span className="ml-2 text-gold">×</span><span className="ml-2 text-sm text-muted-foreground">ChatB2K™</span></Link>
           <div className="flex items-center gap-2">
             <span className="hidden rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-gold sm:inline-flex">AssistLoop</span>
-            <Link to="/me" className="rounded-full bg-gold px-4 py-2 text-xs font-semibold uppercase tracking-wider text-black transition hover:brightness-110">Personalize <ArrowRight className="ml-1 inline h-3.5 w-3.5" /></Link>
+            <Link to="/me" search={attribution as never} className="rounded-full bg-gold px-4 py-2 text-xs font-semibold uppercase tracking-wider text-black transition hover:brightness-110">Personalize <ArrowRight className="ml-1 inline h-3.5 w-3.5" /></Link>
           </div>
         </div>
       </header>
 
       <section className="relative isolate overflow-hidden border-b border-border/50">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_15%_15%,rgba(202,164,91,.18),transparent_42%),radial-gradient(ellipse_at_90%_70%,rgba(88,76,58,.16),transparent_35%)]" />
-        <div className="mx-auto grid max-w-7xl gap-12 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-[1.1fr_.9fr] lg:items-center">
+        <video ref={heroVideoRef} className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover opacity-20" autoPlay muted loop playsInline preload="metadata" poster="https://res.cloudinary.com/resofit/image/upload/f_auto,q_auto/IMG_7973" aria-hidden="true"><source src="https://res.cloudinary.com/resofit/video/upload/f_auto,q_auto/gemini_generated_video_F48FFEE5.mp4" type="video/mp4" /></video>
+        <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_15%_15%,rgba(202,164,91,.24),rgba(8,8,8,.78)_58%),linear-gradient(90deg,rgba(8,8,8,.72),rgba(8,8,8,.42))]" />
+        <div className="relative z-20 mx-auto grid max-w-7xl gap-12 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-[1.1fr_.9fr] lg:items-center">
           <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-2 text-[10px] font-medium uppercase tracking-[.25em] text-gold"><Sparkles className="h-3.5 w-3.5" /> Your intelligent concierge</p>
             <h1 className="mt-7 max-w-3xl font-display text-5xl leading-[.98] sm:text-6xl lg:text-7xl">Tell us where you want to <span className="text-gradient-gold">go next.</span></h1>
             <p className="mt-6 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">Wellness, products, live media or support. Start with a goal, a question or a search phrase. ChatB2K helps you find the right ResoFit path without unnecessary steps.</p>
             <div className="mt-8 flex flex-wrap gap-2">
+              <button type="button" onClick={toggleHeroAudio} className="rounded-full border border-gold/50 bg-black/40 px-4 py-2 text-xs font-medium text-gold transition hover:bg-gold/10">{audioEnabled ? "Mute hero" : "Enable sound · 33%"}</button>
               {["Build a meal plan", "Find a product", "BIGO replays", "Payment help"].map((suggestion) => <button key={suggestion} onClick={() => { setQuery(suggestion); setSubmitted(false); setIntent(null); }} className="rounded-full border border-border bg-card/50 px-4 py-2 text-xs text-muted-foreground transition hover:border-gold/60 hover:text-foreground">{suggestion}</button>)}
             </div>
           </div>
@@ -92,7 +114,7 @@ function ChatB2KAssistLoop() {
                 </div>
               </form>
               <p className="mt-3 text-[11px] leading-5 text-muted-foreground">Your query is used to suggest a destination. Personalized AI responses and connected account actions require their live service integrations to be verified.</p>
-              {submitted && <div role="status" className="mt-4 rounded-xl border border-gold/25 bg-gold/5 p-4"><p className="text-sm font-medium">{destination ? `Suggested path: ${destination.title}` : "Let’s narrow it down."}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{destination ? destination.detail : "Choose one of the paths below, or add a little more context to your search."}</p>{destination && <Link to={destination.route as never} className="mt-3 inline-flex items-center gap-2 rounded-full bg-gold px-4 py-2 text-xs font-semibold text-black">Continue <ArrowRight className="h-3.5 w-3.5" /></Link>}</div>}
+              {submitted && <div role="status" className="mt-4 rounded-xl border border-gold/25 bg-gold/5 p-4"><p className="text-sm font-medium">{destination ? `Suggested path: ${destination.title}` : "Let’s narrow it down."}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{destination ? destination.detail : "Choose one of the paths below, or add a little more context to your search."}</p>{destination && <Link to={destination.route as never} search={attribution as never} className="mt-3 inline-flex items-center gap-2 rounded-full bg-gold px-4 py-2 text-xs font-semibold text-black">Continue <ArrowRight className="h-3.5 w-3.5" /></Link>}</div>}
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2">
               {[{ icon: ShieldCheck, label: "Secure paths" }, { icon: PlayCircle, label: "Media ready" }, { icon: Dumbbell, label: "Personalized" }].map(({ icon: Icon, label }) => <div key={label} className="rounded-xl border border-border/70 bg-background/45 px-2 py-3 text-center"><Icon className="mx-auto h-4 w-4 text-gold" /><p className="mt-2 text-[9px] uppercase tracking-wider text-muted-foreground sm:text-[10px]">{label}</p></div>)}
