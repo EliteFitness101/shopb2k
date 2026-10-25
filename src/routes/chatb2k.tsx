@@ -104,10 +104,10 @@ function ChatB2KAssistLoop() {
       <section className="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-20">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-[10px] uppercase tracking-[.25em] text-gold">Choose a direction</p><h2 className="mt-3 font-display text-3xl sm:text-4xl">Your next step, simplified.</h2></div><p className="max-w-md text-sm leading-6 text-muted-foreground">Pick a path now. You can change direction at any time.</p></div>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {intentCards.map(({ id, title, detail, icon: Icon, route }) => <button key={id} onClick={() => { setIntent(id); setSubmitted(true); }} className={`group rounded-3xl border p-5 text-left transition duration-300 hover:-translate-y-1 hover:border-gold/50 hover:bg-card/70 hover:shadow-xl hover:shadow-black/20 sm:p-6 ${intent === id ? "border-gold/60 bg-gold/5" : "border-border/70 bg-card/35"}`}>
+          {intentCards.map(({ id, title, detail, icon: Icon }) => <button key={id} onClick={() => { setIntent(id); setSubmitted(true); }} className={`group rounded-3xl border p-5 text-left transition duration-300 hover:-translate-y-1 hover:border-gold/50 hover:bg-card/70 hover:shadow-xl hover:shadow-black/20 sm:p-6 ${intent === id ? "border-gold/60 bg-gold/5" : "border-border/70 bg-card/35"}`}>
             <div className="flex items-center justify-between"><span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-gold/20 bg-gold/10 text-gold"><Icon className="h-5 w-5" /></span><ArrowRight className="h-4 w-4 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-gold" /></div>
             <h3 className="mt-5 font-display text-2xl">{title}</h3><p className="mt-2 min-h-12 text-sm leading-6 text-muted-foreground">{detail}</p>
-            <Link to={route as never} onClick={(event) => event.stopPropagation()} className="mt-6 inline-flex rounded-full border border-border px-4 py-2 text-[10px] font-semibold uppercase tracking-wider transition hover:border-gold hover:text-gold">Explore path</Link>
+            <span className="mt-6 inline-flex rounded-full border border-border px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground transition group-hover:border-gold group-hover:text-gold">Select path <ArrowRight className="ml-2 h-3 w-3" /></span>
           </button>)}
         </div>
       </section>
