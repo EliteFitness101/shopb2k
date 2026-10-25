@@ -59,12 +59,14 @@ Use accessible pill CTAs and responsive luxury cards; honor reduced-motion prefe
 - The repository contains a Cloudflare R2 binding `MEDIA_BUCKET` mapped to `resofit-cdn` and route patterns for `media.resofit.fit` and `content.resofit.fit` in its current `wrangler.jsonc`.
 - The source `src/server.ts` handles media reads/writes only when hostname is `media.resofit.fit` or `content.resofit.fit`; upload hostname dispatch must remain routed to the application/API handler.
 - GitHub Actions run `40155343154` failed during Cloudflare deploy with `No access to the specified service`.
-- GitHub Actions run `40155343151` found 45/65 product URLs returned HTTP 200; 20 returned 404.
+- GitHub Actions run `40155343151` found 45/65 product URLs returned HTTP 200; 19 returned 404 and one returned 403. The development PR replaces those 20 non-canonical smoke-manifest handles with existing published catalog SKUs/handles; live smoke verification is pending.
 - GitHub Actions run `40155343123` failed at `npm ci --include=dev` before build.
 - Buffer connector returned a rate-limit response; connected organization/channel state was not verified in this run.
 - Supabase production records show `content_automation_settings.paused=false`, `scheduler_enabled=true`, and `chatb2k_control_plane.kill_switch_enabled=false` at audit time.
 - The ten most recently updated `resofit_live_highlights` rows inspected were `pending`; their stored `imagekit_url` values point to Dropbox and their metadata `r2_url` values are null.
+- `bigo-media-rehost` is active at v15 but currently writes rehosted files to Supabase Storage bucket `resofit-social-media`, not R2. Its current allowlist accepts Dropbox and Vercel Blob sources.
 - `bigo_clips` contains zero rows; nine inspected `bigo_capture_jobs` remain queued with September 28 discovery timestamps and no start/finish timestamps.
+- `social-publisher` logs show repeated HTTP 500 responses; the latest inspected `social_publish_attempts` row includes `asset_fetch_http_403` against a Vercel Blob asset URL. This is consistent with a media-access failure, but the exact provider-side cause needs a live readback test.
 - `chatb2k-publishing-router` is active at version 14 but requires exactly one eligible provider route; current active social-distribution routes are Buffer and ResoFit Ecosystem. The Buffer route config does not specify an organization ID.
 - `content_publish_log` contains recent successful Telegram publishes and Buffer rate-limit failures. A live `social-publisher` request returned HTTP 500 at 2026-10-25T05:14:02Z.
 - The current UI/upload PR branch is `ops/upload-host-and-ecosystem-contract`, latest commit `675aac5005228a27963c33eeb984e92ee1842809`. Its latest Vercel preview deployment was queued at audit time; it is not production.
