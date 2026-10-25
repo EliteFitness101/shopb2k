@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Search, Sparkles, ShieldCheck, Dumbbell, ShoppingBag, Radio, PlayCircle, Send, LoaderCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -56,6 +56,22 @@ function ChatB2KAssistLoop() {
   const [loading, setLoading] = useState(false);
   const [assistantData, setAssistantData] = useState<AssistantData | null>(null);
   const [assistantError, setAssistantError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const video = heroVideoRef.current;
+    if (!video) return;
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const syncPlayback = () => {
+      if (preference.matches) video.pause();
+      else void video.play().catch(() => undefined);
+    };
+    syncPlayback();
+    preference.addEventListener("change", syncPlayback);
+    return () => {
+      preference.removeEventListener("change", syncPlayback);
+      video.pause();
+    };
+  }, []);
   const attribution = useMemo(() => {
     if (typeof window === "undefined") return {};
     const params = new URLSearchParams(window.location.search);
@@ -126,7 +142,7 @@ function ChatB2KAssistLoop() {
       </header>
 
       <section className="relative isolate overflow-hidden border-b border-border/50">
-        <video ref={heroVideoRef} className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover opacity-20" autoPlay muted loop playsInline preload="metadata" poster="https://res.cloudinary.com/resofit/image/upload/f_auto,q_auto/IMG_7973" aria-hidden="true"><source src="https://res.cloudinary.com/resofit/video/upload/f_auto,q_auto/gemini_generated_video_F48FFEE5.mp4" type="video/mp4" /></video>
+        <video ref={heroVideoRef} className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover opacity-20 motion-reduce:hidden" muted loop playsInline preload="metadata" poster="https://res.cloudinary.com/resofit/image/upload/f_auto,q_auto/IMG_7973" aria-hidden="true"><source src="https://res.cloudinary.com/resofit/video/upload/f_auto,q_auto/gemini_generated_video_F48FFEE5.mp4" type="video/mp4" /></video>
         <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_15%_15%,rgba(202,164,91,.24),rgba(8,8,8,.78)_58%),linear-gradient(90deg,rgba(8,8,8,.72),rgba(8,8,8,.42))]" />
         <div className="relative z-20 mx-auto grid max-w-7xl gap-12 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-[1.1fr_.9fr] lg:items-center">
           <div>
