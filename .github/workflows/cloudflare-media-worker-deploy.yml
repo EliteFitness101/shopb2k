@@ -46,17 +46,21 @@ jobs:
           echo "Using configured Cloudflare account ID for resofit.fit: $CLOUDFLARE_ACCOUNT_ID"
           echo "CLOUDFLARE_ACCOUNT_ID=$CLOUDFLARE_ACCOUNT_ID" >> "$GITHUB_ENV"
 
-      - name: Inspect Worker services visible to this token
+      - name: Diagnose Worker script visibility without blocking deployment
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.SHOPB2K_WORKERS_DEPLOY_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           set -euo pipefail
-          response="$(curl --fail --silent --show-error \
+          code="$(curl --silent --show-error -o /tmp/worker-scripts.json -w '%{http_code}' \
             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts?per_page=100")"
-          printf '%s' "$response" | jq -e '.success == true' >/dev/null
-          echo "Worker scripts visible to the deployment token:"
-          printf '%s' "$response" | jq -r '.result[]?.id'
+          if [ "$code" = "200" ] && jq -e '.success == true' /tmp/worker-scripts.json >/dev/null; then
+            echo "Worker scripts visible to token:"
+            jq -r '.result[]?.id' /tmp/worker-scripts.json
+          else
+            echo "::warning::Worker script listing returned HTTP $code; proceeding to the authoritative Wrangler deploy permission check."
+            jq -r '.errors[]?.message // empty' /tmp/worker-scripts.json || true
+          fi
 
       - name: Verify Cloudflare identity and deploy Worker routes
         env:
