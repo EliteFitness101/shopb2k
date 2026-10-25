@@ -190,12 +190,138 @@ async function handleMedia(request: Request, env: WorkerEnv): Promise<Response> 
   }
 }
 
+
+const ALLOWED_UPLOAD_ORIGINS = new Set([
+  "https://resofit.fit",
+  "https://www.resofit.fit",
+  "https://dashboard.resofit.fit",
+  "https://chatb2k.resofit.fit",
+]);
+const ALLOWED_UPLOAD_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/avif",
+  "image/gif",
+  "video/mp4",
+  "video/webm",
+  "audio/mpeg",
+  "audio/mp4",
+  "audio/wav",
+  "application/pdf",
+]);
+
+function encodeObjectKey(key: string): string {
+  return key.split("/").map(encodeURIComponent).join("/");
+}
+
+function uploadJson(data: Record<string, unknown>, status = 200, origin?: string): Response {
+  const headers = new Headers({
+    "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff",
+    "Vary": "Origin",
+  });
+  if (origin && ALLOWED_UPLOAD_ORIGINS.has(origin)) {
+    headers.set("Access-Control-Allow-Origin", origin);
+  }
+  return Response.json(data, { status, headers });
+}
+
+async function handleUpload(request: Request, env: WorkerEnv): Promise<Response> {
+  const url = new URL(request.url);
+  const origin = request.headers.get("origin") ?? undefined;
+  if (origin && !ALLOWED_UPLOAD_ORIGINS.has(origin)) {
+    return uploadJson({ ok: false, error: "Origin not allowed." }, 403);
+  }
+
+  if (request.method === "OPTIONS") {
+    if (!origin) return new Response(null, { status: 204 });
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Authorization, Content-Type",
+        "Access-Control-Max-Age": "600",
+        Vary: "Origin",
+      },
+    });
+  }
+  if (request.method !== "POST") {
+    return uploadJson({ ok: false, error: "POST required." }, 405, origin);
+  }
+
+  if (!env.MEDIA_BUCKET) {
+    return uploadJson({ ok: false, error: "MEDIA_BUCKET binding is unavailable." }, 503, origin);
+  }
+  if (!env.R2_WRITE_TOKEN) {
+    return uploadJson({ ok: false, error: "R2 write authorization is not configured." }, 503, origin);
+  }
+  const authorization = request.headers.get("authorization") ?? "";
+  if (!constantTimeEqual(authorization, `Bearer ${env.R2_WRITE_TOKEN}`)) {
+    return uploadJson({ ok: false, error: "Unauthorized." }, 401, origin);
+  }
+
+  const rawKey = url.searchParams.get("key") ?? "";
+  const key = mediaKey(`/${rawKey}`);
+  if (!key) {
+    return uploadJson({ ok: false, error: "A valid public/ or chatb2k/ object key is required." }, 400, origin);
+  }
+
+  const contentType = (request.headers.get("content-type") ?? "")
+    .split(";")[0].trim().toLowerCase();
+  if (!ALLOWED_UPLOAD_TYPES.has(contentType)) {
+    return uploadJson({ ok: false, error: "Unsupported media type." }, 415, origin);
+  }
+  const declaredLength = Number(request.headers.get("content-length") ?? "0");
+  if (declaredLength > 50 * 1024 * 1024) {
+    return uploadJson({ ok: false, error: "Object exceeds the 50 MiB limit." }, 413, origin);
+  }
+
+  try {
+    const body = await request.arrayBuffer();
+    if (body.byteLength === 0) {
+      return uploadJson({ ok: false, error: "Empty upload." }, 400, origin);
+    }
+    if (body.byteLength > 50 * 1024 * 1024) {
+      return uploadJson({ ok: false, error: "Object exceeds the 50 MiB limit." }, 413, origin);
+    }
+    await env.MEDIA_BUCKET.put(key, body, { httpMetadata: { contentType } });
+    const publicUrl = `https://media.resofit.fit/${encodeObjectKey(key)}`;
+    return uploadJson({
+      ok: true,
+      primary: "Cloudflare R2 resofit-cdn",
+      key,
+      size: body.byteLength,
+      publicUrl,
+    }, 200, origin);
+  } catch (error) {
+    console.error("ResoFit primary R2 ingestion failed", error);
+    return uploadJson({ ok: false, error: "Primary R2 storage operation failed." }, 502, origin);
+  }
+}
+
 export default {
   async fetch(request: Request, env: WorkerEnv, ctx: unknown) {
     const hostname = new URL(request.url).hostname.toLowerCase();
     // Keep media handling isolated to the CDN hostname; all app/API routes retain
     // their existing TanStack Start request dispatcher.
     if (hostname === "media.resofit.fit" || hostname === "content.resofit.fit") return handleMedia(request, env);
+    if (hostname === "upload.resofit.fit") {
+      const url = new URL(request.url);
+      if (url.pathname === "/" && (request.method === "GET" || request.method === "HEAD")) {
+        const response = json({
+          status: "live",
+          service: "ResoFit Primary R2 Media Upload",
+          endpoint: "/api/ingest-media",
+          bucketBinding: env.MEDIA_BUCKET ? "bound" : "missing",
+          writeAuthorization: env.R2_WRITE_TOKEN ? "configured" : "missing",
+        });
+        return request.method === "HEAD" ? new Response(null, { status: response.status, headers: response.headers }) : response;
+      }
+      if (url.pathname === "/api/ingest-media") return handleUpload(request, env);
+      return json({ ok: false, error: "Not Found" }, 404);
+    }
 
     try {
       const handler = await getServerEntry();
