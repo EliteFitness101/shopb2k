@@ -3,6 +3,11 @@ name: ResoFit 66 Product Page Smoke
 on:
   push:
     branches: [main]
+  pull_request:
+    paths:
+      - "scripts/product-pages.json"
+      - "scripts/smoke-product-pages.mjs"
+      - ".github/workflows/product-pages-smoke.yml"
   workflow_dispatch:
 
 jobs:
