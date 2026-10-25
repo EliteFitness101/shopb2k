@@ -29,13 +29,15 @@ Use the status taxonomy in `AGENTS.md`. Do not insert simulated success telemetr
 
 ## Media ingest contract
 
-- Target endpoint contract in open PR #87: `POST https://upload.resofit.fit/api/ingest-media?key=<object-key>`. It is not production-verified until the Worker route deploy succeeds.
+- Target endpoint contract in open PR #87: `POST https://upload.resofit.fit/api/ingest-media?key=<object-key>`. It is not production-verified until the Cloudflare Worker route deploy succeeds.
+- The Worker handles this hostname directly and writes through its existing `MEDIA_BUCKET → resofit-cdn` binding; it does not proxy through Vercel or depend on `process.env` for the R2 binding.
 - Request body: raw binary media, not JSON containing an arbitrary remote URL.
-- Intended authentication: Supabase bearer token for an administrator; server-side `R2_WRITE_TOKEN` authorizes the upstream R2 write.
+- Authentication: `Authorization: Bearer <R2_WRITE_TOKEN>`, validated against the Cloudflare Worker secret. Never expose this token in browser code or logs.
 - Object key namespace: `public/<path>` or `chatb2k/<path>`.
-- Intended route enforces media type and size limits, and returns `ok`, key, size, and the canonical public media URL only after a successful R2 write.
+- The Worker enforces media type and size limits, and returns `ok`, key, size, and the canonical public media URL only after a successful R2 write.
+- `GET https://upload.resofit.fit/` returns a non-secret health response with binding/secret-presence flags. It is not a substitute for upload/readback verification.
 - Delivery must be verified separately with a GET to the returned public URL. A successful POST alone is not enough.
-- The endpoint code accepts uploaded bytes and intentionally does not fetch arbitrary `mediaUrl` values. Capture agents should stream/download the selected source and POST the bytes, avoiding an unrestricted server-side URL fetch/SSRF path.
+- The endpoint accepts uploaded bytes and intentionally does not fetch arbitrary `mediaUrl` values. Capture agents should stream/download the selected source and POST the bytes, avoiding an unrestricted server-side URL fetch/SSRF path.
 
 ## Publisher router contract
 
