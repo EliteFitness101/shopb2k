@@ -134,6 +134,33 @@ function ChatB2KAssistLoop() {
         </div>
       </section>
 
+      <section className="border-y border-border/60 bg-black/20">
+        <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-16">
+          <div className="flex items-end justify-between gap-4">
+            <div><p className="text-[10px] uppercase tracking-[.25em] text-gold">Curated for your next move</p><h2 className="mt-3 font-display text-3xl sm:text-4xl">Explore the ResoFit world.</h2></div>
+            <span className="hidden text-xs text-muted-foreground sm:inline">Swipe to explore <ArrowRight className="ml-1 inline h-3 w-3" /></span>
+          </div>
+          <div aria-label="Featured ResoFit paths" className="mt-7 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4">
+            <Link to="/me" search={attribution as never} className="group relative min-h-[300px] min-w-[250px] flex-1 snap-start overflow-hidden rounded-3xl border border-gold/20 bg-cover bg-center p-5 sm:min-w-[280px]" style={{ backgroundImage: "linear-gradient(180deg,rgba(8,8,8,.05),rgba(8,8,8,.92)),url(https://res.cloudinary.com/resofit/image/upload/f_auto,q_auto/IMG_7988)" }}>
+              <span className="absolute right-4 top-4 rounded-full border border-white/25 bg-black/35 px-3 py-1 text-[9px] uppercase tracking-widest text-white">Wellness</span>
+              <div className="relative mt-40"><h3 className="font-display text-2xl text-white">Build your rhythm.</h3><p className="mt-2 text-xs leading-5 text-white/75">Meals, movement and sustainable habits.</p><span className="mt-4 inline-flex items-center rounded-full bg-gold px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-black">Personalize <ArrowRight className="ml-2 h-3 w-3" /></span></div>
+            </Link>
+            <Link to="/shop" search={attribution as never} className="group relative min-h-[300px] min-w-[250px] flex-1 snap-start overflow-hidden rounded-3xl border border-gold/20 bg-cover bg-center p-5 sm:min-w-[280px]" style={{ backgroundImage: "linear-gradient(180deg,rgba(8,8,8,.05),rgba(8,8,8,.92)),url(https://res.cloudinary.com/resofit/image/upload/f_auto,q_auto/IMG_7980)" }}>
+              <span className="absolute right-4 top-4 rounded-full border border-white/25 bg-black/35 px-3 py-1 text-[9px] uppercase tracking-widest text-white">Strength</span>
+              <div className="relative mt-40"><h3 className="font-display text-2xl text-white">Train with intent.</h3><p className="mt-2 text-xs leading-5 text-white/75">Explore equipment and training programs.</p><span className="mt-4 inline-flex items-center rounded-full bg-gold px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-black">Explore shop <ArrowRight className="ml-2 h-3 w-3" /></span></div>
+            </Link>
+            <Link to="/shop" search={attribution as never} className="group relative min-h-[300px] min-w-[250px] flex-1 snap-start overflow-hidden rounded-3xl border border-gold/20 bg-cover bg-center p-5 sm:min-w-[280px]" style={{ backgroundImage: "linear-gradient(180deg,rgba(8,8,8,.05),rgba(8,8,8,.92)),url(https://res.cloudinary.com/resofit/image/upload/f_auto,q_auto/IMG_6732)" }}>
+              <span className="absolute right-4 top-4 rounded-full border border-white/25 bg-black/35 px-3 py-1 text-[9px] uppercase tracking-widest text-white">Apparel</span>
+              <div className="relative mt-40"><h3 className="font-display text-2xl text-white">Move in your element.</h3><p className="mt-2 text-xs leading-5 text-white/75">Discover the ResoFlex collection.</p><span className="mt-4 inline-flex items-center rounded-full bg-gold px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-black">View collection <ArrowRight className="ml-2 h-3 w-3" /></span></div>
+            </Link>
+            <Link to="/chatb2k" search={attribution as never} className="group relative min-h-[300px] min-w-[250px] flex-1 snap-start overflow-hidden rounded-3xl border border-gold/20 bg-cover bg-center p-5 sm:min-w-[280px]" style={{ backgroundImage: "linear-gradient(180deg,rgba(8,8,8,.05),rgba(8,8,8,.92)),url(https://res.cloudinary.com/resofit/image/upload/f_auto,q_auto/IMG_7989)" }}>
+              <span className="absolute right-4 top-4 rounded-full border border-white/25 bg-black/35 px-3 py-1 text-[9px] uppercase tracking-widest text-white">ChatB2K™</span>
+              <div className="relative mt-40"><h3 className="font-display text-2xl text-white">Find your next step.</h3><p className="mt-2 text-xs leading-5 text-white/75">A guided path through the ResoFit ecosystem.</p><span className="mt-4 inline-flex items-center rounded-full bg-gold px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-black">Ask AssistLoop <ArrowRight className="ml-2 h-3 w-3" /></span></div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <footer className="border-t border-border/60 bg-black/20"><div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-6 text-[11px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-8"><span>ResoFit × ChatB2K™ · Observe. Verify. Execute. Verify. Recover. Learn. Care.</span><span>{attribution.rsid ? `RSID preserved: ${attribution.rsid}` : "Attribution parameters are preserved from the entry URL."}</span></div></footer>
     </main>
   );
