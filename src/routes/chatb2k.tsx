@@ -18,10 +18,14 @@ type Intent = "wellness" | "shop" | "live" | "support";
 type AssistantResult = { name?: string; title?: string; description?: string; tagline?: string; website?: string; url?: string; product_url?: string; verification_status?: string; contact?: { website?: string | null } };
 type AssistantData = { intent?: { intent?: string }; category?: string; count?: number; results?: AssistantResult[] };
 
-function safeHttpsUrl(value: unknown): string | null {
+function safeHttpsUrl(value: unknown, attribution: Record<string, string> = {}): string | null {
   try {
     const url = new URL(String(value ?? ""));
-    return url.protocol === "https:" && !url.username && !url.password ? url.href : null;
+    if (url.protocol !== "https:" || url.username || url.password) return null;
+    for (const [key, value] of Object.entries(attribution)) {
+      if (value && !url.searchParams.has(key)) url.searchParams.set(key, value);
+    }
+    return url.href;
   } catch {
     return null;
   }
@@ -55,12 +59,13 @@ function ChatB2KAssistLoop() {
   const attribution = useMemo(() => {
     if (typeof window === "undefined") return {};
     const params = new URLSearchParams(window.location.search);
-    return {
-      rsid: params.get("rsid") ?? params.get("RSID") ?? "",
-      utm_source: params.get("utm_source") ?? "",
-      utm_medium: params.get("utm_medium") ?? "",
-      utm_campaign: params.get("utm_campaign") ?? "",
-    };
+    const keys = ["rsid", "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "session_id", "source_id", "campaign_id", "ttclid", "gclid", "fbclid", "msclkid", "ref"];
+    const values: Record<string, string> = {};
+    for (const key of keys) {
+      const value = params.get(key) ?? (key === "rsid" ? params.get("RSID") : null);
+      if (value) values[key] = value;
+    }
+    return values;
   }, []);
   const toggleHeroAudio = async () => {
     const video = heroVideoRef.current;
@@ -157,7 +162,7 @@ function ChatB2KAssistLoop() {
                 {assistantData && <div className="mt-3 space-y-2">
                   <p className="text-[10px] uppercase tracking-[.18em] text-gold">{assistantData.count ?? assistantData.results?.length ?? 0} matching result(s)</p>
                   {(assistantData.results ?? []).slice(0, 4).map((result, index) => {
-                    const href = safeHttpsUrl(result.url ?? result.product_url ?? result.website ?? result.contact?.website);
+                    const href = safeHttpsUrl(result.url ?? result.product_url ?? result.website ?? result.contact?.website, attribution);
                     return <div key={`${result.name ?? result.title ?? "result"}-${index}`} className="rounded-xl border border-border/70 bg-background/60 p-3">
                       <p className="text-sm font-medium">{result.name ?? result.title ?? "ResoFit result"}</p>
                       {(result.description ?? result.tagline) && <p className="mt-1 text-xs leading-5 text-muted-foreground">{result.description ?? result.tagline}</p>}
