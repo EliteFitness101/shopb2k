@@ -29,6 +29,7 @@ function safeKey(key: string): string {
     normalized.length > 500 ||
     normalized.includes("..") ||
     normalized.includes("\\") ||
+    // eslint-disable-next-line no-control-regex -- Reject control characters in untrusted media keys.
     /[\u0000-\u001f\u007f]/.test(normalized) ||
     segments.length < 2 ||
     segments.some((segment) =>
