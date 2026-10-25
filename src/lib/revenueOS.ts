@@ -6,6 +6,7 @@ export type RevenueEvent =
   | "landing_view"
   | "cta_click"
   | "assessment_click"
+  | "assessment_complete"
   | "whatsapp_click"
   | "checkout_start"
   | "payment_success";
@@ -93,12 +94,13 @@ const CANONICAL_EVENT: Record<RevenueEvent, string> = {
   landing_view: "funnel.page_viewed",
   cta_click: "funnel.cta_clicked",
   assessment_click: "assessment.started",
+  assessment_complete: "assessment.completed",
   whatsapp_click: "conversation.whatsapp_clicked",
   checkout_start: "checkout.started",
   payment_success: "payment.succeeded",
 };
 
-async function emitCanonicalEvent(event: RevenueEvent) {
+async function emitCanonicalEvent(event: RevenueEvent, context?: { correlationId?: string; assessmentId?: string; goal?: string }) {
   const eventName = CANONICAL_EVENT[event];
   const anonymousId =
     typeof window !== "undefined"
@@ -112,6 +114,9 @@ async function emitCanonicalEvent(event: RevenueEvent) {
   const payload: Record<string, unknown> = {
     event_type: event,
     page_path: typeof window !== "undefined" ? window.location.pathname : undefined,
+    ...(context?.correlationId ? { correlation_id: context.correlationId } : {}),
+    ...(context?.assessmentId ? { assessment_id: context.assessmentId } : {}),
+    ...(context?.goal ? { goal: context.goal } : {}),
   };
 
   try {
@@ -121,6 +126,7 @@ async function emitCanonicalEvent(event: RevenueEvent) {
         contract_version: "1.0",
         idempotency_key: `${anonymousId ?? "server"}:${event}:${Date.now()}:${crypto.randomUUID()}`,
         anonymous_id: anonymousId,
+        correlation_id: context?.correlationId,
         rsid:
           typeof window !== "undefined"
             ? new URLSearchParams(window.location.search).get("rsid")
@@ -141,7 +147,7 @@ async function emitCanonicalEvent(event: RevenueEvent) {
   }
 }
 
-export function trackEvent(event: RevenueEvent) {
+export function trackEvent(event: RevenueEvent, context?: { correlationId?: string; assessmentId?: string; goal?: string }) {
   const state = read();
   state.events[event] = (state.events[event] ?? 0) + 1;
 
@@ -151,7 +157,7 @@ export function trackEvent(event: RevenueEvent) {
   if (event === "payment_success") state.stats[v].conversions += 1;
 
   write(state);
-  void emitCanonicalEvent(event);
+  void emitCanonicalEvent(event, context);
 }
 
 export function getStats(): RevenueState {

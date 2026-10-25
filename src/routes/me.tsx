@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Check, Loader2, Sparkles } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -41,11 +41,32 @@ async function canonicalRecommendation(a: Answers): Promise<Recommendation | nul
 }
 function resetAnswers(): Answers { return { goal: "", activity: "", diet: "" }; }
 function MePage() {
-  const [step, setStep] = useState(0); const [answers, setAnswers] = useState<Answers>(resetAnswers()); const [curating, setCurating] = useState(false); const [result, setResult] = useState<Recommendation | null>(null);
+  const [step, setStep] = useState(0); const [answers, setAnswers] = useState<Answers>(resetAnswers()); const [curating, setCurating] = useState(false); const [result, setResult] = useState<Recommendation | null>(null); const [verifiedCorrelationId, setVerifiedCorrelationId] = useState<string | null>(null);
   const restart = () => { setStep(0); setResult(null); setAnswers(resetAnswers()); };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const candidate = params.get("correlation_id");
+    if (!candidate) return;
+
+    // Remove the bearer-like correlation token from the address bar before any onward navigation.
+    params.delete("correlation_id");
+    const query = params.toString();
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
+
+    let active = true;
+    void fetch(`/api/assessment-handoff?correlation_id=${encodeURIComponent(candidate)}`, { cache: "no-store" })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => null) as { ok?: boolean } | null;
+        if (active && response.ok && payload?.ok === true) setVerifiedCorrelationId(candidate);
+      })
+      .catch(() => { /* assessment remains usable if correlation verification is unavailable */ });
+    return () => { active = false; };
+  }, []);
   async function submit(next: Answers) {
     setCurating(true);
-    trackEvent("assessment_click");
+    trackEvent("assessment_click", { correlationId: verifiedCorrelationId });
     try {
       const recommendation = await Promise.race([
         canonicalRecommendation(next),
@@ -53,7 +74,7 @@ function MePage() {
       ]);
       setResult(recommendation);
       setStep(3);
-      trackEvent("assessment_complete");
+      trackEvent("assessment_complete", { correlationId: verifiedCorrelationId, assessmentId: crypto.randomUUID(), goal: next.goal });
 
     } finally {
       setCurating(false);
