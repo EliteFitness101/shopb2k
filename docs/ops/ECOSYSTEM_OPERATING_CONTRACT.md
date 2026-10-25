@@ -62,6 +62,12 @@ Use accessible pill CTAs and responsive luxury cards; honor reduced-motion prefe
 - GitHub Actions run `40155343151` found 45/65 product URLs returned HTTP 200; 20 returned 404.
 - GitHub Actions run `40155343123` failed at `npm ci --include=dev` before build.
 - Buffer connector returned a rate-limit response; connected organization/channel state was not verified in this run.
+- Supabase production records show `content_automation_settings.paused=false`, `scheduler_enabled=true`, and `chatb2k_control_plane.kill_switch_enabled=false` at audit time.
+- The ten most recently updated `resofit_live_highlights` rows inspected were `pending`; their stored `imagekit_url` values point to Dropbox and their metadata `r2_url` values are null.
+- `bigo_clips` contains zero rows; nine inspected `bigo_capture_jobs` remain queued with September 28 discovery timestamps and no start/finish timestamps.
+- `chatb2k-publishing-router` is active at version 14 but requires exactly one eligible provider route; current active social-distribution routes are Buffer and ResoFit Ecosystem. The Buffer route config does not specify an organization ID.
+- `content_publish_log` contains recent successful Telegram publishes and Buffer rate-limit failures. A live `social-publisher` request returned HTTP 500 at 2026-10-25T05:14:02Z.
+- The current UI/upload PR branch is `ops/upload-host-and-ecosystem-contract`, latest commit `675aac5005228a27963c33eeb984e92ee1842809`. Its latest Vercel preview deployment was queued at audit time; it is not production.
 - These are active blockers, not fixed items. Re-run each check after patch/deploy and update this ledger with new evidence.
 
 ## Required verification after merge
