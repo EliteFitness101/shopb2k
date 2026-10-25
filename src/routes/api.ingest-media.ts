@@ -33,6 +33,7 @@ function requestedKey(request: Request): string | null {
     key.length > 500 ||
     key.includes("..") ||
     key.includes("\\") ||
+    // eslint-disable-next-line no-control-regex -- Reject control characters in untrusted media keys.
     /[\u0000-\u001f\u007f]/.test(key) ||
     segments.length < 2 ||
     segments.some((segment) =>
