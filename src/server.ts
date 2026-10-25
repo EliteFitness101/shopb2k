@@ -194,7 +194,7 @@ export default {
     const hostname = new URL(request.url).hostname.toLowerCase();
     // Keep media handling isolated to the CDN hostname; all app/API routes retain
     // their existing TanStack Start request dispatcher.
-    if (hostname === "media.resofit.fit") return handleMedia(request, env);
+    if (hostname === "media.resofit.fit" || hostname === "content.resofit.fit") return handleMedia(request, env);
 
     try {
       const handler = await getServerEntry();
