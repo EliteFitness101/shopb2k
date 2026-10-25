@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - "src/server.ts"
+      - "src/r2-media-worker.ts"
       - "wrangler.jsonc"
       - "package.json"
       - "package-lock.json"
