@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
-import { ArrowRight, Search, Sparkles, ShieldCheck, Dumbbell, ShoppingBag, Radio, PlayCircle, Send } from "lucide-react";
+import { ArrowRight, Search, Sparkles, ShieldCheck, Dumbbell, ShoppingBag, Radio, PlayCircle, Send, LoaderCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/chatb2k")({
   head: () => ({
@@ -14,6 +15,17 @@ export const Route = createFileRoute("/chatb2k")({
 });
 
 type Intent = "wellness" | "shop" | "live" | "support";
+type AssistantResult = { name?: string; title?: string; description?: string; tagline?: string; website?: string; url?: string; product_url?: string; verification_status?: string; contact?: { website?: string | null } };
+type AssistantData = { intent?: { intent?: string }; category?: string; count?: number; results?: AssistantResult[] };
+
+function safeHttpsUrl(value: unknown): string | null {
+  try {
+    const url = new URL(String(value ?? ""));
+    return url.protocol === "https:" && !url.username && !url.password ? url.href : null;
+  } catch {
+    return null;
+  }
+}
 
 const intentCards: { id: Intent; title: string; detail: string; icon: typeof Sparkles; route: string }[] = [
   { id: "wellness", title: "My wellness plan", detail: "Nutrition, movement, recovery and personalized guidance.", icon: Sparkles, route: "/me" },
@@ -37,6 +49,9 @@ function ChatB2KAssistLoop() {
   const [query, setQuery] = useState("");
   const [intent, setIntent] = useState<Intent | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [assistantData, setAssistantData] = useState<AssistantData | null>(null);
+  const [assistantError, setAssistantError] = useState<string | null>(null);
   const attribution = useMemo(() => {
     if (typeof window === "undefined") return {};
     const params = new URLSearchParams(window.location.search);
@@ -68,9 +83,29 @@ function ChatB2KAssistLoop() {
   const inferred = classifyIntent(query);
   const selected = intent ?? inferred;
   const destination = intentCards.find((card) => card.id === selected);
-  const submit = () => {
+  const submit = async () => {
+    const cleanQuery = query.trim();
     setSubmitted(true);
+    setAssistantData(null);
+    setAssistantError(null);
+    if (!cleanQuery) {
+      setAssistantError("Enter a goal or search phrase to get a tailored route.");
+      return;
+    }
     if (!intent && inferred) setIntent(inferred);
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("chatb2k-orchestrator", {
+        body: { q: cleanQuery, limit: 6 },
+      });
+      if (error) throw error;
+      setAssistantData(data as AssistantData);
+    } catch (error) {
+      console.error("ChatB2K AssistLoop request failed", error);
+      setAssistantError("The live ChatB2K route is temporarily unavailable. Choose a path below or try again shortly.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -95,7 +130,7 @@ function ChatB2KAssistLoop() {
             <p className="mt-6 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">Wellness, products, live media or support. Start with a goal, a question or a search phrase. ChatB2K helps you find the right ResoFit path without unnecessary steps.</p>
             <div className="mt-8 flex flex-wrap gap-2">
               <button type="button" onClick={toggleHeroAudio} className="rounded-full border border-gold/50 bg-black/40 px-4 py-2 text-xs font-medium text-gold transition hover:bg-gold/10">{audioEnabled ? "Mute hero" : "Enable sound · 33%"}</button>
-              {["Build a meal plan", "Find a product", "BIGO replays", "Payment help"].map((suggestion) => <button key={suggestion} onClick={() => { setQuery(suggestion); setSubmitted(false); setIntent(null); }} className="rounded-full border border-border bg-card/50 px-4 py-2 text-xs text-muted-foreground transition hover:border-gold/60 hover:text-foreground">{suggestion}</button>)}
+              {["Build a meal plan", "Find a product", "BIGO replays", "Payment help"].map((suggestion) => <button key={suggestion} onClick={() => { setQuery(suggestion); setSubmitted(false); setIntent(null); setAssistantData(null); setAssistantError(null); }} className="rounded-full border border-border bg-card/50 px-4 py-2 text-xs text-muted-foreground transition hover:border-gold/60 hover:text-foreground">{suggestion}</button>)}
             </div>
           </div>
 
@@ -109,12 +144,33 @@ function ChatB2KAssistLoop() {
                 <label htmlFor="chatb2k-query" className="mb-2 block text-[10px] uppercase tracking-[.2em] text-muted-foreground">Your goal or search</label>
                 <div className="flex items-center gap-2 rounded-2xl border border-border bg-background/80 p-2 focus-within:border-gold/60">
                   <Search className="ml-2 h-4 w-4 shrink-0 text-muted-foreground" />
-                  <input id="chatb2k-query" value={query} onChange={(event) => { setQuery(event.target.value); setSubmitted(false); }} placeholder="I want to improve my energy…" className="min-w-0 flex-1 bg-transparent px-1 py-3 text-sm outline-none placeholder:text-muted-foreground/70" />
+                  <input id="chatb2k-query" value={query} onChange={(event) => { setQuery(event.target.value); setSubmitted(false); setAssistantData(null); setAssistantError(null); }} placeholder="I want to improve my energy…" className="min-w-0 flex-1 bg-transparent px-1 py-3 text-sm outline-none placeholder:text-muted-foreground/70" />
                   <button aria-label="Find my path" type="submit" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gold text-black transition hover:brightness-110"><Send className="h-4 w-4" /></button>
                 </div>
               </form>
-              <p className="mt-3 text-[11px] leading-5 text-muted-foreground">Your query is used to suggest a destination. Personalized AI responses and connected account actions require their live service integrations to be verified.</p>
-              {submitted && <div role="status" className="mt-4 rounded-xl border border-gold/25 bg-gold/5 p-4"><p className="text-sm font-medium">{destination ? `Suggested path: ${destination.title}` : "Let’s narrow it down."}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{destination ? destination.detail : "Choose one of the paths below, or add a little more context to your search."}</p>{destination && <Link to={destination.route as never} search={attribution as never} className="mt-3 inline-flex items-center gap-2 rounded-full bg-gold px-4 py-2 text-xs font-semibold text-black">Continue <ArrowRight className="h-3.5 w-3.5" /></Link>}</div>}
+              <p className="mt-3 text-[11px] leading-5 text-muted-foreground">Search and discovery use the existing ChatB2K orchestration route. Purchases, payments, publishing and account changes remain on their verified service paths.</p>
+              {submitted && <div role="status" aria-live="polite" className="mt-4 rounded-xl border border-gold/25 bg-gold/5 p-4">
+                <p className="text-sm font-medium">{destination ? `Suggested path: ${destination.title}` : assistantData?.intent?.intent ? `ChatB2K intent: ${assistantData.intent.intent}` : "Your next step"}</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">{destination ? destination.detail : assistantData?.category ? `Matched ecosystem category: ${assistantData.category}.` : "Choose a path below or refine your search."}</p>
+                {loading && <p className="mt-3 inline-flex items-center gap-2 text-xs text-muted-foreground"><LoaderCircle className="h-4 w-4 animate-spin" /> Searching the live ResoFit ecosystem…</p>}
+                {assistantError && <p className="mt-3 text-xs leading-5 text-amber-200">{assistantError}</p>}
+                {assistantData && <div className="mt-3 space-y-2">
+                  <p className="text-[10px] uppercase tracking-[.18em] text-gold">{assistantData.count ?? assistantData.results?.length ?? 0} matching result(s)</p>
+                  {(assistantData.results ?? []).slice(0, 4).map((result, index) => {
+                    const href = safeHttpsUrl(result.url ?? result.product_url ?? result.website ?? result.contact?.website);
+                    return <div key={`${result.name ?? result.title ?? "result"}-${index}`} className="rounded-xl border border-border/70 bg-background/60 p-3">
+                      <p className="text-sm font-medium">{result.name ?? result.title ?? "ResoFit result"}</p>
+                      {(result.description ?? result.tagline) && <p className="mt-1 text-xs leading-5 text-muted-foreground">{result.description ?? result.tagline}</p>}
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        <span className="text-[10px] text-muted-foreground">{result.verification_status ?? "Registry result"}</span>
+                        {href && <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-gold">Open result <ArrowRight className="h-3 w-3" /></a>}
+                      </div>
+                    </div>;
+                  })}
+                  {!assistantData.results?.length && <p className="text-xs text-muted-foreground">No verified match returned yet. Refine the query or choose a path below.</p>}
+                </div>}
+                {destination && <Link to={destination.route as never} search={attribution as never} className="mt-3 inline-flex items-center gap-2 rounded-full bg-gold px-4 py-2 text-xs font-semibold text-black">Continue <ArrowRight className="h-3.5 w-3.5" /></Link>}
+              </div>}
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2">
               {[{ icon: ShieldCheck, label: "Secure paths" }, { icon: PlayCircle, label: "Media ready" }, { icon: Dumbbell, label: "Personalized" }].map(({ icon: Icon, label }) => <div key={label} className="rounded-xl border border-border/70 bg-background/45 px-2 py-3 text-center"><Icon className="mx-auto h-4 w-4 text-gold" /><p className="mt-2 text-[9px] uppercase tracking-wider text-muted-foreground sm:text-[10px]">{label}</p></div>)}
