@@ -73,24 +73,33 @@ async function ingest(request: Request): Promise<Response> {
     "https://www.resofit.fit",
     "https://dashboard.resofit.fit",
   ]);
-  if (origin && !allowedOrigins.has(origin)) return json({ ok: false, error: "Origin not allowed." }, 403);
+  if (origin && !allowedOrigins.has(origin)) return reply({ ok: false, error: "Origin not allowed." }, 403);
+
+  const reply = (data: unknown, status = 200) => {
+    const response = json(data, status);
+    if (origin) {
+      response.headers.set("Access-Control-Allow-Origin", origin);
+      response.headers.set("Vary", "Origin");
+    }
+    return response;
+  };
 
   const auth = await authorizedAdmin(request);
-  if (auth === null) return json({ ok: false, error: "Media authentication is not configured." }, 503);
-  if (!auth) return json({ ok: false, error: "Admin authorization required." }, 403);
-  if (!R2_WRITE_TOKEN) return json({ ok: false, error: "Media storage credentials are not configured." }, 503);
+  if (auth === null) return reply({ ok: false, error: "Media authentication is not configured." }, 503);
+  if (!auth) return reply({ ok: false, error: "Admin authorization required." }, 403);
+  if (!R2_WRITE_TOKEN) return reply({ ok: false, error: "Media storage credentials are not configured." }, 503);
 
   const key = requestedKey(request);
-  if (!key) return json({ ok: false, error: "A valid public/ or chatb2k/ media key is required." }, 400);
+  if (!key) return reply({ ok: false, error: "A valid public/ or chatb2k/ media key is required." }, 400);
 
   const contentType = (request.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
-  if (!ALLOWED_TYPES.has(contentType)) return json({ ok: false, error: "Unsupported media type." }, 415);
+  if (!ALLOWED_TYPES.has(contentType)) return reply({ ok: false, error: "Unsupported media type." }, 415);
   const declaredLength = Number(request.headers.get("content-length") ?? "0");
-  if (declaredLength > MAX_BYTES) return json({ ok: false, error: "File exceeds the 50 MiB limit." }, 413);
+  if (declaredLength > MAX_BYTES) return reply({ ok: false, error: "File exceeds the 50 MiB limit." }, 413);
 
   const body = await request.arrayBuffer();
-  if (body.byteLength === 0) return json({ ok: false, error: "Empty upload." }, 400);
-  if (body.byteLength > MAX_BYTES) return json({ ok: false, error: "File exceeds the 50 MiB limit." }, 413);
+  if (body.byteLength === 0) return reply({ ok: false, error: "Empty upload." }, 400);
+  if (body.byteLength > MAX_BYTES) return reply({ ok: false, error: "File exceeds the 50 MiB limit." }, 413);
 
   try {
     const upstream = await fetch(`${MEDIA_DOMAIN}/${encodeObjectKey(key)}`, {
@@ -103,12 +112,12 @@ async function ingest(request: Request): Promise<Response> {
     });
     const payload = await upstream.json().catch(() => ({}));
     if (!upstream.ok) {
-      return json(
+      return reply(
         { ok: false, error: "Primary R2 write failed.", upstreamStatus: upstream.status },
         upstream.status >= 400 && upstream.status < 500 ? upstream.status : 502,
       );
     }
-    return json({
+    return reply({
       ok: true,
       primary: "Cloudflare R2 resofit-cdn",
       key,
@@ -118,7 +127,7 @@ async function ingest(request: Request): Promise<Response> {
     });
   } catch (error) {
     console.error("ResoFit primary R2 ingestion failed", error);
-    return json({ ok: false, error: "Primary R2 storage is temporarily unavailable." }, 502);
+    return reply({ ok: false, error: "Primary R2 storage is temporarily unavailable." }, 502);
   }
 }
 
