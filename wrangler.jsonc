@@ -12,6 +12,10 @@
     {
       "pattern": "content.resofit.fit/*",
       "zone_name": "resofit.fit"
+    },
+    {
+      "pattern": "upload.resofit.fit/*",
+      "zone_name": "resofit.fit"
     }
   ],
   "r2_buckets": [
