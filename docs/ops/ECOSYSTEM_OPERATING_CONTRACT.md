@@ -29,15 +29,13 @@ Use the status taxonomy in `AGENTS.md`. Do not insert simulated success telemetr
 
 ## Media ingest contract
 
-- Upload endpoint: `POST https://upload.resofit.fit/api/ingest-media?key=<object-key>`
+- Target endpoint contract in open PR #87: `POST https://upload.resofit.fit/api/ingest-media?key=<object-key>`. It is not production-verified until the Worker route deploy succeeds.
 - Request body: raw binary media, not JSON containing an arbitrary remote URL.
-- Authentication: Supabase bearer token for an administrator; server-side `R2_WRITE_TOKEN` is used only to authorize the upstream R2 write.
+- Intended authentication: Supabase bearer token for an administrator; server-side `R2_WRITE_TOKEN` authorizes the upstream R2 write.
 - Object key namespace: `public/<path>` or `chatb2k/<path>`.
-- Allowed media types and size limits are enforced by the route.
-- Success response must include `ok: true`, key, size, and the canonical public media URL.
-- Delivery is verified separately with a GET to the returned public URL. A successful POST alone is not enough.
-- A failed R2 write must return failure; do not report success or enqueue a publish job as though the asset were available.
-- This route accepts uploaded bytes and intentionally does not fetch arbitrary `mediaUrl` values. Capture agents should stream/download their selected source and POST the bytes, avoiding an unrestricted server-side URL fetch/SSRF path.
+- Intended route enforces media type and size limits, and returns `ok`, key, size, and the canonical public media URL only after a successful R2 write.
+- Delivery must be verified separately with a GET to the returned public URL. A successful POST alone is not enough.
+- The endpoint code accepts uploaded bytes and intentionally does not fetch arbitrary `mediaUrl` values. Capture agents should stream/download the selected source and POST the bytes, avoiding an unrestricted server-side URL fetch/SSRF path.
 
 ## Publisher router contract
 
@@ -69,7 +67,7 @@ Use accessible pill CTAs and responsive luxury cards; honor reduced-motion prefe
 - `social-publisher` logs show repeated HTTP 500 responses; the latest inspected `social_publish_attempts` row includes `asset_fetch_http_403` against a Vercel Blob asset URL. This is consistent with a media-access failure, but the exact provider-side cause needs a live readback test.
 - `chatb2k-publishing-router` is active at version 14 but requires exactly one eligible provider route; current active social-distribution routes are Buffer and ResoFit Ecosystem. The Buffer route config does not specify an organization ID.
 - `content_publish_log` contains recent successful Telegram publishes and Buffer rate-limit failures. A live `social-publisher` request returned HTTP 500 at 2026-10-25T05:14:02Z.
-- The current UI/upload PR branch is `ops/upload-host-and-ecosystem-contract`, latest commit `675aac5005228a27963c33eeb984e92ee1842809`. Its latest Vercel preview deployment was queued at audit time; it is not production.
+- The current UI/upload PR is `EliteFitness101/shopb2k#87`, branch `ops/upload-host-and-ecosystem-contract`. A Vercel preview for an earlier branch commit reached READY; newer commits were queued at the latest check. The preview is not production.
 - These are active blockers, not fixed items. Re-run each check after patch/deploy and update this ledger with new evidence.
 
 ## Required verification after merge
