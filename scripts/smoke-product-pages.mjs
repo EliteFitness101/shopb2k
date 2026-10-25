@@ -15,6 +15,8 @@ async function check(product) {
     ...product,
     url,
     status: null,
+    responseHeaders: {},
+    bodyPreview: null,
     ok: false,
     titleFound: false,
     skuFound: false,
@@ -26,10 +28,14 @@ async function check(product) {
     const response = await fetch(url, {
       redirect: "follow",
       headers: { "user-agent": "ResoFit-66-Product-Smoke/1.0" },
+      signal: AbortSignal.timeout(10000),
     });
 
     result.status = response.status;
+    const headerNames = ["server", "cf-ray", "cf-mitigated", "x-vercel-id", "x-vercel-cache", "content-type", "location"];
+    result.responseHeaders = Object.fromEntries(headerNames.map((name) => [name, response.headers.get(name)]).filter(([, value]) => value));
     const html = await response.text();
+    if (response.status !== 200) result.bodyPreview = html.slice(0, 280).replace(/\\s+/g, " ").trim();
     result.ok = response.status === 200;
     result.notFound = /<h1[^>]*>\s*Product not found\s*<\/h1>|We couldn['’]t find\s+[^<]*\.\s*<\/p>/i.test(html);
     result.titleFound = !result.notFound && html.length > 1000;
@@ -46,9 +52,8 @@ async function check(product) {
 for (const product of manifest.products) {
   const result = await check(product);
   results.push(result);
-  console.log(
-    `${result.ok ? "PASS" : "FAIL"} ${result.status ?? "ERR"} ${product.sku} ${result.url}`,
-  );
+  const edge = Object.entries(result.responseHeaders).map(([key, value]) => `${key}=${value}`).join(" ");
+  console.log(`${result.ok ? "PASS" : "FAIL"} ${result.status ?? "ERR"} ${product.sku} ${result.url}${edge && !result.ok ? ` [${edge}]` : ""}`);
 }
 
 const failures = results.filter((r) => !r.ok);
