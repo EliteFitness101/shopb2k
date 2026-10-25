@@ -74,7 +74,7 @@ async function ingest(request: Request): Promise<Response> {
     "https://www.resofit.fit",
     "https://dashboard.resofit.fit",
   ]);
-  if (origin && !allowedOrigins.has(origin)) return reply({ ok: false, error: "Origin not allowed." }, 403);
+  if (origin && !allowedOrigins.has(origin)) return json({ ok: false, error: "Origin not allowed." }, 403);
 
   const reply = (data: unknown, status = 200) => {
     const response = json(data, status);
