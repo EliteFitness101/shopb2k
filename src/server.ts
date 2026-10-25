@@ -125,6 +125,70 @@ function constantTimeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
+async function handleUpload(request: Request, env: WorkerEnv): Promise<Response> {
+  if (request.method !== "POST") {
+    return new Response("Method Not Allowed", {
+      status: 405,
+      headers: { Allow: "POST", "Cache-Control": "no-store" },
+    });
+  }
+
+  const url = new URL(request.url);
+  const rawKey = url.searchParams.get("key") ?? "";
+  const key = mediaKey(`/${rawKey}`);
+  if (!key) return json({ ok: false, error: "Invalid media key." }, 400);
+
+  const expected = env.R2_WRITE_TOKEN;
+  const supplied = request.headers.get("authorization") ?? "";
+  if (!expected || !constantTimeEqual(supplied, `Bearer ${expected}`)) {
+    return json({ ok: false, error: "Unauthorized." }, 401);
+  }
+
+  const bucket = env.MEDIA_BUCKET;
+  if (!bucket) return json({ ok: false, error: "MEDIA_BUCKET binding is unavailable." }, 503);
+
+  const contentType = (request.headers.get("content-type") ?? "")
+    .split(";")[0].trim().toLowerCase();
+  const allowedTypes = new Set([
+    "video/mp4",
+    "video/quicktime",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "audio/mpeg",
+    "audio/mp4",
+    "audio/wav",
+  ]);
+  if (!allowedTypes.has(contentType)) {
+    return json({ ok: false, error: "Unsupported media type." }, 415);
+  }
+
+  const declaredLength = Number(request.headers.get("content-length") ?? "0");
+  if (declaredLength > 50 * 1024 * 1024) {
+    return json({ ok: false, error: "Object exceeds the 50 MiB limit." }, 413);
+  }
+
+  try {
+    const body = await request.arrayBuffer();
+    if (body.byteLength === 0) return json({ ok: false, error: "Empty upload." }, 400);
+    if (body.byteLength > 50 * 1024 * 1024) {
+      return json({ ok: false, error: "Object exceeds the 50 MiB limit." }, 413);
+    }
+
+    await bucket.put(key, body, { httpMetadata: { contentType } });
+    const encodedKey = key.split("/").map(encodeURIComponent).join("/");
+    return json({
+      ok: true,
+      key,
+      size: body.byteLength,
+      media_url: `https://media.resofit.fit/${encodedKey}`,
+    });
+  } catch (error) {
+    console.error("ResoFit R2 upload failed", error);
+    return json({ ok: false, error: "Media upload failed." }, 502);
+  }
+}
+
 async function handleMedia(request: Request, env: WorkerEnv): Promise<Response> {
   const method = request.method.toUpperCase();
   if (!["GET", "HEAD", "PUT", "DELETE"].includes(method)) {
@@ -195,6 +259,7 @@ export default {
     const hostname = new URL(request.url).hostname.toLowerCase();
     // Keep media handling isolated to the CDN hostname; all app/API routes retain
     // their existing TanStack Start request dispatcher.
+    if (hostname === "upload.resofit.fit") return handleUpload(request, env);
     if (hostname === "media.resofit.fit" || hostname === "content.resofit.fit") return handleMedia(request, env);
 
     try {
