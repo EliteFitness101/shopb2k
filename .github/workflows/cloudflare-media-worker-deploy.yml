@@ -62,13 +62,15 @@ jobs:
             jq -r '.errors[]?.message // empty' /tmp/worker-scripts.json || true
           fi
 
-      - name: Verify Cloudflare identity and deploy Worker routes
+      - name: Verify Cloudflare identity and deploy Worker script only
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.SHOPB2K_WORKERS_DEPLOY_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           set -euo pipefail
           npx wrangler whoami
-          npx wrangler deploy --config wrangler.jsonc --name shopb2k
+          jq 'del(.routes, ."$schema")' wrangler.jsonc > .wrangler-worker-only.jsonc
+          trap 'rm -f .wrangler-worker-only.jsonc' EXIT
+          npx wrangler deploy --config .wrangler-worker-only.jsonc --name shopb2k
 
       - name: Configure Worker R2 write secret
         if: always()
