@@ -82,25 +82,15 @@ jobs:
           test -n "${R2_WRITE_TOKEN:-}" || { echo "::error::Missing R2_WRITE_TOKEN repository secret"; exit 1; }
           printf '%s' "$R2_WRITE_TOKEN" | npx wrangler secret put R2_WRITE_TOKEN --config wrangler.jsonc --name shopb2k
 
-      - name: Verify deployed Worker service and routes
+      - name: Verify deployed Worker through public production routes
         if: always()
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.SHOPB2K_WORKERS_DEPLOY_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           set -euo pipefail
-          code="$(curl --silent --show-error -o /tmp/worker-service-response.txt -w '%{http_code}' \
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/shopb2k")"
-          content_type="$(file -b --mime-type /tmp/worker-service-response.txt 2>/dev/null || echo unknown)"
-          echo "Worker service API HTTP status: $code"
-          if [ "$code" != "200" ]; then
-            echo "::error::Cloudflare Worker service verification returned HTTP $code."
-            sed -n '1,12p' /tmp/worker-service-response.txt
-            exit 1
-          fi
-          if ! jq -e '.success == true' /tmp/worker-service-response.txt >/dev/null 2>&1; then
-            echo "::error::Cloudflare Worker service endpoint did not return the expected success JSON (detected MIME: $content_type)."
-            sed -n '1,12p' /tmp/worker-service-response.txt
-            exit 1
-          fi
-          echo "Cloudflare confirms Worker service shopb2k exists in the resolved account."
+          MEDIA_URL='https://media.resofit.fit/chatb2k/Free%20Clips/audi%20scharwz.mp4'
+          MEDIA_STATUS="$(curl --silent --show-error -o /dev/null -w '%{http_code}' --max-time 20 -I "$MEDIA_URL")"
+          echo "Existing production media HEAD: HTTP $MEDIA_STATUS"
+          test "$MEDIA_STATUS" = "200"
+          UPLOAD_STATUS="$(curl --silent --show-error -o /dev/null -w '%{http_code}' --max-time 20 -X POST 'https://upload.resofit.fit/api/ingest-media')"
+          echo "Upload Worker no-body probe: HTTP $UPLOAD_STATUS (400 expected without key/body/auth)"
+          test "$UPLOAD_STATUS" = "400"
+          echo "Public media and upload Worker routes are responding as expected."
