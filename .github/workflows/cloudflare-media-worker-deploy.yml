@@ -27,23 +27,54 @@ jobs:
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
+
       - name: Install dependencies and reconcile stale lock metadata
         run: npm install --no-audit --no-fund
-      - name: Deploy Worker and configured routes
+
+      - name: Resolve the account that owns resofit.fit
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler deploy --config wrangler.jsonc --name shopb2k
+        run: |
+          set -euo pipefail
+          test -n "${CLOUDFLARE_API_TOKEN:-}" || { echo "::error::Missing CLOUDFLARE_API_TOKEN repository secret"; exit 1; }
+          response="$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/zones?name=resofit.fit&status=active")"
+          account_id="$(printf '%s' "$response" | jq -er '.result[0].account.id | select(type == "string" and length > 0)')"
+          zone_id="$(printf '%s' "$response" | jq -er '.result[0].id | select(type == "string" and length > 0)')"
+          echo "Resolved resofit.fit zone $zone_id to Cloudflare account $account_id"
+          echo "CLOUDFLARE_ACCOUNT_ID=$account_id" >> "$GITHUB_ENV"
+
+      - name: Verify Cloudflare identity and deploy Worker routes
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          npx wrangler whoami
+          npx wrangler deploy --config wrangler.jsonc --name shopb2k
+
       - name: Configure Worker R2 write secret
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           R2_WRITE_TOKEN: ${{ secrets.R2_WRITE_TOKEN }}
         run: |
-          test -n "$R2_WRITE_TOKEN"
+          set -euo pipefail
+          test -n "${R2_WRITE_TOKEN:-}" || { echo "::error::Missing R2_WRITE_TOKEN repository secret"; exit 1; }
           printf '%s' "$R2_WRITE_TOKEN" | npx wrangler secret put R2_WRITE_TOKEN --config wrangler.jsonc --name shopb2k
+
+      - name: Verify deployed Worker service and routes
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          response="$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/shopb2k")"
+          printf '%s' "$response" | jq -e '.success == true' >/dev/null
+          echo "Cloudflare confirms Worker service shopb2k exists in the resolved account."
