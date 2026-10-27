@@ -7,9 +7,9 @@ export default defineConfig({
   reporter: "list",
   use: { ...devices["Desktop Chrome"], headless: true },
   webServer: {
-    // This build emits a Cloudflare Worker preset and wrangler.json under
-    // .output/server. Run that built worker locally instead of Vite's
-    // incompatible dist/server/server.js preview entry or Node worker import.
+    // The Cloudflare Nitro preset emits a Wrangler config and server entry in
+    // .output/server. Avoid Nitro's broken preview wrapper and launch Wrangler
+    // directly so Playwright polls the same port Wrangler serves.
     command: "bunx wrangler dev --config .output/server/wrangler.json --ip 127.0.0.1 --port 4173",
     url: "http://127.0.0.1:4173",
     reuseExistingServer: !process.env.CI,

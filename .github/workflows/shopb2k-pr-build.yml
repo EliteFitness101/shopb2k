@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - "src/**"
+      - "api/lib/**"
+      - "tests/secrets-bridge.test.js"
       - "package.json"
       - "bun.lock"
       - "vite.config.*"
@@ -33,5 +35,7 @@ jobs:
           bun-version: "1.3.14"
       - name: Install locked dependencies
         run: bun install --frozen-lockfile
+      - name: Run secrets bridge tests
+        run: bun run test:secrets-bridge
       - name: Build production bundle
         run: bun run build

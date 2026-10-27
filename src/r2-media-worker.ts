@@ -33,7 +33,10 @@ function mediaKey(pathname: string): string | null {
     key.length === 0 ||
     key.length > 500 ||
     key.includes("\\") ||
-    /[\u0000-\u001f\u007f]/.test(key) ||
+    [...key].some((character) => {
+      const code = character.charCodeAt(0);
+      return code <= 0x1f || code === 0x7f;
+    }) ||
     key.includes("..")
   ) return null;
 
