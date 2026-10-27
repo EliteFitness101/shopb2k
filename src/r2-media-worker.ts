@@ -160,7 +160,7 @@ async function upload(request: Request, env: WorkerEnv): Promise<Response> {
       console.error("R2 upload upstream status", result.status);
       return cors(request, json({ ok: false, error: "R2 upload failed" }, 502));
     }
-    return cors(request, json({ ok: true, key, size: body.byteLength, media_url: "https://media.resofit.fit/" + key.split("/").map(encodeURIComponent).join("/") }), request);
+    return cors(request, json({ ok: true, key, size: body.byteLength, media_url: "https://media.resofit.fit/" + key.split("/").map(encodeURIComponent).join("/") }));
   } catch (error) {
     console.error("R2 upload failed", error);
     return cors(request, json({ ok: false, error: "R2 storage unavailable or misconfigured" }, 502));
@@ -186,7 +186,7 @@ async function media(request: Request, env: WorkerEnv): Promise<Response> {
     }
     const upstream = await r2Fetch(request, env, method as "GET" | "HEAD" | "PUT" | "DELETE", key, body, type);
     if (upstream.status === 404) return cors(request, new Response("Not Found", { status: 404, headers: { "Cache-Control": "no-store" } }));
-    if (!upstream.ok && upstream.status !== 206) {
+    if (!upstream.ok && upstream.status !== 206 && upstream.status !== 304 && upstream.status !== 416) {
       console.error("R2 upstream status", upstream.status);
       return cors(request, json({ ok: false, error: "R2 request failed" }, 502));
     }
