@@ -7,10 +7,10 @@ export default defineConfig({
   reporter: "list",
   use: { ...devices["Desktop Chrome"], headless: true },
   webServer: {
-    // This build emits a Cloudflare Worker preset and wrangler.json under
-    // .output/server. Run that built worker locally instead of Vite's
-    // incompatible dist/server/server.js preview entry or Node worker import.
-    command: "bunx wrangler dev --config .output/server/wrangler.json --ip 127.0.0.1 --port 4173 --log-level debug",
+    // Nitro's Cloudflare preset emits a Worker plus an asset manifest, but the
+    // generated Wrangler dev server returns 404 for SSR routes in CI. Use the
+    // framework's supported preview server for the built production output.
+    command: "bunx vite preview --host 127.0.0.1 --port 4173 --strictPort",
     url: "http://127.0.0.1:4173",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
