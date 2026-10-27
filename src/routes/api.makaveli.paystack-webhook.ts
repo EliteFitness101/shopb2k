@@ -131,12 +131,13 @@ export const Route = createFileRoute("/api/makaveli/paystack-webhook")({
             );
           if (revenueError) throw revenueError;
 
-          let { data: fulfillment, error: fulfillmentLookupError } = await client
+          const { data: existingFulfillment, error: fulfillmentLookupError } = await client
             .from("resofit_fulfillment_orders")
             .select("id")
             .eq("payment_reference", reference)
             .maybeSingle();
           if (fulfillmentLookupError) throw fulfillmentLookupError;
+          let fulfillment = existingFulfillment;
 
           if (!fulfillment) {
             const created = await client
