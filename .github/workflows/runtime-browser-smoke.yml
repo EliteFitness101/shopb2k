@@ -25,6 +25,8 @@ jobs:
       - name: Install Chromium
         run: bunx playwright install --with-deps chromium
       - name: Test built app in Chromium
+        env:
+          DEBUG: pw:webserver
         run: bunx playwright test tests/browser/runtime-smoke.spec.ts
       - uses: actions/upload-artifact@v4
         if: failure()
