@@ -57,9 +57,9 @@ function options(request: Request, methods: string): Response {
 function parseKey(raw: string): string | null {
   let key: string;
   try { key = decodeURIComponent(raw.replace(/^\/+/, "")); } catch { return null; }
-  // Reject ASCII control bytes in untrusted object keys.\n  // eslint-disable-next-line no-control-regex\n  if (!key || key.length > 500 || key.includes("\\\\") || key.includes("..") || /[\\u0000-\\u001f\\u007f]/.test(key)) return null;
-  const parts = key.split("/");
-  if (!["public", "chatb2k"].includes(parts[0]) || parts.length < 2) return null;
+  // Reject ASCII control bytes in untrusted object keys.
+  // eslint-disable-next-line no-control-regex
+  if (!key || key.length > 500 || key.includes("\\") || key.includes("..") || /[\u0000-\u001f\u007f]/.test(key)) return null;
   if (parts.some((part) => !part || part === "." || part === ".." || !/^[a-zA-Z0-9][a-zA-Z0-9 ._-]*$/.test(part))) return null;
   return key;
 }
