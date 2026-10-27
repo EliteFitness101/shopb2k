@@ -20,6 +20,9 @@ jobs:
       - run: bun install --frozen-lockfile
       - name: Build production bundle
         run: bun run build
+      - name: Inspect generated worker asset routing (sanitized)
+        run: |
+          node --input-type=module -e 'import fs from "node:fs"; const p=".output/server/wrangler.json"; const c=JSON.parse(fs.readFileSync(p,"utf8")); const b=Array.isArray(c.bindings)?c.bindings.map(x=>({name:x.name,type:x.type})):[]; console.log(JSON.stringify({config:p,main:c.main,assets:c.assets,bindings:b,publicRootExists:fs.existsSync(".output/public"),publicRootEntries:fs.existsSync(".output/public")?fs.readdirSync(".output/public").slice(0,12):[]},null,2));'
       - name: Install Playwright
         run: bun add --no-save @playwright/test
       - name: Install Chromium
