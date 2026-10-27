@@ -121,7 +121,7 @@ async function r2Fetch(request: Request, env: WorkerEnv, method: "GET" | "HEAD" 
   const names = Object.keys(headersToSign).sort();
   const canonicalHeaders = names.map(name => name + ":" + headersToSign[name].trim().replace(/\s+/g, " ") + "\n").join("");
   const signedHeaders = names.join(";");
-  const canonicalRequest = [method, target.pathname, "", canonicalHeaders, signedHeaders, payloadHash].join("\n");
+  const canonicalRequest = method + "\n" + target.pathname + "\n\n" + canonicalHeaders + signedHeaders + "\n" + payloadHash;
   const scope = day + "/" + c.region + "/s3/aws4_request";
   const stringToSign = "AWS4-HMAC-SHA256\n" + amzDate + "\n" + scope + "\n" + await sha256(enc.encode(canonicalRequest));
   const dateKey = await hmac(enc.encode("AWS4" + c.secretKey), day);
