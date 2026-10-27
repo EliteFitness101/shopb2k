@@ -9,8 +9,9 @@ type WorkerEnv = {
 
 const MAX_OBJECT_BYTES = 50 * 1024 * 1024;
 const MEDIA_TYPES = new Set([
-  "video/mp4", "video/quicktime", "image/jpeg", "image/png", "image/webp",
-  "audio/mpeg", "audio/mp4", "audio/wav",
+  "image/jpeg", "image/png", "image/webp", "image/avif", "image/gif",
+  "video/mp4", "video/quicktime", "video/webm",
+  "audio/mpeg", "audio/mp4", "audio/wav", "application/pdf",
 ]);
 const ORIGINS = new Set([
   "https://xbang.lovable.app", "https://xbang.vercel.app",
