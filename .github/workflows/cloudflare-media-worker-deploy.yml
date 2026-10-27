@@ -83,50 +83,98 @@ jobs:
           trap 'rm -f .wrangler-worker-only.jsonc' EXIT
           npx wrangler deploy --config .wrangler-worker-only.jsonc --name test-upload-format
 
-      - name: Verify real production media-host upload, ranged download, and cleanup
+      - name: Verify real production upload, ranged download, and cleanup in Chromium
         if: success()
         env:
-          R2_WRITE_TOKEN: ${{ secrets.R2_WRITE_TOKEN }}
+          R2_WRITE_TOKEN: \${{ secrets.R2_WRITE_TOKEN }}
         run: |
           set -euo pipefail
-          test -n "${R2_WRITE_TOKEN:-}" || { echo "::error::Missing R2_WRITE_TOKEN repository secret"; exit 1; }
-          MEDIA_URL='https://media.resofit.fit/chatb2k/Free%20Clips/audi%20scharwz.mp4'
-          MEDIA_RANGE_STATUS="$(curl --silent --show-error --max-time 30 -D /tmp/existing-media-headers.txt -o /tmp/existing-media-range.bin -w '%{http_code}' -H 'Range: bytes=0-15' "$MEDIA_URL")"
-          echo "Existing production media range status: HTTP $MEDIA_RANGE_STATUS"
-          if [ "$MEDIA_RANGE_STATUS" = "206" ] && grep -qi '^content-range: bytes 0-15/' /tmp/existing-media-headers.txt; then
-            echo "PASS: existing production media served a valid 16-byte range."
-          else
-            echo "Existing media range probe did not pass; continuing to test the authenticated upload path."
-            head -c 300 /tmp/existing-media-range.bin || true
-            echo
-          fi
-          KEY="chatb2k/r2-production-probe-${GITHUB_RUN_ID}.mp4"
-          printf 'ResoFit R2 probe ${GITHUB_RUN_ID}' > /tmp/r2-probe.bin
-          cleanup() {
-            curl --silent --show-error --max-time 20 -o /dev/null -X DELETE \
-              -H "Authorization: Bearer $R2_WRITE_TOKEN" \
-              "https://media.resofit.fit/$KEY" || true
-          }
-          trap cleanup EXIT
-          UPLOAD_STATUS="$(curl --silent --show-error --max-time 30 -o /tmp/r2-upload-response.json -w '%{http_code}' \
-            -X PUT --data-binary @/tmp/r2-probe.bin \
-            -H "Authorization: Bearer $R2_WRITE_TOKEN" -H 'Content-Type: video/mp4' \
-            "https://media.resofit.fit/$KEY")"
-          echo "Live media-host upload status: HTTP $UPLOAD_STATUS"
-          if [ "$UPLOAD_STATUS" != "200" ]; then
-            echo "Upload response body (first 800 bytes; secrets excluded):"
-            head -c 800 /tmp/r2-upload-response.json || true
-            echo
-            exit 1
-          fi
-          grep -q '"ok":true' /tmp/r2-upload-response.json
-          RANGE_STATUS="$(curl --silent --show-error --max-time 30 -D /tmp/r2-probe-headers.txt -o /tmp/r2-probe-range.bin -w '%{http_code}' \
-            -H 'Range: bytes=0-5' "https://media.resofit.fit/$KEY")"
-          echo "Live ranged download status: HTTP $RANGE_STATUS"
-          test "$RANGE_STATUS" = "206"
-          grep -qi '^content-range: bytes 0-5/' /tmp/r2-probe-headers.txt
-          cmp -n 6 /tmp/r2-probe.bin /tmp/r2-probe-range.bin
-          echo "PASS: production upload, R2-backed ranged read, byte comparison, and cleanup requested."
+          test -n "\${R2_WRITE_TOKEN:-}" || { echo "::error::Missing R2_WRITE_TOKEN repository secret"; exit 1; }
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+          node <<'NODE'
+          const { chromium } = require("playwright");
+
+          (async () => {
+            const token = process.env.R2_WRITE_TOKEN;
+            const runId = process.env.GITHUB_RUN_ID;
+            const key = \`chatb2k/r2-production-probe-\${runId}.mp4\`;
+            const payload = \`ResoFit R2 probe \${runId}\`;
+            const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
+            const page = await browser.newPage({ viewport: { width: 1365, height: 900 } });
+            let uploaded = false;
+            let failure;
+
+            try {
+              const navigation = await page.goto("https://media.resofit.fit/", {
+                waitUntil: "domcontentloaded",
+                timeout: 90000,
+              });
+              console.log("Media-origin bootstrap status:", navigation?.status() ?? "no response");
+              await page.waitForFunction(
+                () => !/just a moment/i.test(document.title),
+                null,
+                { timeout: 60000 },
+              );
+
+              const upload = await page.evaluate(async ({ token, key, payload }) => {
+                const path = "/" + key.split("/").map(encodeURIComponent).join("/");
+                const response = await fetch(path, {
+                  method: "PUT",
+                  headers: {
+                    Authorization: "Bearer " + token,
+                    "Content-Type": "video/mp4",
+                  },
+                  body: payload,
+                });
+                return { status: response.status, body: (await response.text()).slice(0, 800) };
+              }, { token, key, payload });
+
+              console.log("Live media-host upload status:", upload.status);
+              if (upload.status !== 200) throw new Error("Live upload failed: HTTP " + upload.status + " " + upload.body);
+              if (!upload.body.includes('"ok":true')) throw new Error("Upload returned an unexpected response");
+              uploaded = true;
+
+              const range = await page.evaluate(async ({ key }) => {
+                const path = "/" + key.split("/").map(encodeURIComponent).join("/");
+                const response = await fetch(path, { headers: { Range: "bytes=0-5" } });
+                return {
+                  status: response.status,
+                  contentRange: response.headers.get("Content-Range"),
+                  body: await response.text(),
+                };
+              }, { key });
+
+              console.log("Live ranged download status:", range.status, "Content-Range:", range.contentRange);
+              if (range.status !== 206) throw new Error("Range read failed: HTTP " + range.status);
+              if (!/^bytes 0-5\//i.test(range.contentRange ?? "")) throw new Error("Missing/invalid Content-Range");
+              if (range.body !== payload.slice(0, 6)) throw new Error("Range response bytes did not match the uploaded file");
+              console.log("PASS: uploaded file read back through production R2 route with matching range bytes.");
+            } catch (error) {
+              failure = error;
+            }
+
+            if (uploaded) {
+              try {
+                const cleanup = await page.evaluate(async ({ token, key }) => {
+                  const path = "/" + key.split("/").map(encodeURIComponent).join("/");
+                  const response = await fetch(path, { method: "DELETE", headers: { Authorization: "Bearer " + token } });
+                  return { status: response.status, body: (await response.text()).slice(0, 300) };
+                }, { token, key });
+                console.log("Temporary probe cleanup status:", cleanup.status);
+                if (cleanup.status !== 200 && !failure) failure = new Error("Probe cleanup failed: HTTP " + cleanup.status);
+              } catch (error) {
+                if (!failure) failure = error;
+              }
+            }
+
+            await browser.close();
+            if (failure) throw failure;
+          })().catch((error) => {
+            console.error(error?.stack ?? String(error));
+            process.exitCode = 1;
+          });
+          NODE
 
       - name: Publish live R2 verification status
         if: always()
