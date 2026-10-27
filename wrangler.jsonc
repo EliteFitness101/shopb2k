@@ -1,7 +1,13 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "shopb2k",
-  "workers_dev": true,
+  "name": "test-upload-format",
+  "workers_dev": false,
+  "keep_vars": true,
+  "vars": {
+    "R2_BUCKET_NAME": "xbang-media-canonical",
+    "R2_ENDPOINT": "https://e8325f28fa48ca43bdfa667c062f272f.r2.cloudflarestorage.com",
+    "R2_REGION": "auto"
+  },
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/r2-media-worker.ts",
@@ -17,12 +23,6 @@
     {
       "pattern": "upload.resofit.fit/*",
       "zone_name": "resofit.fit"
-    }
-  ],
-  "r2_buckets": [
-    {
-      "binding": "MEDIA_BUCKET",
-      "bucket_name": "resofit-cdn"
     }
   ]
 }

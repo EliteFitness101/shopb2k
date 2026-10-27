@@ -33,5 +33,7 @@ jobs:
           bun-version: "1.3.14"
       - name: Install locked dependencies
         run: bun install --frozen-lockfile
+      - name: Test cross-account R2 upload and download handlers
+        run: bun run test:r2
       - name: Build production bundle
         run: bun run build
