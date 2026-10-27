@@ -90,6 +90,16 @@ jobs:
         run: |
           set -euo pipefail
           test -n "${R2_WRITE_TOKEN:-}" || { echo "::error::Missing R2_WRITE_TOKEN repository secret"; exit 1; }
+          MEDIA_URL='https://media.resofit.fit/chatb2k/Free%20Clips/audi%20scharwz.mp4'
+          MEDIA_RANGE_STATUS="$(curl --silent --show-error --max-time 30 -D /tmp/existing-media-headers.txt -o /tmp/existing-media-range.bin -w '%{http_code}' -H 'Range: bytes=0-15' "$MEDIA_URL")"
+          echo "Existing production media range status: HTTP $MEDIA_RANGE_STATUS"
+          if [ "$MEDIA_RANGE_STATUS" = "206" ] && grep -qi '^content-range: bytes 0-15/' /tmp/existing-media-headers.txt; then
+            echo "PASS: existing production media served a valid 16-byte range."
+          else
+            echo "Existing media range probe did not pass; continuing to test the authenticated upload path."
+            head -c 300 /tmp/existing-media-range.bin || true
+            echo
+          fi
           KEY="chatb2k/r2-production-probe-${GITHUB_RUN_ID}.mp4"
           printf 'ResoFit R2 probe ${GITHUB_RUN_ID}' > /tmp/r2-probe.bin
           cleanup() {
