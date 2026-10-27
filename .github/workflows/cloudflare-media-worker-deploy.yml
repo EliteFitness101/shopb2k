@@ -86,10 +86,10 @@ jobs:
       - name: Verify real production upload, ranged download, and cleanup in Chromium
         if: success()
         env:
-          R2_WRITE_TOKEN: \${{ secrets.R2_WRITE_TOKEN }}
+          R2_WRITE_TOKEN: ${{ secrets.R2_WRITE_TOKEN }}
         run: |
           set -euo pipefail
-          test -n "\${R2_WRITE_TOKEN:-}" || { echo "::error::Missing R2_WRITE_TOKEN repository secret"; exit 1; }
+          test -n "${R2_WRITE_TOKEN:-}" || { echo "::error::Missing R2_WRITE_TOKEN repository secret"; exit 1; }
           npm install --no-save --package-lock=false playwright@1.55.0
           npx playwright install --with-deps chromium
           node <<'NODE'
@@ -98,8 +98,8 @@ jobs:
           (async () => {
             const token = process.env.R2_WRITE_TOKEN;
             const runId = process.env.GITHUB_RUN_ID;
-            const key = \`chatb2k/r2-production-probe-\${runId}.mp4\`;
-            const payload = \`ResoFit R2 probe \${runId}\`;
+            const key = `chatb2k/r2-production-probe-${runId}.mp4`;
+            const payload = `ResoFit R2 probe ${runId}`;
             const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
             const page = await browser.newPage({ viewport: { width: 1365, height: 900 } });
             let uploaded = false;
