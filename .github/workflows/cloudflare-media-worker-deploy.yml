@@ -110,7 +110,7 @@ jobs:
           UPLOAD_STATUS="$(curl --silent --show-error --max-time 30 -o /tmp/r2-upload-response.json -w '%{http_code}' \
             -X POST --data-binary @/tmp/r2-probe.bin \
             -H "Authorization: Bearer $R2_WRITE_TOKEN" -H 'Content-Type: video/mp4' \
-            --get --data-urlencode "key=$KEY" 'https://upload.resofit.fit/')"
+            "https://upload.resofit.fit/?key=$KEY")"
           echo "Live upload status: HTTP $UPLOAD_STATUS"
           test "$UPLOAD_STATUS" = "200"
           grep -q '"ok":true' /tmp/r2-upload-response.json
