@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "shopb2k",
+  "name": "test-upload-format",
   "workers_dev": false,
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
