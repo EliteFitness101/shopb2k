@@ -4,6 +4,7 @@ const SUPABASE_URL =
   process.env.SUPABASE_URL ??
   process.env.VITE_SUPABASE_URL ??
   "https://vbqjvmnhdtdhmeeudqnn.supabase.co";
+const SUPABASE_BASE_URL = SUPABASE_URL.endsWith("/") ? SUPABASE_URL.slice(0, -1) : SUPABASE_URL;
 
 /**
  * Same-origin verification alias. Supabase verify-order remains authoritative
@@ -22,9 +23,7 @@ export const Route = createFileRoute("/api/payment/verify-order")({
           );
         }
 
-        const upstreamUrl = new URL(
-          \`\${SUPABASE_URL.replace(/\\/$/, "")}/functions/v1/verify-order\`,
-        );
+        const upstreamUrl = new URL(SUPABASE_BASE_URL + "/functions/v1/verify-order");
         upstreamUrl.searchParams.set("reference", reference);
 
         try {
