@@ -23,7 +23,7 @@ export const Route = createFileRoute("/api/payment/verify-order")({
         }
 
         const upstreamUrl = new URL(
-          `${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/verify-order`,
+          \`\${SUPABASE_URL.replace(/\\/$/, "")}/functions/v1/verify-order\`,
         );
         upstreamUrl.searchParams.set("reference", reference);
 
