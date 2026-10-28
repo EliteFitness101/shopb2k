@@ -4,12 +4,12 @@ const SUPABASE_URL =
   process.env.SUPABASE_URL ??
   process.env.VITE_SUPABASE_URL ??
   "https://vbqjvmnhdtdhmeeudqnn.supabase.co";
+const SUPABASE_BASE_URL = SUPABASE_URL.endsWith("/") ? SUPABASE_URL.slice(0, -1) : SUPABASE_URL;
 
 /**
  * Canonical-domain ingress for Paystack events.
- * The existing Supabase paystack-webhook function remains the signature-verification
- * and reconciliation authority. Preserve the raw request body because Paystack's
- * HMAC signature is calculated over the exact bytes received.
+ * Supabase paystack-webhook remains the signature-verification and reconciliation
+ * authority. Preserve the raw request body for Paystack HMAC validation.
  */
 export const Route = createFileRoute("/api/webhook/paystack")({
   server: {
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/api/webhook/paystack")({
         }
 
         const rawBody = await request.arrayBuffer();
-        const upstreamUrl = \`\${SUPABASE_URL.replace(/\\/$/, "")}/functions/v1/paystack-webhook\`;
+        const upstreamUrl = SUPABASE_BASE_URL + "/functions/v1/paystack-webhook";
 
         try {
           const upstream = await fetch(upstreamUrl, {
