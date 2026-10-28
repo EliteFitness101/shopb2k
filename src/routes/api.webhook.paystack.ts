@@ -21,7 +21,7 @@ export const Route = createFileRoute("/api/webhook/paystack")({
         }
 
         const rawBody = await request.arrayBuffer();
-        const upstreamUrl = `${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/paystack-webhook`;
+        const upstreamUrl = \`\${SUPABASE_URL.replace(/\\/$/, "")}/functions/v1/paystack-webhook\`;
 
         try {
           const upstream = await fetch(upstreamUrl, {
