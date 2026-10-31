@@ -23,7 +23,7 @@ jobs:
       - name: Install Playwright
         run: bun add --no-save @playwright/test
       - name: Install Chromium
-        run: bunx playwright install --with-deps chromium
+        run: bunx playwright install chromium
       - name: Test local app in Chromium
         run: bunx playwright test tests/browser/runtime-smoke.spec.ts
       - uses: actions/upload-artifact@v4
