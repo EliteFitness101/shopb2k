@@ -10,9 +10,18 @@ const cors = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const publishableKeys = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}");
+// These are public client keys (never service-role credentials). Keep them aligned
+// with Supabase project API keys so the website's anonymous assessment can call this
+// intentionally public, catalog-only recommendation endpoint after key rotation.
+const projectPublicKeys = [
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZicWp2bW5oZHRkaG1lZXVkcW5uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3Mjc5NTQsImV4cCI6MjA5MTMwMzk1NH0.Zaldp7-KWijxUXqNTXeFAeqEYVYeK5DOJ5xB690k3Yg",
+  "sb_publishable_fu_Y3KQipfuomFQyd3zNtA_rG9XpOfG",
+];
 const allowedKeys = new Set<string>([
   ...Object.values(publishableKeys).filter((v): v is string => typeof v === "string"),
   Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+  Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "",
+  ...projectPublicKeys,
 ].filter(Boolean));
 const db = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
