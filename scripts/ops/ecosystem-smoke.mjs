@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * ResoFit ecosystem production smoke checks.
- * Read-only HTTP requests only; no checkout, payment, webhook, or data mutations.
+ * Non-mutating HTTP checks only. The cart probe submits an intentionally invalid
+ * payload and must fail validation before any cart or payment data is written.
  */
 const timeoutMs = Number(process.env.SMOKE_TIMEOUT_MS || 15000);
 const targets = [
@@ -15,8 +16,10 @@ const targets = [
   { name: "store", url: "https://store.resofit.fit/", kind: "html" },
   { name: "elite", url: "https://elite.resofit.fit/", kind: "html" },
   { name: "martial", url: "https://martial.resofit.fit/", kind: "html" },
-  // This is a known source path in the API repository; do not treat a generic host response as API health.
-  { name: "api-index", url: "https://api.resofit.fit/api/index", kind: "api" },
+  // Canonical Vercel API route: POST {} must reach validation and return 400 before any write.
+  { name: "api-cart-validation", url: "https://www.resofit.fit/api/cart", kind: "api-validation", method: "POST", body: {} },
+  // Public Supabase catalog API is a separate backend health signal, independent of the Vercel domain/WAF.
+  { name: "catalog-public-api", url: "https://vbqjvmnhdtdhmeeudqnn.supabase.co/functions/v1/catalog-public?q=meal&limit=1", kind: "json" },
 ];
 
 function contentType(response) {
@@ -26,17 +29,28 @@ function contentType(response) {
 async function checkTarget(target) {
   const started = Date.now();
   try {
+    const headers = { "user-agent": "ResoFit-Ecosystem-Smoke/1.0" };
+    if (target.body !== undefined) headers["content-type"] = "application/json";
     const response = await fetch(target.url, {
-      method: "GET",
+      method: target.method || "GET",
+      body: target.body === undefined ? undefined : JSON.stringify(target.body),
       redirect: "follow",
       signal: AbortSignal.timeout(timeoutMs),
-      headers: { "user-agent": "ResoFit-Ecosystem-Smoke/1.0" },
+      headers,
     });
     const type = contentType(response);
     const body = await response.text();
     const elapsedMs = Date.now() - started;
+    const cloudflareChallenge = response.status === 403 && (
+      response.headers.get("cf-mitigated") === "challenge" ||
+      /cloudflare|just a moment|challenge-platform/i.test(body)
+    );
     let ok = response.status >= 200 && response.status < 300;
     let reason = ok ? "HTTP 2xx" : `HTTP ${response.status}`;
+    if (cloudflareChallenge) {
+      ok = false;
+      reason = "Cloudflare Managed Challenge blocked the synthetic probe; origin was not reached";
+    }
 
     if (target.kind === "html" && !type.includes("text/html")) {
       ok = false;
@@ -56,13 +70,15 @@ async function checkTarget(target) {
         reason = "robots.txt does not declare the canonical www sitemap";
       }
     }
-    if (target.kind === "api" && !(response.status >= 200 && response.status < 300)) {
+    if (target.kind === "json" && !type.includes("application/json")) {
       ok = false;
-      reason = `API probe returned HTTP ${response.status}`;
+      reason = `expected JSON, received ${type || "unknown content type"}`;
     }
-    if (target.kind === "api" && type.includes("text/html")) {
-      ok = false;
-      reason = "API probe returned HTML instead of an API response";
+    if (target.kind === "api-validation") {
+      ok = response.status === 400 && type.includes("application/json") && body.includes("cartToken is required");
+      reason = ok
+        ? "POST route reached; expected cartToken validation rejected the empty payload"
+        : `expected HTTP 400 JSON cartToken validation, received HTTP ${response.status} (${type || "unknown content type"})`;
     }
     return {
       name: target.name,
