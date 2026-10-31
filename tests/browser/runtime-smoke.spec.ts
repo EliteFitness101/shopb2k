@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 const routes = ["/", "/me", "/product/resoflex-hips-booty-oil"] as const;
 
 for (const route of routes) {
-  test(`built production app route ${route} renders without uncaught exceptions`, async ({ page }) => {
+  test(`local app route ${route} renders without uncaught exceptions`, async ({ page }) => {
     const pageErrors: string[] = [];
     page.on("pageerror", (error) => pageErrors.push(error.stack ?? error.message));
     const response = await page.goto(`http://127.0.0.1:4173${route}`, { waitUntil: "domcontentloaded", timeout: 45000 });
