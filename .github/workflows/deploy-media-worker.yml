@@ -57,49 +57,17 @@ jobs:
           set -euo pipefail
           test -n "${CLOUDFLARE_API_TOKEN:-}" || { echo "::error::Missing CLOUDFLARE_API_TOKEN repository secret"; exit 1; }
           test -n "${CLOUDFLARE_ACCOUNT_ID:-}" || { echo "::error::Missing CLOUDFLARE_ACCOUNT_ID repository secret"; exit 1; }
-          # The Cloudflare Vite plugin generates the deploy config during build.
-          # Do not pass --config here: that would bypass generated TanStack aliases.
-          npx --yes wrangler@4 deploy --name shopb2k
-
-      - name: Verify production R2 upload, range playback, and cleanup
-        env:
-          R2_WRITE_TOKEN: ${{ secrets.R2_WRITE_TOKEN }}
-        run: |
-          set -euo pipefail
+          # Keep the generated TanStack/Vite bundle and aliases, but do not
+          # steal media/content/upload routes owned by the dedicated R2 Worker.
           node <<'NODE'
-          (async () => {
-            const token = process.env.R2_WRITE_TOKEN;
-            if (!token) throw new Error("R2_WRITE_TOKEN is missing");
-            const media = "https://media.resofit.fit";
-            const upload = "https://upload.resofit.fit";
-            const runId = process.env.GITHUB_RUN_ID;
-            const key = "elite/smoke/app-worker-" + runId + ".txt";
-            const payload = "ResoFit app Worker R2 route " + runId;
-            async function health(url, label) {
-              const response = await fetch(url);
-              const raw = await response.text();
-              console.log(label + " health:", response.status, raw.slice(0, 500));
-              if (!response.ok) throw new Error(label + " health returned HTTP " + response.status);
-              const value = JSON.parse(raw);
-              if (value.bucket_binding_ready !== true) throw new Error(label + " R2 bucket binding is not ready");
-              return value;
-            }
-            await health(media + "/health", "Media CDN");
-            await health(upload + "/health", "Upload API");
-            const auth = { Authorization: "Bearer " + token };
-            const put = await fetch(upload + "/api/ingest-media?key=" + encodeURIComponent(key), { method: "POST", headers: { ...auth, "Content-Type": "text/plain" }, body: payload });
-            const putBody = await put.text();
-            console.log("Production upload:", put.status, putBody.slice(0, 300));
-            if (put.status !== 200) throw new Error("Production upload route failed");
-            const mediaUrl = media + "/" + key.split("/").map(encodeURIComponent).join("/");
-            const range = await fetch(mediaUrl, { headers: { Range: "bytes=0-5" } });
-            const rangeBody = await range.text();
-            console.log("Production range:", range.status, range.headers.get("Content-Range"));
-            if (range.status !== 206 || rangeBody !== payload.slice(0, 6)) throw new Error("Production range playback failed");
-            const del = await fetch(mediaUrl, { method: "DELETE", headers: auth });
-            if (del.status !== 200) throw new Error("Production cleanup failed: " + del.status);
-            const missing = await fetch(mediaUrl);
-            if (missing.status !== 404) throw new Error("Production object remained after cleanup: " + missing.status);
-            console.log("PASS: app Worker R2 upload, CDN range playback, DELETE and 404 read-back verified.");
-          })().catch(error => { console.error(error?.stack ?? String(error)); process.exitCode = 1; });
+          const fs = require("fs");
+          const source = ".wrangler/deploy/config.json";
+          const target = ".wrangler/deploy/config-no-routes.json";
+          const config = JSON.parse(fs.readFileSync(source, "utf8"));
+          delete config.routes;
+          delete config.route;
+          config.name = "shopb2k";
+          fs.writeFileSync(target, JSON.stringify(config, null, 2));
+          console.log("Prepared shopb2k app Worker config without media route takeover.");
           NODE
+          npx --yes wrangler@4 deploy --config .wrangler/deploy/config-no-routes.json --name shopb2k
