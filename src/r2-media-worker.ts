@@ -177,27 +177,26 @@ async function handleWrite(request: Request, env: Env, key: string): Promise<Res
   if (!authorized(request, env)) return json({ ok: false, error: "Unauthorized." }, 401);
   const bucket = env.MEDIA_BUCKET;
   if (!bucket) return json({ ok: false, error: "MEDIA_BUCKET binding unavailable." }, 503);
-  const contentType = (request.headers.get("content-type") || "application/octet-stream").split(";")[0].trim().toLowerCase();
-  if (!MEDIA_TYPES.has(contentType)) return json({ ok: false, error: "Unsupported media type." }, 415);
-  const declaredLength = Number(request.headers.get("content-length") || "0");
-  if (declaredLength > MAX_OBJECT_BYTES) return json({ ok: false, error: "Object exceeds the 95 MiB upload limit.", max_bytes: MAX_OBJECT_BYTES }, 413);
   if (request.method === "DELETE") {
     await bucket.delete(key);
     return json({ ok: true, key, deleted: true });
   }
+  if (request.method !== "PUT" && request.method !== "POST") return new Response("Method Not Allowed", { status: 405, headers: { Allow: "PUT, DELETE, POST" } });
+  const contentType = (request.headers.get("content-type") || "application/octet-stream").split(";")[0].trim().toLowerCase();
+  if (!MEDIA_TYPES.has(contentType)) return json({ ok: false, error: "Unsupported media type." }, 415);
+  const declaredLength = Number(request.headers.get("content-length") || "0");
+  if (!Number.isFinite(declaredLength) || declaredLength <= 0) return json({ ok: false, error: "Content-Length is required for streamed uploads." }, 411);
+  if (declaredLength > MAX_OBJECT_BYTES) return json({ ok: false, error: "Object exceeds the 95 MiB upload limit.", max_bytes: MAX_OBJECT_BYTES }, 413);
   if (!request.body) return json({ ok: false, error: "Empty upload." }, 400);
-  let bytesWritten = 0;
-  const limitedBody = request.body.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
-    transform(chunk, controller) {
-      bytesWritten += chunk.byteLength;
-      if (bytesWritten > MAX_OBJECT_BYTES) throw new Error("Object exceeds the 95 MiB upload limit.");
-      controller.enqueue(chunk);
-    },
-  }));
   const cacheControl = request.headers.get("cache-control") || cacheControlFor(key);
-  const stored = await bucket.put(key, limitedBody, { httpMetadata: { contentType, cacheControl } });
-  const encodedKey = key.split("/").map(encodeURIComponent).join("/");
-  return json({ ok: true, key, bytes: bytesWritten, etag: stored?.etag || null, media_url: "https://media.resofit.fit/" + encodedKey });
+  try {
+    const stored = await bucket.put(key, request.body, { httpMetadata: { contentType, cacheControl } });
+    const encodedKey = key.split("/").map(encodeURIComponent).join("/");
+    return json({ ok: true, key, bytes: declaredLength, etag: stored?.etag || null, media_url: "https://media.resofit.fit/" + encodedKey });
+  } catch (error) {
+    console.error("R2 media write failed", error);
+    return json({ ok: false, error: String(error).slice(0, 300) }, 500);
+  }
 }
 
 async function handleUpload(request: Request, env: Env): Promise<Response> {
