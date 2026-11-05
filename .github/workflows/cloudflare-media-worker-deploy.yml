@@ -83,97 +83,39 @@ jobs:
           trap 'rm -f .wrangler-worker-only.jsonc' EXIT
           npx wrangler deploy --config .wrangler-worker-only.jsonc --name test-upload-format
 
-      - name: Verify real production upload, ranged download, and cleanup in Chromium
+      - name: Verify real production R2 upload, ranged download, and cleanup
         if: success()
         env:
           R2_WRITE_TOKEN: ${{ secrets.R2_WRITE_TOKEN }}
         run: |
           set -euo pipefail
           test -n "${R2_WRITE_TOKEN:-}" || { echo "::error::Missing R2_WRITE_TOKEN repository secret"; exit 1; }
-          npm install --no-save --package-lock=false playwright@1.64.1
-          npx playwright install --with-deps chromium
           node <<'NODE'
-          const { chromium } = require("playwright");
+          const token = process.env.R2_WRITE_TOKEN;
+          const runId = process.env.GITHUB_RUN_ID;
+          const key = `elite/smoke/${runId}.txt`;
+          const payload = `ResoFit R2 probe ${runId}`;
+          const url = "https://media.resofit.fit/" + key.split("/").map(encodeURIComponent).join("/");
+          const auth = { Authorization: "Bearer " + token };
 
-          (async () => {
-            const token = process.env.R2_WRITE_TOKEN;
-            const runId = process.env.GITHUB_RUN_ID;
-            const key = `chatb2k/r2-production-probe-${runId}.mp4`;
-            const payload = `ResoFit R2 probe ${runId}`;
-            const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
-            const page = await browser.newPage({ viewport: { width: 1365, height: 900 } });
-            let uploaded = false;
-            let failure;
+          const upload = await fetch(url, { method: "PUT", headers: { ...auth, "Content-Type": "text/plain" }, body: payload });
+          const uploadBody = await upload.text();
+          console.log("R2 upload:", upload.status, uploadBody.slice(0, 400));
+          if (upload.status !== 200 || !uploadBody.includes('"ok":true')) throw new Error("R2 upload failed");
 
-            try {
-              const navigation = await page.goto("https://media.resofit.fit/", {
-                waitUntil: "domcontentloaded",
-                timeout: 90000,
-              });
-              console.log("Media-origin bootstrap status:", navigation?.status() ?? "no response");
-              await page.waitForFunction(
-                () => !/just a moment/i.test(document.title),
-                null,
-                { timeout: 60000 },
-              );
+          const range = await fetch(url, { headers: { Range: "bytes=0-5" } });
+          const rangeBody = await range.text();
+          console.log("R2 ranged read:", range.status, range.headers.get("Content-Range"));
+          if (range.status !== 206 || rangeBody !== payload.slice(0, 6)) throw new Error("R2 ranged read-back failed");
 
-              const upload = await page.evaluate(async ({ token, key, payload }) => {
-                const path = "/" + key.split("/").map(encodeURIComponent).join("/");
-                const response = await fetch(path, {
-                  method: "PUT",
-                  headers: {
-                    Authorization: "Bearer " + token,
-                    "Content-Type": "video/mp4",
-                  },
-                  body: payload,
-                });
-                return { status: response.status, body: (await response.text()).slice(0, 800) };
-              }, { token, key, payload });
+          const cleanup = await fetch(url, { method: "DELETE", headers: auth });
+          const cleanupBody = await cleanup.text();
+          console.log("R2 cleanup:", cleanup.status, cleanupBody.slice(0, 300));
+          if (cleanup.status !== 200) throw new Error("R2 cleanup failed");
 
-              console.log("Live media-host upload status:", upload.status);
-              if (upload.status !== 200) throw new Error("Live upload failed: HTTP " + upload.status + " " + upload.body);
-              if (!upload.body.includes('"ok":true')) throw new Error("Upload returned an unexpected response");
-              uploaded = true;
-
-              const range = await page.evaluate(async ({ key }) => {
-                const path = "/" + key.split("/").map(encodeURIComponent).join("/");
-                const response = await fetch(path, { headers: { Range: "bytes=0-5" } });
-                return {
-                  status: response.status,
-                  contentRange: response.headers.get("Content-Range"),
-                  body: await response.text(),
-                };
-              }, { key });
-
-              console.log("Live ranged download status:", range.status, "Content-Range:", range.contentRange);
-              if (range.status !== 206) throw new Error("Range read failed: HTTP " + range.status);
-              if (!/^bytes 0-5\//i.test(range.contentRange ?? "")) throw new Error("Missing/invalid Content-Range");
-              if (range.body !== payload.slice(0, 6)) throw new Error("Range response bytes did not match the uploaded file");
-              console.log("PASS: uploaded file read back through production R2 route with matching range bytes.");
-            } catch (error) {
-              failure = error;
-            }
-
-            if (uploaded) {
-              try {
-                const cleanup = await page.evaluate(async ({ token, key }) => {
-                  const path = "/" + key.split("/").map(encodeURIComponent).join("/");
-                  const response = await fetch(path, { method: "DELETE", headers: { Authorization: "Bearer " + token } });
-                  return { status: response.status, body: (await response.text()).slice(0, 300) };
-                }, { token, key });
-                console.log("Temporary probe cleanup status:", cleanup.status);
-                if (cleanup.status !== 200 && !failure) failure = new Error("Probe cleanup failed: HTTP " + cleanup.status);
-              } catch (error) {
-                if (!failure) failure = error;
-              }
-            }
-
-            await browser.close();
-            if (failure) throw failure;
-          })().catch((error) => {
-            console.error(error?.stack ?? String(error));
-            process.exitCode = 1;
-          });
+          const missing = await fetch(url);
+          if (missing.status !== 404) throw new Error("R2 object still exists after cleanup: " + missing.status);
+          console.log("PASS: production R2 PUT, range GET, DELETE and missing-object read-back verified.");
           NODE
 
       - name: Publish live R2 verification status
