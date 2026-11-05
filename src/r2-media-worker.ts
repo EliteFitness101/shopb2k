@@ -34,7 +34,7 @@ const ORIGINS = new Set([
   "https://chatb2k.resofit.fit", "https://media.resofit.fit",
   "https://content.resofit.fit", "https://upload.resofit.fit",
 ]);
-const PUBLIC_PREFIXES = new Set(["public", "chatb2k", "elite", "bigo_highlights", "buffer", "imagekit", "shop", "content"]);
+const PUBLIC_PREFIXES = new Set(["public", "chatb2k", "elite", "bigo_highlights", "buffer", "imagekit", "shop", "content", "resofit", "bigo", "products", "campaigns", "test"]);
 const PRIVATE_PREFIXES = new Set(["archive", "private"]);
 
 function json(data: Record<string, unknown>, status = 200, extra: Record<string, string> = {}) {
@@ -70,7 +70,7 @@ function authorized(request: Request, env: Env): boolean {
 }
 
 function isPrivateKey(key: string): boolean {
-  return PRIVATE_PREFIXES.has(key.split("/")[0]) || key.startsWith("elite/raw/") || key.startsWith("bigo_highlights/raw/");
+  return PRIVATE_PREFIXES.has(key.split("/")[0]) || key.startsWith("elite/raw/") || key.startsWith("bigo/raw/") || key.startsWith("bigo_highlights/raw/") || key.startsWith("resofit/raw/");
 }
 
 function withCors(request: Request, response: Response): Response {
