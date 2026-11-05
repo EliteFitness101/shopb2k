@@ -1,214 +1,227 @@
-type WorkerEnv = {
-  R2_ACCESS_KEY_ID?: string;
-  R2_SECRET_ACCESS_KEY?: string;
-  R2_BUCKET_NAME?: string;
-  R2_ENDPOINT?: string;
-  R2_REGION?: string;
+type R2ObjectBody = {
+  body: ReadableStream<Uint8Array>;
+  httpEtag: string;
+  size: number;
+  writeHttpMetadata: (headers: Headers) => void;
+};
+type R2ObjectHead = {
+  httpEtag: string;
+  size: number;
+  writeHttpMetadata: (headers: Headers) => void;
+};
+type R2Bucket = {
+  get: (key: string, options?: { range?: { offset: number; length: number } }) => Promise<R2ObjectBody | null>;
+  head: (key: string) => Promise<R2ObjectHead | null>;
+  put: (key: string, value: ReadableStream<Uint8Array>, options?: { httpMetadata?: { contentType?: string; cacheControl?: string } }) => Promise<{ etag?: string; size?: number }>;
+  delete: (key: string) => Promise<void>;
+};
+type Env = {
+  MEDIA_BUCKET?: R2Bucket;
+  LEGACY_MEDIA_BUCKET?: R2Bucket;
   R2_WRITE_TOKEN?: string;
 };
 
-const MAX_OBJECT_BYTES = 50 * 1024 * 1024;
+const MAX_OBJECT_BYTES = 95 * 1024 * 1024;
 const MEDIA_TYPES = new Set([
+  "video/mp4", "video/quicktime", "video/webm", "video/mpeg",
+  "audio/mpeg", "audio/mp4", "audio/wav",
   "image/jpeg", "image/png", "image/webp", "image/avif", "image/gif",
-  "video/mp4", "video/quicktime", "video/webm",
-  "audio/mpeg", "audio/mp4", "audio/wav", "application/pdf",
+  "application/pdf", "application/json", "text/plain",
 ]);
 const ORIGINS = new Set([
-  "https://xbang.lovable.app", "https://xbang.vercel.app",
-  "https://resofit.fit", "https://www.resofit.fit", "https://shop.resofit.fit",
-  "https://store.resofit.fit", "https://chatb2k.resofit.fit", "https://media.resofit.fit",
+  "https://elite.resofit.fit", "https://resofit.fit", "https://www.resofit.fit",
+  "https://shop.resofit.fit", "https://store.resofit.fit",
+  "https://chatb2k.resofit.fit", "https://media.resofit.fit",
+  "https://content.resofit.fit", "https://upload.resofit.fit",
 ]);
+const PUBLIC_PREFIXES = new Set(["public", "chatb2k", "elite", "bigo_highlights", "buffer", "imagekit", "shop", "content"]);
+const PRIVATE_PREFIXES = new Set(["archive", "private"]);
 
-const enc = new TextEncoder();
-const json = (data: Record<string, unknown>, status = 200) =>
-  new Response(JSON.stringify(data), {
+function json(data: Record<string, unknown>, status = 200, extra: Record<string, string> = {}) {
+  return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" },
+    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", ...extra },
   });
+}
 
-function cors(request: Request, response: Response): Response {
+function parseKey(raw: string): string | null {
+  let key: string;
+  try { key = decodeURIComponent(raw.replace(/^\/+/, "")); } catch { return null; }
+  // eslint-disable-next-line no-control-regex
+  if (!key || key.length > 500 || key.includes("\\") || key.includes("..") || /[\u0000-\u001f\u007f]/.test(key)) return null;
+  const parts = key.split("/");
+  if (!PUBLIC_PREFIXES.has(parts[0]) && !PRIVATE_PREFIXES.has(parts[0])) return null;
+  if (parts.length < 2 || parts.some(part => !part || part === "." || part === ".." || !/^[a-zA-Z0-9][a-zA-Z0-9 ._-]*$/.test(part))) return null;
+  return key;
+}
+
+function constantTimeEqual(a: string, b: string): boolean {
+  const left = new TextEncoder().encode(a);
+  const right = new TextEncoder().encode(b);
+  let diff = left.length ^ right.length;
+  for (let i = 0; i < Math.max(left.length, right.length); i++) diff |= (left[i] ?? 0) ^ (right[i] ?? 0);
+  return diff === 0;
+}
+
+function authorized(request: Request, env: Env): boolean {
+  const expected = env.R2_WRITE_TOKEN || "";
+  const supplied = request.headers.get("authorization") || "";
+  return !!expected && constantTimeEqual(supplied, "Bearer " + expected);
+}
+
+function isPrivateKey(key: string): boolean {
+  return PRIVATE_PREFIXES.has(key.split("/")[0]) || key.startsWith("elite/raw/") || key.startsWith("bigo_highlights/raw/");
+}
+
+function withCors(request: Request, response: Response): Response {
   const headers = new Headers(response.headers);
   const origin = request.headers.get("Origin");
   if (origin && ORIGINS.has(origin)) {
     headers.set("Access-Control-Allow-Origin", origin);
     headers.set("Access-Control-Allow-Credentials", "false");
-    headers.set("Access-Control-Expose-Headers", "Accept-Ranges, Content-Length, Content-Range, ETag");
+    headers.set("Access-Control-Expose-Headers", "Accept-Ranges, Content-Length, Content-Range, ETag, Last-Modified");
     headers.append("Vary", "Origin");
   }
   headers.set("X-Content-Type-Options", "nosniff");
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
-function options(request: Request, methods: string): Response {
+function options(request: Request): Response {
   const origin = request.headers.get("Origin");
   if (origin && !ORIGINS.has(origin)) return new Response(null, { status: 403, headers: { "Cache-Control": "no-store" } });
   const headers = new Headers({
-    "Access-Control-Allow-Methods": methods,
+    "Access-Control-Allow-Methods": "GET, HEAD, PUT, DELETE, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, Content-Type, Range, If-None-Match, If-Modified-Since",
     "Access-Control-Max-Age": "86400",
     "Cache-Control": "no-store",
   });
-  if (origin) {
-    headers.set("Access-Control-Allow-Origin", origin);
-    headers.set("Vary", "Origin");
-  }
+  if (origin) { headers.set("Access-Control-Allow-Origin", origin); headers.set("Vary", "Origin"); }
   return new Response(null, { status: 204, headers });
 }
 
-function parseKey(raw: string): string | null {
-  let key: string;
-  try { key = decodeURIComponent(raw.replace(/^\/+/, "")); } catch { return null; }
-  // Reject ASCII control bytes in untrusted object keys.
-  // eslint-disable-next-line no-control-regex
-  if (!key || key.length > 500 || key.includes("\\") || key.includes("..") || /[\u0000-\u001f\u007f]/.test(key)) return null;
-  const parts = key.split("/");
-  if (!["public", "chatb2k"].includes(parts[0]) || parts.length < 2) return null;
-  if (parts.some((part) => !part || part === "." || part === ".." || !/^[a-zA-Z0-9][a-zA-Z0-9 ._-]*$/.test(part))) return null;
-  return key;
+function cacheControlFor(key: string): string {
+  if (isPrivateKey(key)) return "private, no-store";
+  return "public, max-age=3600, stale-while-revalidate=86400";
 }
 
-function equalSecret(a: string, b: string): boolean {
-  const left = enc.encode(a), right = enc.encode(b);
-  let diff = left.length ^ right.length;
-  for (let i = 0; i < Math.max(left.length, right.length); i++) diff |= (left[i] ?? 0) ^ (right[i] ?? 0);
-  return diff === 0;
+function metadataHeaders(object: R2ObjectHead | R2ObjectBody, key: string): Headers {
+  const headers = new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set("ETag", object.httpEtag);
+  headers.set("Accept-Ranges", "bytes");
+  headers.set("Cache-Control", headers.get("Cache-Control") || cacheControlFor(key));
+  if (!headers.has("Content-Type")) headers.set("Content-Type", "application/octet-stream");
+  headers.set("X-Content-Type-Options", "nosniff");
+  return headers;
 }
 
-function config(env: WorkerEnv) {
-  const { R2_ACCESS_KEY_ID: accessKey, R2_SECRET_ACCESS_KEY: secretKey } = env;
-  const bucket = env.R2_BUCKET_NAME?.trim();
-  const endpointText = env.R2_ENDPOINT?.trim();
-  if (!accessKey?.trim() || !secretKey || !bucket || !endpointText) throw new Error("R2 runtime configuration is incomplete");
-  const endpoint = new URL(endpointText);
-  if (endpoint.protocol !== "https:" || !endpoint.hostname.endsWith(".r2.cloudflarestorage.com") || endpoint.username || endpoint.password || endpoint.search || endpoint.hash) {
-    throw new Error("R2_ENDPOINT must be an HTTPS Cloudflare R2 S3 endpoint");
+function parseRange(value: string | null, size: number): { offset: number; length: number; end: number } | null | "invalid" {
+  if (!value) return null;
+  const match = /^bytes=(\d*)-(\d*)$/i.exec(value.trim());
+  if (!match || (!match[1] && !match[2])) return "invalid";
+  let start: number;
+  let end: number;
+  if (!match[1]) {
+    const suffix = Number(match[2]);
+    if (!Number.isFinite(suffix) || suffix <= 0) return "invalid";
+    start = Math.max(0, size - suffix);
+    end = size - 1;
+  } else {
+    start = Number(match[1]);
+    end = match[2] ? Number(match[2]) : size - 1;
   }
-  return { accessKey: accessKey.trim(), secretKey, bucket, endpoint, region: env.R2_REGION?.trim() || "auto" };
+  if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end < start || start >= size) return "invalid";
+  end = Math.min(end, size - 1);
+  return { offset: start, length: end - start + 1, end };
 }
 
-function hex(data: ArrayBuffer | Uint8Array): string {
-  const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-}
-async function sha256(data: BufferSource): Promise<string> {
-  return hex(await crypto.subtle.digest("SHA-256", data));
-}
-async function hmac(key: BufferSource, value: string): Promise<Uint8Array> {
-  const imported = await crypto.subtle.importKey("raw", key, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  return new Uint8Array(await crypto.subtle.sign("HMAC", imported, enc.encode(value)));
-}
-function awsEncode(value: string): string {
-  return encodeURIComponent(value).replace(/[!'()*]/g, c => "%" + c.charCodeAt(0).toString(16).toUpperCase());
-}
-
-async function r2Fetch(request: Request, env: WorkerEnv, method: "GET" | "HEAD" | "PUT" | "DELETE", key: string, body?: ArrayBuffer, contentType?: string): Promise<Response> {
-  const c = config(env);
-  const encodedKey = key.split("/").map(awsEncode).join("/");
-  const endpointPrefix = c.endpoint.pathname.replace(/\/+$/, "");
-  const target = new URL(c.endpoint.origin);
-  target.pathname = endpointPrefix + "/" + awsEncode(c.bucket) + "/" + encodedKey;
-  const payloadHash = await sha256(body ?? new ArrayBuffer(0));
-  const date = new Date();
-  const amzDate = date.toISOString().replace(/[:-]|\.\d{3}/g, "");
-  const day = amzDate.slice(0, 8);
-  const range = request.headers.get("Range");
-  const headersToSign: Record<string, string> = {
-    host: target.host,
-    "x-amz-content-sha256": payloadHash,
-    "x-amz-date": amzDate,
-  };
-  if (contentType) headersToSign["content-type"] = contentType;
-  if (range) headersToSign.range = range;
-  const names = Object.keys(headersToSign).sort();
-  const canonicalHeaders = names.map(name => name + ":" + headersToSign[name].trim().replace(/\s+/g, " ") + "\n").join("");
-  const signedHeaders = names.join(";");
-  const canonicalRequest = method + "\n" + target.pathname + "\n\n" + canonicalHeaders + signedHeaders + "\n" + payloadHash;
-  const scope = day + "/" + c.region + "/s3/aws4_request";
-  const stringToSign = "AWS4-HMAC-SHA256\n" + amzDate + "\n" + scope + "\n" + await sha256(enc.encode(canonicalRequest));
-  const dateKey = await hmac(enc.encode("AWS4" + c.secretKey), day);
-  const regionKey = await hmac(dateKey, c.region);
-  const serviceKey = await hmac(regionKey, "s3");
-  const signingKey = await hmac(serviceKey, "aws4_request");
-  const signature = hex(await hmac(signingKey, stringToSign));
-  const headers = new Headers({
-    "x-amz-content-sha256": payloadHash,
-    "x-amz-date": amzDate,
-    Authorization: "AWS4-HMAC-SHA256 Credential=" + c.accessKey + "/" + scope + ", SignedHeaders=" + signedHeaders + ", Signature=" + signature,
-  });
-  if (contentType) headers.set("Content-Type", contentType);
-  if (range) headers.set("Range", range);
-  return fetch(target.toString(), { method, headers, body: method === "PUT" ? body : undefined, redirect: "manual" });
-}
-
-function auth(request: Request, env: WorkerEnv): boolean {
-  const token = env.R2_WRITE_TOKEN;
-  return !!token && equalSecret(request.headers.get("Authorization") ?? "", "Bearer " + token);
-}
-
-async function upload(request: Request, env: WorkerEnv): Promise<Response> {
-  if (request.method === "OPTIONS") return options(request, "POST, OPTIONS");
-  if (request.method !== "POST") return cors(request, new Response("Method Not Allowed", { status: 405, headers: { Allow: "POST, OPTIONS", "Cache-Control": "no-store" } }));
-  if (!auth(request, env)) return cors(request, json({ ok: false, error: "Unauthorized" }, 401));
-  const key = parseKey(new URL(request.url).searchParams.get("key") ?? "");
-  if (!key) return cors(request, json({ ok: false, error: "Invalid media key" }, 400));
-  const type = (request.headers.get("Content-Type") ?? "").split(";")[0].trim().toLowerCase();
-  if (!MEDIA_TYPES.has(type)) return cors(request, json({ ok: false, error: "Unsupported media type" }, 415));
-  if (Number(request.headers.get("Content-Length") ?? "0") > MAX_OBJECT_BYTES) return cors(request, json({ ok: false, error: "Object exceeds 50 MiB" }, 413));
-  try {
-    const body = await request.arrayBuffer();
-    if (!body.byteLength) return cors(request, json({ ok: false, error: "Empty upload" }, 400));
-    if (body.byteLength > MAX_OBJECT_BYTES) return cors(request, json({ ok: false, error: "Object exceeds 50 MiB" }, 413));
-    const result = await r2Fetch(request, env, "PUT", key, body, type);
-    if (!result.ok) {
-      console.error("R2 upload upstream status", result.status);
-      return cors(request, json({ ok: false, error: "R2 upload failed" }, 502));
+async function getFromBuckets(key: string, range?: { offset: number; length: number }, env?: Env) {
+  const primary = env?.MEDIA_BUCKET;
+  if (!primary) throw new Error("MEDIA_BUCKET binding unavailable");
+  const first = range ? await primary.get(key, { range }) : await primary.get(key);
+  if (first) return { object: first, bucket: primary };
+  if (key.startsWith("public/") || key.startsWith("chatb2k/")) {
+    const legacy = env?.LEGACY_MEDIA_BUCKET;
+    if (legacy) {
+      const fallback = range ? await legacy.get(key, { range }) : await legacy.get(key);
+      if (fallback) return { object: fallback, bucket: legacy };
     }
-    return cors(request, json({ ok: true, key, size: body.byteLength, media_url: "https://media.resofit.fit/" + key.split("/").map(encodeURIComponent).join("/") }));
-  } catch (error) {
-    console.error("R2 upload failed", error);
-    return cors(request, json({ ok: false, error: "R2 storage unavailable or misconfigured" }, 502));
   }
+  return null;
 }
 
-async function media(request: Request, env: WorkerEnv): Promise<Response> {
-  if (request.method === "OPTIONS") return options(request, "GET, HEAD, PUT, DELETE, OPTIONS");
-  const method = request.method.toUpperCase();
-  if (!["GET", "HEAD", "PUT", "DELETE"].includes(method)) return cors(request, new Response("Method Not Allowed", { status: 405, headers: { Allow: "GET, HEAD, PUT, DELETE, OPTIONS" } }));
-  const key = parseKey(new URL(request.url).pathname);
-  if (!key) return cors(request, new Response("Not Found", { status: 404 }));
-  if ((method === "PUT" || method === "DELETE") && !auth(request, env)) return cors(request, json({ ok: false, error: "Unauthorized" }, 401));
-  try {
-    let body: ArrayBuffer | undefined;
-    let type: string | undefined;
-    if (method === "PUT") {
-      type = (request.headers.get("Content-Type") ?? "").split(";")[0].trim().toLowerCase();
-      if (!MEDIA_TYPES.has(type)) return cors(request, json({ ok: false, error: "Unsupported media type" }, 415));
-      if (Number(request.headers.get("Content-Length") ?? "0") > MAX_OBJECT_BYTES) return cors(request, json({ ok: false, error: "Object exceeds 50 MiB" }, 413));
-      body = await request.arrayBuffer();
-      if (!body.byteLength || body.byteLength > MAX_OBJECT_BYTES) return cors(request, json({ ok: false, error: "Invalid upload size" }, body.byteLength ? 413 : 400));
-    }
-    const upstream = await r2Fetch(request, env, method as "GET" | "HEAD" | "PUT" | "DELETE", key, body, type);
-    if (upstream.status === 404) return cors(request, new Response("Not Found", { status: 404, headers: { "Cache-Control": "no-store" } }));
-    if (!upstream.ok && upstream.status !== 206 && upstream.status !== 304 && upstream.status !== 416) {
-      console.error("R2 upstream status", upstream.status);
-      return cors(request, json({ ok: false, error: "R2 request failed" }, 502));
-    }
-    if (method === "PUT" || method === "DELETE") return cors(request, json({ ok: true, key, ...(method === "PUT" ? { size: body?.byteLength } : { deleted: true }) }));
-    const headers = new Headers(upstream.headers);
-    headers.set("Cache-Control", "public, max-age=300, stale-while-revalidate=60");
-    headers.set("Accept-Ranges", "bytes");
-    return cors(request, new Response(method === "HEAD" ? null : upstream.body, { status: upstream.status, statusText: upstream.statusText, headers }));
-  } catch (error) {
-    console.error("R2 media request failed", error);
-    return cors(request, json({ ok: false, error: "R2 storage unavailable or misconfigured" }, 502));
+async function handleRead(request: Request, env: Env, key: string): Promise<Response> {
+  if (isPrivateKey(key) && !authorized(request, env)) return json({ ok: false, error: "Unauthorized." }, 401);
+  const bucket = env.MEDIA_BUCKET;
+  if (!bucket) return json({ ok: false, error: "MEDIA_BUCKET binding unavailable." }, 503);
+  const head = await bucket.head(key) || ((key.startsWith("public/") || key.startsWith("chatb2k/")) && env.LEGACY_MEDIA_BUCKET ? await env.LEGACY_MEDIA_BUCKET.head(key) : null);
+  if (!head) return new Response("Not Found", { status: 404, headers: { "Cache-Control": "no-store" } });
+  const range = request.method === "GET" ? parseRange(request.headers.get("Range"), head.size) : null;
+  if (range === "invalid") return new Response(null, { status: 416, headers: { "Content-Range": "bytes */" + head.size, "Accept-Ranges": "bytes" } });
+  if (request.method === "HEAD") return new Response(null, { status: 200, headers: metadataHeaders(head, key) });
+  const found = await getFromBuckets(key, range || undefined, env);
+  if (!found) return new Response("Not Found", { status: 404 });
+  const headers = metadataHeaders(found.object, key);
+  if (range) {
+    headers.set("Content-Range", "bytes " + range.offset + "-" + range.end + "/" + head.size);
+    headers.set("Content-Length", String(range.length));
+    return new Response(found.object.body, { status: 206, headers });
   }
+  headers.set("Content-Length", String(head.size));
+  const ifNoneMatch = request.headers.get("If-None-Match");
+  if (ifNoneMatch && ifNoneMatch === head.httpEtag) return new Response(null, { status: 304, headers });
+  return new Response(found.object.body, { status: 200, headers });
+}
+
+async function handleWrite(request: Request, env: Env, key: string): Promise<Response> {
+  if (!authorized(request, env)) return json({ ok: false, error: "Unauthorized." }, 401);
+  const bucket = env.MEDIA_BUCKET;
+  if (!bucket) return json({ ok: false, error: "MEDIA_BUCKET binding unavailable." }, 503);
+  const contentType = (request.headers.get("content-type") || "application/octet-stream").split(";")[0].trim().toLowerCase();
+  if (!MEDIA_TYPES.has(contentType)) return json({ ok: false, error: "Unsupported media type." }, 415);
+  const declaredLength = Number(request.headers.get("content-length") || "0");
+  if (declaredLength > MAX_OBJECT_BYTES) return json({ ok: false, error: "Object exceeds the 95 MiB upload limit.", max_bytes: MAX_OBJECT_BYTES }, 413);
+  if (request.method === "DELETE") {
+    await bucket.delete(key);
+    return json({ ok: true, key, deleted: true });
+  }
+  if (!request.body) return json({ ok: false, error: "Empty upload." }, 400);
+  let bytesWritten = 0;
+  const limitedBody = request.body.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
+    transform(chunk, controller) {
+      bytesWritten += chunk.byteLength;
+      if (bytesWritten > MAX_OBJECT_BYTES) throw new Error("Object exceeds the 95 MiB upload limit.");
+      controller.enqueue(chunk);
+    },
+  }));
+  const cacheControl = request.headers.get("cache-control") || cacheControlFor(key);
+  const stored = await bucket.put(key, limitedBody, { httpMetadata: { contentType, cacheControl } });
+  const encodedKey = key.split("/").map(encodeURIComponent).join("/");
+  return json({ ok: true, key, bytes: bytesWritten, etag: stored?.etag || null, media_url: "https://media.resofit.fit/" + encodedKey });
+}
+
+async function handleUpload(request: Request, env: Env): Promise<Response> {
+  if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405, headers: { Allow: "POST", "Cache-Control": "no-store" } });
+  const url = new URL(request.url);
+  const key = parseKey(url.searchParams.get("key") || "");
+  if (!key) return json({ ok: false, error: "Invalid media key." }, 400);
+  return handleWrite(new Request(request.url, { method: "PUT", headers: request.headers, body: request.body }), env, key);
 }
 
 export default {
-  async fetch(request: Request, env: WorkerEnv): Promise<Response> {
-    const hostname = new URL(request.url).hostname.toLowerCase();
-    if (hostname === "upload.resofit.fit") return upload(request, env);
-    if (hostname === "media.resofit.fit" || hostname === "content.resofit.fit") return media(request, env);
-    return new Response("Not Found", { status: 404, headers: { "Cache-Control": "no-store" } });
+  async fetch(request: Request, env: Env): Promise<Response> {
+    if (request.method === "OPTIONS") return options(request);
+    const url = new URL(request.url);
+    if (url.pathname === "/health") {
+      return withCors(request, json({ ok: true, provider: "cloudflare_r2", bucket_binding_ready: !!env.MEDIA_BUCKET, legacy_bucket_binding_ready: !!env.LEGACY_MEDIA_BUCKET, max_upload_bytes: MAX_OBJECT_BYTES }));
+    }
+    if (url.hostname === "upload.resofit.fit" || url.pathname === "/upload") {
+      return withCors(request, await handleUpload(request, env));
+    }
+    const key = parseKey(url.pathname);
+    if (!key) return withCors(request, new Response("Not Found", { status: 404 }));
+    if (request.method === "GET" || request.method === "HEAD") return withCors(request, await handleRead(request, env, key));
+    if (request.method === "PUT" || request.method === "DELETE") return withCors(request, await handleWrite(request, env, key));
+    return withCors(request, new Response("Method Not Allowed", { status: 405, headers: { Allow: "GET, HEAD, PUT, DELETE, OPTIONS" } }));
   },
 };
