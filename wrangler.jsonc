@@ -4,12 +4,14 @@
   "workers_dev": false,
   "keep_vars": true,
   "vars": {
-    "R2_BUCKET_NAME": "xbang-media-canonical",
+    "R2_BUCKET_NAME": "resofit-cdn",
     "R2_ENDPOINT": "https://e8325f28fa48ca43bdfa667c062f272f.r2.cloudflarestorage.com",
     "R2_REGION": "auto"
   },
   "compatibility_date": "2025-09-24",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "main": "src/r2-media-worker.ts",
   "routes": [
     {
@@ -23,6 +25,16 @@
     {
       "pattern": "upload.resofit.fit/*",
       "zone_name": "resofit.fit"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA_BUCKET",
+      "bucket_name": "resofit-cdn"
+    },
+    {
+      "binding": "LEGACY_MEDIA_BUCKET",
+      "bucket_name": "xbang-media-canonical"
     }
   ]
 }
