@@ -1,8 +1,6 @@
 name: Elite Gemini Omni Automation Poller
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"
   workflow_dispatch:
   push:
     branches: [main]
