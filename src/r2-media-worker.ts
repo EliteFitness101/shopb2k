@@ -209,18 +209,23 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    if (request.method === "OPTIONS") return options(request);
-    const url = new URL(request.url);
-    if (url.pathname === "/health") {
-      return withCors(request, json({ ok: true, provider: "cloudflare_r2", bucket_binding_ready: !!env.MEDIA_BUCKET, legacy_bucket_binding_ready: !!env.LEGACY_MEDIA_BUCKET, max_upload_bytes: MAX_OBJECT_BYTES }));
+    try {
+      if (request.method === "OPTIONS") return options(request);
+      const url = new URL(request.url);
+      if (url.pathname === "/health") {
+        return withCors(request, json({ ok: true, provider: "cloudflare_r2", bucket_binding_ready: !!env.MEDIA_BUCKET, legacy_bucket_binding_ready: !!env.LEGACY_MEDIA_BUCKET, max_upload_bytes: MAX_OBJECT_BYTES }));
+      }
+      if (url.hostname === "upload.resofit.fit" || url.pathname === "/upload") {
+        return withCors(request, await handleUpload(request, env));
+      }
+      const key = parseKey(url.pathname);
+      if (!key) return withCors(request, new Response("Not Found", { status: 404 }));
+      if (request.method === "GET" || request.method === "HEAD") return withCors(request, await handleRead(request, env, key));
+      if (request.method === "PUT" || request.method === "DELETE") return withCors(request, await handleWrite(request, env, key));
+      return withCors(request, new Response("Method Not Allowed", { status: 405, headers: { Allow: "GET, HEAD, PUT, DELETE, OPTIONS" } }));
+    } catch (error) {
+      console.error("R2 media worker unhandled request error", error);
+      return json({ ok: false, error: String(error).slice(0, 300), provider: "cloudflare_r2" }, 500);
     }
-    if (url.hostname === "upload.resofit.fit" || url.pathname === "/upload") {
-      return withCors(request, await handleUpload(request, env));
-    }
-    const key = parseKey(url.pathname);
-    if (!key) return withCors(request, new Response("Not Found", { status: 404 }));
-    if (request.method === "GET" || request.method === "HEAD") return withCors(request, await handleRead(request, env, key));
-    if (request.method === "PUT" || request.method === "DELETE") return withCors(request, await handleWrite(request, env, key));
-    return withCors(request, new Response("Method Not Allowed", { status: 405, headers: { Allow: "GET, HEAD, PUT, DELETE, OPTIONS" } }));
   },
 };
