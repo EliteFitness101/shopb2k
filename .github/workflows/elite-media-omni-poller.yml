@@ -1,0 +1,35 @@
+name: Elite Gemini Omni Automation Poller
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/elite-media-poll-worker.mjs"
+      - ".github/workflows/elite-media-omni-poller.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: elite-gemini-omni-poller
+  cancel-in-progress: true
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Poll Elite Gemini Omni generation and render jobs
+        env:
+          SUPABASE_URL: https://vbqjvmnhdtdhmeeudqnn.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          GEMINI_AUTOMATION_API_KEY: ${{ secrets.GEMINI_AUTOMATION_API_KEY }}
+        run: node scripts/elite-media-poll-worker.mjs
