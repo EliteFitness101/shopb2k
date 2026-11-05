@@ -91,31 +91,36 @@ jobs:
           set -euo pipefail
           test -n "${R2_WRITE_TOKEN:-}" || { echo "::error::Missing R2_WRITE_TOKEN repository secret"; exit 1; }
           node <<'NODE'
-          const token = process.env.R2_WRITE_TOKEN;
-          const runId = process.env.GITHUB_RUN_ID;
-          const key = `elite/smoke/${runId}.txt`;
-          const payload = `ResoFit R2 probe ${runId}`;
-          const url = "https://media.resofit.fit/" + key.split("/").map(encodeURIComponent).join("/");
-          const auth = { Authorization: "Bearer " + token };
+          (async () => {
+            const token = process.env.R2_WRITE_TOKEN;
+            const runId = process.env.GITHUB_RUN_ID;
+            const key = "elite/smoke/" + runId + ".txt";
+            const payload = "ResoFit R2 probe " + runId;
+            const url = "https://media.resofit.fit/" + key.split("/").map(encodeURIComponent).join("/");
+            const auth = { Authorization: "Bearer " + token };
 
-          const upload = await fetch(url, { method: "PUT", headers: { ...auth, "Content-Type": "text/plain" }, body: payload });
-          const uploadBody = await upload.text();
-          console.log("R2 upload:", upload.status, uploadBody.slice(0, 400));
-          if (upload.status !== 200 || !uploadBody.includes('"ok":true')) throw new Error("R2 upload failed");
+            const upload = await fetch(url, { method: "PUT", headers: { ...auth, "Content-Type": "text/plain" }, body: payload });
+            const uploadBody = await upload.text();
+            console.log("R2 upload:", upload.status, uploadBody.slice(0, 400));
+            if (upload.status !== 200 || !uploadBody.includes('"ok":true')) throw new Error("R2 upload failed");
 
-          const range = await fetch(url, { headers: { Range: "bytes=0-5" } });
-          const rangeBody = await range.text();
-          console.log("R2 ranged read:", range.status, range.headers.get("Content-Range"));
-          if (range.status !== 206 || rangeBody !== payload.slice(0, 6)) throw new Error("R2 ranged read-back failed");
+            const range = await fetch(url, { headers: { Range: "bytes=0-5" } });
+            const rangeBody = await range.text();
+            console.log("R2 ranged read:", range.status, range.headers.get("Content-Range"));
+            if (range.status !== 206 || rangeBody !== payload.slice(0, 6)) throw new Error("R2 ranged read-back failed");
 
-          const cleanup = await fetch(url, { method: "DELETE", headers: auth });
-          const cleanupBody = await cleanup.text();
-          console.log("R2 cleanup:", cleanup.status, cleanupBody.slice(0, 300));
-          if (cleanup.status !== 200) throw new Error("R2 cleanup failed");
+            const cleanup = await fetch(url, { method: "DELETE", headers: auth });
+            const cleanupBody = await cleanup.text();
+            console.log("R2 cleanup:", cleanup.status, cleanupBody.slice(0, 300));
+            if (cleanup.status !== 200) throw new Error("R2 cleanup failed");
 
-          const missing = await fetch(url);
-          if (missing.status !== 404) throw new Error("R2 object still exists after cleanup: " + missing.status);
-          console.log("PASS: production R2 PUT, range GET, DELETE and missing-object read-back verified.");
+            const missing = await fetch(url);
+            if (missing.status !== 404) throw new Error("R2 object still exists after cleanup: " + missing.status);
+            console.log("PASS: production R2 PUT, range GET, DELETE and missing-object read-back verified.");
+          })().catch((error) => {
+            console.error(error?.stack ?? String(error));
+            process.exitCode = 1;
+          });
           NODE
 
       - name: Publish live R2 verification status
