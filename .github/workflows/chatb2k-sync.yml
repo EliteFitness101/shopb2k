@@ -35,15 +35,19 @@ jobs:
       - name: Run Gemini CLI read-only audit
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_AUTOMATION_API_KEY }}
+          GEMINI_CLI_TRUST_WORKSPACE: "true"
         run: |
+          set -euo pipefail
           if [ -z "${GEMINI_API_KEY:-}" ]; then
             echo "::error::Missing repository secret GEMINI_AUTOMATION_API_KEY. Add it in GitHub Actions secrets before running the Gemini audit."
             exit 1
           fi
-          npx --yes @google/gemini-cli --output-format json -p "Read GEMINI.md and inspect the checked-out repository. Perform a READ-ONLY audit only. Do not edit files, call external infrastructure, or claim access to Supabase, GitHub settings, Vercel, Cloudflare, Neon, Make.com, or n8n unless evidence is present in the repository. Return JSON with: checked_files, configuration_findings, missing_evidence, risks, and next_actions. Explicitly state that repository inspection is not proof of live infrastructure synchronization." | tee gemini-audit.json
+          npx --yes @google/gemini-cli --skip-trust --output-format json -p "Read GEMINI.md and inspect the checked-out repository. Perform a READ-ONLY audit only. Do not edit files, call external infrastructure, or claim access to Supabase, GitHub settings, Vercel, Cloudflare, Neon, Make.com, or n8n unless evidence is present in the repository. Return JSON with: checked_files, configuration_findings, missing_evidence, risks, and next_actions. Explicitly state that repository inspection is not proof of live infrastructure synchronization." | tee gemini-audit.json
+          test -s gemini-audit.json
+          node -e 'const fs=require("fs"); const r=JSON.parse(fs.readFileSync("gemini-audit.json","utf8")); for (const k of ["checked_files","configuration_findings","missing_evidence","risks","next_actions"]) if (!(k in r)) throw new Error("Audit JSON missing " + k);'
 
       - name: Upload audit report
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: chatb2k-ecosystem-audit
