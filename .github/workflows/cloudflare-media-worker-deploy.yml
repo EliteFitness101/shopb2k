@@ -98,6 +98,10 @@ jobs:
             const payload = "ResoFit R2 probe " + runId;
             const url = "https://media.resofit.fit/" + key.split("/").map(encodeURIComponent).join("/");
             const auth = { Authorization: "Bearer " + token };
+            const healthResponse = await fetch("https://media.resofit.fit/health");
+            const health = await healthResponse.json();
+            console.log("R2 health:", JSON.stringify(health));
+            if (!healthResponse.ok || health.bucket_binding_ready !== true) throw new Error("R2 primary bucket binding is not ready");
 
             const upload = await fetch(url, { method: "PUT", headers: { ...auth, "Content-Type": "text/plain" }, body: payload });
             const uploadBody = await upload.text();
