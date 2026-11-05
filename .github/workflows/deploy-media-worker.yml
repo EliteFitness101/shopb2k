@@ -59,7 +59,7 @@ jobs:
           test -n "${CLOUDFLARE_ACCOUNT_ID:-}" || { echo "::error::Missing CLOUDFLARE_ACCOUNT_ID repository secret"; exit 1; }
           # The Cloudflare Vite plugin generates the deploy config during build.
           # Do not pass --config here: that would bypass generated TanStack aliases.
-          npx --yes wrangler@4 deploy
+          npx --yes wrangler@4 deploy --name shopb2k
 
       - name: Verify production R2 upload, range playback, and cleanup
         env:
@@ -75,13 +75,19 @@ jobs:
             const runId = process.env.GITHUB_RUN_ID;
             const key = "elite/smoke/app-worker-" + runId + ".txt";
             const payload = "ResoFit app Worker R2 route " + runId;
-            const healthMedia = await fetch(media + "/health").then(r => r.json());
-            const healthUpload = await fetch(upload + "/health").then(r => r.json());
-            console.log("Media R2 health:", JSON.stringify(healthMedia));
-            console.log("Upload R2 health:", JSON.stringify(healthUpload));
-            if (!healthMedia.bucket_binding_ready || !healthUpload.bucket_binding_ready) throw new Error("Production R2 binding health failed");
+            async function health(url, label) {
+              const response = await fetch(url);
+              const raw = await response.text();
+              console.log(label + " health:", response.status, raw.slice(0, 500));
+              if (!response.ok) throw new Error(label + " health returned HTTP " + response.status);
+              const value = JSON.parse(raw);
+              if (value.bucket_binding_ready !== true) throw new Error(label + " R2 bucket binding is not ready");
+              return value;
+            }
+            await health(media + "/health", "Media CDN");
+            await health(upload + "/health", "Upload API");
             const auth = { Authorization: "Bearer " + token };
-            const put = await fetch(upload + "/?key=" + encodeURIComponent(key), { method: "POST", headers: { ...auth, "Content-Type": "text/plain" }, body: payload });
+            const put = await fetch(upload + "/api/ingest-media?key=" + encodeURIComponent(key), { method: "POST", headers: { ...auth, "Content-Type": "text/plain" }, body: payload });
             const putBody = await put.text();
             console.log("Production upload:", put.status, putBody.slice(0, 300));
             if (put.status !== 200) throw new Error("Production upload route failed");
