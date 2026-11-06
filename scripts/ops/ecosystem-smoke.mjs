@@ -64,6 +64,18 @@ async function checkTarget(target) {
       ok = false;
       reason = "API probe returned HTML instead of an API response";
     }
+    const edgeHeaders = {
+      server: response.headers.get("server") || null,
+      via: response.headers.get("via") || null,
+      vercelId: response.headers.get("x-vercel-id") || null,
+      vercelError: response.headers.get("x-vercel-error") || null,
+      cloudflareRay: response.headers.get("cf-ray") || null,
+      cloudflareMitigated: response.headers.get("cf-mitigated") || null,
+      location: response.headers.get("location") || null,
+    };
+    const errorBodySnippet = response.status >= 400
+      ? body.replace(/\\s+/g, " ").slice(0, 240)
+      : null;
     return {
       name: target.name,
       ok,
@@ -72,6 +84,7 @@ async function checkTarget(target) {
       contentType: type,
       elapsedMs,
       reason,
+      ...(response.status >= 400 ? { edgeHeaders, errorBodySnippet } : {}),
     };
   } catch (error) {
     return {
@@ -131,7 +144,7 @@ async function firecrawlCheck() {
 const results = await Promise.all(targets.map(checkTarget));
 const mirror = await firecrawlCheck();
 for (const result of results) {
-  console.log(`${result.ok ? "PASS" : "FAIL"} ${result.name} status=${result.status ?? "NETERR"} ms=${result.elapsedMs} type=${result.contentType || "-"} reason=${result.reason}`);
+  console.log(`${result.ok ? "PASS" : "FAIL"} ${result.name} status=${result.status ?? "NETERR"} ms=${result.elapsedMs} type=${result.contentType || "-"} reason=${result.reason}${result.edgeHeaders ? ` edge=${JSON.stringify(result.edgeHeaders)} body=${JSON.stringify(result.errorBodySnippet)}` : ""}`);
 }
 if (mirror.skipped) {
   console.log(`SKIP firecrawl: ${mirror.reason}`);
