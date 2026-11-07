@@ -1,12 +1,14 @@
 import { test, expect } from "@playwright/test";
 
+const BASE_URL = process.env.BASE_URL ?? "http://127.0.0.1:4173";
+const appUrl = (path: string) => new URL(path, BASE_URL).toString();
 const routes = ["/", "/me", "/product/resoflex-hips-booty-oil"] as const;
 
 for (const route of routes) {
   test(`built production app route ${route} renders without uncaught exceptions`, async ({ page }) => {
     const pageErrors: string[] = [];
     page.on("pageerror", (error) => pageErrors.push(error.stack ?? error.message));
-    const response = await page.goto(`http://127.0.0.1:4173${route}`, { waitUntil: "domcontentloaded", timeout: 45000 });
+    const response = await page.goto(appUrl(route), { waitUntil: "domcontentloaded", timeout: 45000 });
     expect(response, `${route} should return an HTTP response`).not.toBeNull();
     expect(response!.status(), `${route} should not return a 5xx response`).toBeLessThan(400);
     await expect(page.locator("body")).not.toBeEmpty();
@@ -16,7 +18,7 @@ for (const route of routes) {
 }
 
 test("product detail renders server-loaded product data without the client loading placeholder", async ({ page }) => {
-  const response = await page.goto("http://127.0.0.1:4173/product/resoflex-hips-booty-oil", {
+  const response = await page.goto(appUrl("/product/resoflex-hips-booty-oil"), {
     waitUntil: "domcontentloaded",
     timeout: 45000,
   });
@@ -28,7 +30,7 @@ test("product detail renders server-loaded product data without the client loadi
 
 test("homepage exposes clear assessment, programs, equipment, membership, wellness and coaching paths", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto("http://127.0.0.1:4173/", { waitUntil: "domcontentloaded" });
+  await page.goto(appUrl("/"), { waitUntil: "domcontentloaded" });
   const paths = page.locator('section[aria-labelledby="revenue-paths"] a');
   await expect(paths.filter({ hasText: "Get My Personalized Plan" })).toHaveAttribute("href", "/me");
   await expect(paths.filter({ hasText: "Build My Body" })).toHaveAttribute("href", "/programs");
@@ -46,7 +48,7 @@ test("nutrition coaching checkout loads its canonical plan and pending bank-tran
   page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
   page.on("requestfailed", (request) => failedRequests.push(`${request.method()} ${request.url()} — ${request.failure()?.errorText ?? "failed"}`));
   const response = await page.goto(
-    "http://127.0.0.1:4173/paystack/resofit-nutrition-coaching-1-month",
+    appUrl("/paystack/resofit-nutrition-coaching-1-month"),
     { waitUntil: "domcontentloaded" },
   );
   expect(response, "coaching checkout should return an HTTP response").not.toBeNull();
@@ -76,7 +78,7 @@ test("signed-in coaching checkout forwards the Supabase bearer to both payment e
   const userId = "f8775742-eb28-4b9a-8790-1022142005f3";
   const email = "test@resofit.fit";
   await page.addInitScript(({ accessToken, authUserId, authEmail }) => {
-    if (location.hostname !== "127.0.0.1") return;
+    if (location.hostname !== "127.0.0.1" && !location.hostname.endsWith(".vercel.app")) return;
     const now = Math.floor(Date.now() / 1000);
     localStorage.setItem("sb-vbqjvmnhdtdhmeeudqnn-auth-token", JSON.stringify({
       access_token: accessToken,
@@ -135,7 +137,7 @@ test("signed-in coaching checkout forwards the Supabase bearer to both payment e
 
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.stack ?? error.message));
-  await page.goto("http://127.0.0.1:4173/paystack/resofit-nutrition-coaching-1-month", {
+  await page.goto(appUrl("/paystack/resofit-nutrition-coaching-1-month"), {
     waitUntil: "domcontentloaded",
   });
   await expect(page.getByRole("heading", { name: "ResoFit Nutrition Coaching — 1 Month" })).toBeVisible();
@@ -161,7 +163,7 @@ test("signed-in coaching checkout forwards the Supabase bearer to both payment e
 });
 
 test("mobile navigation exposes the personalized assessment destination", async ({ page }) => {
-  await page.goto("http://127.0.0.1:4173/", { waitUntil: "domcontentloaded" });
+  await page.goto(appUrl("/"), { waitUntil: "domcontentloaded" });
   const mobileMenu = page.locator("header details").filter({ has: page.locator('summary[aria-label="Open menu"]') });
   await expect(mobileMenu).toHaveCount(1);
   await expect(mobileMenu.locator('summary[aria-label="Open menu"]')).toHaveCount(1);
