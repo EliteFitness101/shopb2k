@@ -158,7 +158,11 @@ async function handleRead(request: Request, env: Env, key: string): Promise<Resp
   if (!head) return new Response("Not Found", { status: 404, headers: { "Cache-Control": "no-store" } });
   const range = request.method === "GET" ? parseRange(request.headers.get("Range"), head.size) : null;
   if (range === "invalid") return new Response(null, { status: 416, headers: { "Content-Range": "bytes */" + head.size, "Accept-Ranges": "bytes" } });
-  if (request.method === "HEAD") return new Response(null, { status: 200, headers: metadataHeaders(head, key) });
+  if (request.method === "HEAD") {
+    const headers = metadataHeaders(head, key);
+    headers.set("Content-Length", String(head.size));
+    return new Response(null, { status: 200, headers });
+  }
   const found = await getFromBuckets(key, range || undefined, env);
   if (!found) return new Response("Not Found", { status: 404 });
   const headers = metadataHeaders(found.object, key);
