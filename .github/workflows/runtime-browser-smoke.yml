@@ -20,23 +20,30 @@ jobs:
       - run: bun install --frozen-lockfile
       - name: Build production bundle
         run: bun run build
-      - name: Start built Vite preview and verify route readiness
+      - name: Start built Cloudflare worker and verify route readiness
         run: |
-          bunx vite preview --host 127.0.0.1 --port 4173 --strictPort > /tmp/resofit-vite-preview.log 2>&1 &
-          echo $! > /tmp/resofit-vite-preview.pid
+          cat .output/server/wrangler.json
+          cd .output/server
+          bunx wrangler dev --local --config wrangler.json --ip 127.0.0.1 --port 4173 --log-level debug > /tmp/resofit-wrangler.log 2>&1 &
+          echo $! > /tmp/resofit-wrangler.pid
           for attempt in $(seq 1 60); do
             status="$(curl --silent --output /dev/null --write-out "%{http_code}" http://127.0.0.1:4173/ || true)"
             if [[ "$status" =~ ^[23][0-9][0-9]$ ]]; then
-              echo "Built Vite preview is serving HTTP $status."
+              echo "Built worker is serving HTTP $status."
               exit 0
             fi
-            if ! kill -0 "$(cat /tmp/resofit-vite-preview.pid)" 2>/dev/null; then
-              cat /tmp/resofit-vite-preview.log
+            if [[ "$status" != "000" ]]; then
+              echo "Built worker returned unexpected HTTP $status for /."
+              cat /tmp/resofit-wrangler.log
+              exit 1
+            fi
+            if ! kill -0 "$(cat /tmp/resofit-wrangler.pid)" 2>/dev/null; then
+              cat /tmp/resofit-wrangler.log
               exit 1
             fi
             sleep 2
           done
-          cat /tmp/resofit-vite-preview.log
+          cat /tmp/resofit-wrangler.log
           exit 1
       - name: Install Playwright
         run: bun add --no-save @playwright/test
