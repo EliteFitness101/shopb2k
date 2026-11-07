@@ -58,6 +58,10 @@ function DirectOfferCheckout() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"paystack" | "bank_transfer">("paystack");
+  const [transactionReference, setTransactionReference] = useState("");
+  const [evidenceUrl, setEvidenceUrl] = useState("");
+  const [submittedReference, setSubmittedReference] = useState("");
 
   const startCheckout = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -67,6 +71,28 @@ function DirectOfferCheckout() {
     }
     setBusy(true);
     try {
+      if (paymentMethod === "bank_transfer") {
+        const response = await fetch(`${RESOFIT_SUPABASE_URL}/functions/v1/resofit-bank-transfer-submit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sku: product.sku,
+            name: fullName.trim(),
+            email: email.trim().toLowerCase(),
+            phone: phone.trim(),
+            transaction_reference: transactionReference.trim(),
+            evidence_url: evidenceUrl.trim(),
+          }),
+        });
+        const payload = (await response.json().catch(() => null)) as { ok?: boolean; reference?: string; error?: string; message?: string } | null;
+        if (!response.ok || payload?.ok !== true || !payload.reference) {
+          throw new Error(payload?.message ?? payload?.error ?? "Bank transfer submission could not be recorded.");
+        }
+        setSubmittedReference(payload.reference);
+        toast.success("Transfer details submitted. Access activates after payment verification.");
+        setBusy(false);
+        return;
+      }
       const price = Number(product.priceRange.minVariantPrice.amount);
       track("checkout_start", {
         product_id: product.sku,
@@ -167,7 +193,12 @@ function DirectOfferCheckout() {
             Enter your details to continue to the live payment page. Your payment is confirmed
             server-side before the order is marked paid.
           </p>
-          <form onSubmit={startCheckout} className="mt-6 space-y-4">
+          <div className="mt-6 grid grid-cols-2 gap-2 rounded-xl border border-border bg-background/50 p-1">
+            <button type="button" aria-pressed={paymentMethod === "paystack"} onClick={() => setPaymentMethod("paystack")} className={`min-h-11 rounded-lg px-3 text-xs font-semibold uppercase tracking-wider transition-colors ${paymentMethod === "paystack" ? "bg-gold text-black" : "text-muted-foreground hover:text-foreground"}`}>Paystack</button>
+            <button type="button" aria-pressed={paymentMethod === "bank_transfer"} onClick={() => setPaymentMethod("bank_transfer")} className={`min-h-11 rounded-lg px-3 text-xs font-semibold uppercase tracking-wider transition-colors ${paymentMethod === "bank_transfer" ? "bg-gold text-black" : "text-muted-foreground hover:text-foreground"}`}>Bank transfer</button>
+          </div>
+          {submittedReference && <div role="status" className="rounded-xl border border-gold/40 bg-gold/10 p-4 text-sm"><p className="font-semibold text-gold">Submission received — pending verification</p><p className="mt-1 text-xs text-muted-foreground">Keep this reference and send your transfer receipt to ResoFit support.</p><p className="mt-2 font-mono text-xs">{submittedReference}</p></div>}
+          <form onSubmit={startCheckout} className="mt-4 space-y-4">
             <label className="block text-sm">
               Full name
               <input
@@ -203,16 +234,22 @@ function DirectOfferCheckout() {
                 placeholder="+234…"
               />
             </label>
+            {paymentMethod === "bank_transfer" && <div className="space-y-3 rounded-xl border border-gold/30 bg-gold/5 p-4">
+              <div><p className="text-[10px] uppercase tracking-[0.2em] text-gold">Transfer to</p><p className="mt-1 font-semibold">Union Bank · Resonance Fitness</p><p className="mt-1 font-mono text-lg tracking-wider">0149704422</p></div>
+              <div className="rounded-lg border border-border/70 bg-background/50 p-3"><p className="text-xs text-muted-foreground">Transfer exactly the amount shown for this coaching plan. Do not send a different amount.</p><p className="mt-1 text-xs text-muted-foreground">Your access is not activated until a ResoFit administrator verifies the deposit.</p></div>
+              <label className="block text-sm">Transfer transaction reference (optional)<input value={transactionReference} onChange={(event) => setTransactionReference(event.target.value)} className="mt-1.5 h-11 w-full rounded-lg border border-border bg-background px-3 text-base outline-none focus:border-gold" placeholder="Bank transaction reference" /></label>
+              <label className="block text-sm">Receipt link (optional)<input type="url" value={evidenceUrl} onChange={(event) => setEvidenceUrl(event.target.value)} className="mt-1.5 h-11 w-full rounded-lg border border-border bg-background px-3 text-base outline-none focus:border-gold" placeholder="https://…" /></label>
+            </div>}
             <button
               type="submit"
               disabled={busy || isLoading || isError || !product?.sku}
               className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-gold px-4 text-sm font-semibold text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {busy ? "Connecting to Paystack…" : "Continue to secure checkout"}
+              {busy ? (paymentMethod === "paystack" ? "Connecting to Paystack…" : "Submitting transfer details…") : paymentMethod === "paystack" ? "Continue to secure checkout" : "I have transferred — submit for verification"}
             </button>
             <p className="text-center text-xs leading-5 text-muted-foreground">
-              Your final amount is validated against ResoFit’s live catalogue and checkout rules.
+              {paymentMethod === "paystack" ? "Your final amount is validated against ResoFit’s live catalogue and checkout rules." : "This records a pending payment request only. It does not confirm receipt or activate coaching access."}
             </p>
           </form>
           <Link to="/me" className="mt-5 block text-center text-xs text-muted-foreground underline">
