@@ -38,6 +38,25 @@ test("homepage exposes clear assessment, programs, equipment, membership, wellne
   await expect(paths.filter({ hasText: "Talk to CoachB2K" })).toHaveAttribute("href", /wa\.me/);
 });
 
+test("nutrition coaching checkout loads its canonical plan and pending bank-transfer path", async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.stack ?? error.message));
+  const response = await page.goto(
+    "http://127.0.0.1:4173/paystack/resofit-nutrition-coaching-1-month",
+    { waitUntil: "domcontentloaded" },
+  );
+  expect(response, "coaching checkout should return an HTTP response").not.toBeNull();
+  expect(response!.status(), "coaching checkout should not return a 4xx/5xx response").toBeLessThan(400);
+  await expect(page.getByRole("heading", { name: "Secure your wellness reset" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ResoFit Nutrition Coaching — 1 Month" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Paystack" })).toBeVisible();
+  await page.getByRole("button", { name: "Bank transfer" }).click();
+  await expect(page.getByText("Union Bank · Resonance Fitness")).toBeVisible();
+  await expect(page.getByText("Your access is not activated until a ResoFit administrator verifies the deposit.")).toBeVisible();
+  await expect(page.getByRole("button", { name: /I have transferred/ })).toBeVisible();
+  expect(pageErrors, `coaching checkout uncaught browser exceptions:\n${pageErrors.join("\n\n")}`).toEqual([]);
+});
+
 test("mobile navigation exposes the personalized assessment destination", async ({ page }) => {
   await page.goto("http://127.0.0.1:4173/", { waitUntil: "domcontentloaded" });
   const mobileMenu = page.locator("header details").filter({ has: page.locator('summary[aria-label="Open menu"]') });
