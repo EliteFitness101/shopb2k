@@ -55,7 +55,7 @@ describe("Cloudflare R2 media worker", () => {
     const uploadResponse = await worker.fetch(
       new Request("https://upload.resofit.fit/?key=chatb2k/test.mp4", {
         method: "POST",
-        headers: { Authorization: "Bearer test-write-token", "Content-Type": "video/mp4", Origin: "https://shop.resofit.fit" },
+        headers: { Authorization: "Bearer test-write-token", "Content-Type": "video/mp4", "Content-Length": "6", Origin: "https://shop.resofit.fit" },
         body: new Uint8Array([48, 49, 50, 51, 52, 53]),
       }),
       env,
