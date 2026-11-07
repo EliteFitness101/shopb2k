@@ -14,6 +14,7 @@ import {
 } from "@/lib/shopify";
 import { getAttribution } from "@/lib/attribution";
 import { track } from "@/lib/tracking";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/paystack/$handle")({
   head: () => ({
@@ -71,10 +72,14 @@ function DirectOfferCheckout() {
     }
     setBusy(true);
     try {
+      const { data: authData } = await supabase.auth.getSession();
+      const authHeaders = authData.session?.access_token
+        ? { Authorization: `Bearer ${authData.session.access_token}` }
+        : {};
       if (paymentMethod === "bank_transfer") {
         const response = await fetch(`${RESOFIT_SUPABASE_URL}/functions/v1/resofit-bank-transfer-submit`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeaders },
           body: JSON.stringify({
             sku: product.sku,
             name: fullName.trim(),
@@ -106,7 +111,7 @@ function DirectOfferCheckout() {
       });
       const response = await fetch(`${RESOFIT_SUPABASE_URL}/functions/v1/paystack-init`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
           items: [{ sku: product.sku, quantity: 1 }],
           name: fullName.trim(),
