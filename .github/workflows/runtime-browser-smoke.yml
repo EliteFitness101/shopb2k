@@ -5,8 +5,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-  checks: read
-  pull-requests: read
+  deployments: read
 concurrency:
   group: resofit-vercel-preview-browser-smoke-${{ github.ref }}
   cancel-in-progress: true
@@ -26,20 +25,25 @@ jobs:
           CHECK_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           for attempt in $(seq 1 60); do
-            checks="$(curl --fail --silent --show-error \
+            deployments="$(curl --fail --silent --show-error \
               -H "Authorization: Bearer $GITHUB_TOKEN" \
               -H "Accept: application/vnd.github+json" \
-              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/commits/$CHECK_SHA/check-runs?per_page=100")"
-            summary="$(printf '%s' "$checks" | jq -r '.check_runs[] | select(.name == "Vercel Preview Comments" and .status == "completed" and .conclusion == "success") | .output.summary' | head -n 1)"
-            preview_host="$(printf '%s' "$summary" | sed -nE 's#.*https://vercel\.live/open-feedback/([^?[:space:]]+).*#\1#p')"
-            if [[ -n "$preview_host" ]]; then
-              echo "BASE_URL=https://$preview_host" >> "$GITHUB_ENV"
-              echo "Resolved Vercel preview: https://$preview_host"
-              exit 0
-            fi
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/deployments?sha=$CHECK_SHA&environment=Preview&per_page=100")"
+            for deployment_id in $(printf '%s' "$deployments" | jq -r '.[].id'); do
+              statuses="$(curl --fail --silent --show-error \
+                -H "Authorization: Bearer $GITHUB_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/deployments/$deployment_id/statuses?per_page=10")"
+              preview_url="$(printf '%s' "$statuses" | jq -r '[.[] | select(.state == "success") | (.environment_url // .target_url) | select(type == "string" and startswith("https://reso-") and contains("resonancefitnessng-2206.vercel.app"))] | .[0] // empty')"
+              if [[ -n "$preview_url" ]]; then
+                echo "BASE_URL=$preview_url" >> "$GITHUB_ENV"
+                echo "Resolved deployed Vercel preview: $preview_url"
+                exit 0
+              fi
+            done
             sleep 10
           done
-          echo "Vercel Preview Comments did not publish a ready preview URL for $CHECK_SHA."
+          echo "No successful reso-web Vercel Preview deployment was published for $CHECK_SHA."
           exit 1
       - name: Install Playwright
         run: bun add --no-save @playwright/test
