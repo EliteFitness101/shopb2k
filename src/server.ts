@@ -99,6 +99,7 @@ function json(data: Record<string, unknown>, status = 200): Response {
 function mediaKey(pathname: string): string | null {
   let key: string;
   try { key = decodeURIComponent(pathname.replace(/^\/+/, "")); } catch { return null; }
+  // eslint-disable-next-line no-control-regex
   if (key.length === 0 || key.length > 500 || key.includes("\\") || key.includes("..") ||
     /[\u0000-\u001f\u007f]/.test(key)) return null;
   const segments = key.split("/");
