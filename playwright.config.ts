@@ -5,6 +5,6 @@ export default defineConfig({
   fullyParallel: false,
   retries: 0,
   reporter: "list",
-  use: { ...devices["Desktop Chrome"], headless: true },
+  use: { ...devices["Desktop Chrome"], headless: true, baseURL: process.env.BASE_URL ?? "http://127.0.0.1:4173" },
 
 });
