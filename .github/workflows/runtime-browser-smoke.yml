@@ -11,11 +11,11 @@ concurrency:
   cancel-in-progress: true
 jobs:
   browser-smoke:
-    if: github.event_name != 'deployment_status' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Preview' && startsWith(github.event.deployment_status.environment_url, 'https://reso-'))
+    if: github.event_name != 'deployment_status' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      BASE_URL: ${{ github.event_name == 'deployment_status' && github.event.deployment_status.environment_url || 'https://reso-web-resonancefitnessng-2206.vercel.app' }}
+      BASE_URL: https://www.resofit.fit
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
