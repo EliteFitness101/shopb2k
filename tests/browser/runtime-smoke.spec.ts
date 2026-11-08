@@ -78,9 +78,8 @@ test("signed-in coaching checkout forwards the Supabase bearer to both payment e
   const userId = "f8775742-eb28-4b9a-8790-1022142005f3";
   const email = "test@resofit.fit";
   await page.addInitScript(({ accessToken, authUserId, authEmail }) => {
-    if (location.hostname !== "127.0.0.1" && !location.hostname.endsWith(".vercel.app")) return;
     const now = Math.floor(Date.now() / 1000);
-    localStorage.setItem("sb-vbqjvmnhdtdhmeeudqnn-auth-token", JSON.stringify({
+    const session = JSON.stringify({
       access_token: accessToken,
       token_type: "bearer",
       expires_in: 3600,
@@ -96,7 +95,14 @@ test("signed-in coaching checkout forwards the Supabase bearer to both payment e
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
-    }));
+    });
+    if (location.hostname === "resofit.fit" || location.hostname.endsWith(".resofit.fit")) {
+      const domain = "; Domain=.resofit.fit; Path=/; Secure; SameSite=Lax";
+      document.cookie = "rf_auth_session_v1_0=" + encodeURIComponent(session) + domain;
+      document.cookie = "rf_auth_session_v1_count=1" + domain;
+    } else if (location.hostname === "127.0.0.1" || location.hostname.endsWith(".vercel.app")) {
+      localStorage.setItem("sb-vbqjvmnhdtdhmeeudqnn-auth-token", session);
+    }
   }, { accessToken: token, authUserId: userId, authEmail: email });
 
   let transferAuthorization = "";
