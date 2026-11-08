@@ -5,3 +5,15 @@ verify_jwt = false
 
 [functions.wellness-locator]
 verify_jwt = false
+
+[functions.paystack-init]
+verify_jwt = false
+
+[functions.paystack-webhook]
+verify_jwt = false
+
+[functions.resofit-bank-transfer-submit]
+verify_jwt = false
+
+[functions.resofit-bank-transfer-review]
+verify_jwt = false
