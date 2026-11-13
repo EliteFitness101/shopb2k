@@ -9,6 +9,7 @@ import { ProductImage } from "@/components/ProductImage";
 import { recordEngagement } from "@/lib/imagePriority";
 import {
   PRODUCTS_QUERY,
+  RESOFIT_SUPABASE_URL,
   approxUSD,
   formatMoney,
   storefrontApiRequest,
@@ -390,18 +391,48 @@ function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; pla
   const isLoading = useCartStore((s) => s.isLoading);
   const [busy, setBusy] = useState(false);
 
+  const isNaijaFitFree = node.sku === "naijafit-7day-free";
+  const isPersonalTrainerTrial = node.sku === "RESO-PT-TRIAL-7D";
+  const isFreeOffer = isNaijaFitFree || isPersonalTrainerTrial;
+
   const handleAdd = async () => {
     if (!firstAvail) return;
+    if (isPersonalTrainerTrial) {
+      track("product_click", { product_id: node.sku || node.id, product_title: node.title, value: 0, currency: "NGN" });
+      recordEngagement(node.id, "click");
+      window.location.assign(`/product/${node.handle}`);
+      return;
+    }
+    if (isNaijaFitFree) {
+      setBusy(true);
+      try {
+        const response = await fetch(`${RESOFIT_SUPABASE_URL}/functions/v1/resofit-free-product-download`, { method: "GET", cache: "no-store" });
+        if (!response.ok) throw new Error("Your free plan is temporarily unavailable. Please try again.");
+        const contentType = response.headers.get("content-type") ?? "";
+        if (!contentType.toLowerCase().includes("application/pdf")) throw new Error("The free plan response was not a PDF. Please try again.");
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = downloadUrl;
+        anchor.download = "NaijaFit-7-Day-Smart-Meal-Plan.pdf";
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        window.setTimeout(() => window.URL.revokeObjectURL(downloadUrl), 1500);
+        recordEngagement(node.id, "click");
+        track("product_click", { product_id: node.sku || node.id, product_title: node.title, value: 0, currency: "NGN" });
+        toast.success("Your free NaijaFit meal plan is ready.", { position: "top-center" });
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Unable to download the free plan.");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     setBusy(true);
     try {
       await addItem({
-        product: {
-          id: node.id,
-          title: node.title,
-          handle: node.handle,
-          sku: node.sku,
-          images: node.images,
-        },
+        product: { id: node.id, title: node.title, handle: node.handle, sku: node.sku, images: node.images },
         variantId: firstAvail.id,
         variantTitle: firstAvail.title,
         price: firstAvail.price,
@@ -411,6 +442,8 @@ function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; pla
       track("add_to_cart", { product_id: node.sku || node.id, product_title: node.title, quantity: 1, value: Number(firstAvail.price.amount), currency: firstAvail.price.currencyCode ?? "NGN" });
       recordEngagement(node.id, "add_to_cart");
       toast.success(`Added ${node.title} to cart`, { position: "top-center" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to add this item to your cart.");
     } finally {
       setBusy(false);
     }
@@ -445,23 +478,27 @@ function ProductCard({ product, placement = 99 }: { product: ShopifyProduct; pla
         )}
         <div className="mt-4 flex items-end justify-between gap-2 border-t border-border/60 pt-4 sm:mt-6 sm:gap-4 sm:pt-5">
           <div>
-            <p className="font-display text-lg text-gold sm:text-2xl">{formatMoney(price)}</p>
+            <p className="font-display text-lg text-gold sm:text-2xl">{isFreeOffer ? "FREE" : formatMoney(price)}</p>
             <p className="text-xs uppercase tracking-widest text-muted-foreground">
-              ≈ {approxUSD(price)}
+              {isNaijaFitFree ? "Instant PDF download" : isPersonalTrainerTrial ? "7-day access · Sign-in required" : `≈ ${approxUSD(price)}`}
             </p>
           </div>
           <button
             type="button"
             onClick={handleAdd}
-            disabled={busy || isLoading || !firstAvail?.availableForSale}
+            disabled={busy || (!isFreeOffer && isLoading) || !firstAvail?.availableForSale}
             className="inline-flex min-h-11 items-center justify-center rounded-full bg-foreground px-3 text-[10px] font-semibold uppercase tracking-wider text-background transition-colors hover:bg-gold hover:text-gold-foreground disabled:opacity-50 sm:px-5 sm:text-xs sm:tracking-widest"
           >
             {busy ? (
               <Loader2 className="h-4 w-4 animate-spin" />
-            ) : firstAvail?.availableForSale ? (
-              "Add to cart"
-            ) : (
+            ) : !firstAvail?.availableForSale ? (
               "Sold out"
+            ) : isNaijaFitFree ? (
+              "Get Free Meal Plan"
+            ) : isPersonalTrainerTrial ? (
+              "Start 7-Day Trial"
+            ) : (
+              "Add to cart"
             )}
           </button>
         </div>
