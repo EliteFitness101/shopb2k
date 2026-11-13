@@ -187,6 +187,13 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
           body: JSON.stringify({ product_sku: product.sku }),
         });
         const payload = await response.json().catch(() => null) as { ok?: boolean; error?: string; end_at?: string } | null;
+        if (response.status === 409) {
+          recordEngagement(product.id, "click");
+          track("product_click", { product_id: product.sku || product.id, product_title: product.title, value: 0, currency: "NGN" });
+          toast.success("Your trial has already been claimed. Opening your trainer dashboard.", { position: "top-center" });
+          window.location.assign("https://dashboard.resofit.fit/trainer");
+          return;
+        }
         if (!response.ok || payload?.ok !== true) {
           throw new Error(payload?.error ?? (response.status === 401 ? "Sign in to start your ResoFit trial." : "Unable to start your trial."));
         }
