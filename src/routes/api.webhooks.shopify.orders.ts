@@ -49,10 +49,10 @@ function lineTotal(item: ShopifyLineItem) {
 
 
 function buildShopifyTestMediaSpec(product: any, orderId: string) {
-  const destination = \`https://www.resofit.fit/product/\${product.handle || product.sku}\`;
+  const destination = `https://www.resofit.fit/product/${product.handle || product.sku}`;
   const title = String(product.title);
   const prompt = (brief: string) =>
-    \`ResoFlex powered by Resonance Fitness. Use only supplied product facts. No medical claims, guaranteed outcomes, fake testimonials, before/after claims, pricing, discounts, stock claims or unsupported features. \${brief} Product: \${title}. Destination: \${destination}.\`;
+    `ResoFlex powered by Resonance Fitness. Use only supplied product facts. No medical claims, guaranteed outcomes, fake testimonials, before/after claims, pricing, discounts, stock claims or unsupported features. ${brief} Product: ${title}. Destination: ${destination}.`;
   const asset_slots = [
     { role: "hero_video", type: "video", required: true, aspect_ratio: "9:16", duration_seconds: 8, prompt: prompt("Create a premium vertical hero video with authentic Nigerian/African wellness-commerce context and a clean CTA ending.") },
     { role: "problem_solution_video", type: "video", required: true, aspect_ratio: "9:16", duration_seconds: 8, prompt: prompt("Create an 8-second problem-to-solution story without before/after or guaranteed-result claims.") },
@@ -103,6 +103,9 @@ async function enqueueShopifyTestMedia(
 ) {
   if (email !== "test@resofit.fit") {
     return Response.json({ ok: false, error: "Shopify test orders must use test@resofit.fit" }, { status: 422 });
+  }
+  if (![...grouped.keys()].some((sku) => eligible.has(sku))) {
+    return Response.json({ ok: false, error: "Test order contains no published digital product SKUs" }, { status: 422 });
   }
   const { data: inserted, error: eventInsertError } = await supabase
     .from("shopify_test_order_events")
@@ -184,6 +187,11 @@ async function enqueueShopifyTestMedia(
       if (linkError) return Response.json({ ok: false, error: "Test media job link failed", sku }, { status: 500 });
     }
 
+    if (jobId) {
+      const { data: persistedJob } = await supabase.from("digital_product_factory_jobs")
+        .select("status").eq("id", jobId).maybeSingle();
+      if (persistedJob?.status) jobStatus = String(persistedJob.status);
+    }
     if (["queued", "failed", "ready_for_generation"].includes(jobStatus)) {
       const { error: dispatchError } = await supabase.rpc("start_shopify_test_media_job", { _job_id: jobId });
       if (dispatchError) {
@@ -283,7 +291,7 @@ export const Route = createFileRoute("/api/webhooks/shopify/orders")({
         const skus = [...grouped.keys()];
         const { data: products, error: productError } = await supabase
           .from("products")
-          .select("id,sku,title,product_type,fulfillment_mode,published")
+          .select("id,sku,handle,title,product_type,fulfillment_mode,published")
           .in("sku", skus);
 
         if (productError) {
