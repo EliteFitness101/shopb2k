@@ -184,7 +184,7 @@ async function enqueueShopifyTestMedia(
       if (linkError) return Response.json({ ok: false, error: "Test media job link failed", sku }, { status: 500 });
     }
 
-    if (["queued", "failed"].includes(jobStatus)) {
+    if (["queued", "failed", "ready_for_generation"].includes(jobStatus)) {
       const { error: dispatchError } = await supabase.rpc("start_shopify_test_media_job", { _job_id: jobId });
       if (dispatchError) {
         await supabase.from("shopify_test_order_items")
