@@ -29,6 +29,7 @@ type ShopifyPaidOrder = {
   processed_at?: string | null;
   updated_at?: string | null;
   created_at?: string | null;
+  test?: boolean;
   line_items?: ShopifyLineItem[];
 };
 
@@ -98,13 +99,56 @@ export const Route = createFileRoute("/api/webhooks/shopify/orders")({
           grouped.set(sku, existing);
         }
 
+        const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, {
+          auth: { persistSession: false, autoRefreshToken: false },
+        });
+        const webhookId = request.headers.get("x-shopify-webhook-id");
+
+        // Shopify test orders are recorded for audit but never written to the paid
+        // payments ledger. This prevents test checkouts from granting live access.
+        if (order.test === true) {
+          const testReference = `shopify-test:${orderId}`;
+          const { error: testEventError } = await supabase.from("payment_events").upsert(
+            {
+              paystack_ref: testReference,
+              event: "orders/paid_test",
+              payload: {
+                source: "shopify_test",
+                shop_domain: receivedStore,
+                shopify_order_id: orderId,
+                shopify_order_name: order.name ?? null,
+                shopify_webhook_id: webhookId,
+                sku_list: [...grouped.keys()],
+                financial_status: "paid",
+                payment_verification: "verified_shopify_hmac_orders_paid_test",
+                delivery_mode: "test_audit_only_no_live_entitlement",
+              },
+              processed: true,
+              processed_at: new Date().toISOString(),
+              signature_verified: true,
+              source: "shopify_test",
+            },
+            { onConflict: "paystack_ref,event", ignoreDuplicates: true },
+          );
+          if (testEventError) {
+            console.error("Shopify test-order audit write failed", { orderId, error: testEventError });
+            return Response.json({ ok: false, error: "Test-order audit write failed" }, { status: 500 });
+          }
+          return Response.json({
+            ok: true,
+            source: "shopify_test",
+            order_id: orderId,
+            recorded: true,
+            paid_ledger_write: false,
+            entitlement_granted: false,
+            delivery_queued: false,
+          });
+        }
+
         if (grouped.size === 0) {
           return Response.json({ ok: true, ignored: true, reason: "no_sku_line_items" });
         }
 
-        const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, {
-          auth: { persistSession: false, autoRefreshToken: false },
-        });
         const skus = [...grouped.keys()];
         const { data: products, error: productError } = await supabase
           .from("products")
@@ -137,9 +181,9 @@ export const Route = createFileRoute("/api/webhooks/shopify/orders")({
         }
 
         const paidAt = order.processed_at ?? order.updated_at ?? order.created_at ?? new Date().toISOString();
-        const webhookId = request.headers.get("x-shopify-webhook-id");
         let queued = 0;
         let skipped = 0;
+        let duplicates = 0;
 
         for (const [sku, line] of grouped) {
           const product = eligible.get(sku);
@@ -149,20 +193,58 @@ export const Route = createFileRoute("/api/webhooks/shopify/orders")({
           }
 
           const reference = `shopify:${orderId}:${encodeURIComponent(sku)}`;
-          const metadata = {
+          const eventPayload = {
             source: "shopify",
-            checkout_channel: "shopify_headless",
             shop_domain: receivedStore,
             shopify_order_id: orderId,
             shopify_order_name: order.name ?? null,
             shopify_webhook_id: webhookId,
-            shopify_line_item_ids: line.lineItemIds,
+            sku,
             quantity: line.quantity,
-            customer_name: customerName || null,
-            customer_email: email,
+            line_item_ids: line.lineItemIds,
+            currency,
+            amount: line.total,
             financial_status: "paid",
             payment_verification: "verified_shopify_hmac_orders_paid",
             paid_at: paidAt,
+          };
+
+          const { data: priorEvent, error: priorEventError } = await supabase
+            .from("payment_events")
+            .select("id,processed")
+            .eq("paystack_ref", reference)
+            .eq("event", "orders/paid")
+            .maybeSingle();
+
+          if (priorEventError) {
+            console.error("Shopify paid-order event lookup failed", { orderId, sku, error: priorEventError });
+            return Response.json({ ok: false, error: "Payment event lookup failed" }, { status: 500 });
+          }
+          if (priorEvent?.processed === true) {
+            duplicates += 1;
+            continue;
+          }
+
+          if (!priorEvent) {
+            const { error: eventInsertError } = await supabase.from("payment_events").insert({
+              paystack_ref: reference,
+              event: "orders/paid",
+              payload: eventPayload,
+              processed: false,
+              signature_verified: true,
+              source: "shopify",
+            });
+            if (eventInsertError && eventInsertError.code !== "23505") {
+              console.error("Shopify paid-order event insert failed", { orderId, sku, error: eventInsertError });
+              return Response.json({ ok: false, error: "Payment event persistence failed" }, { status: 500 });
+            }
+          }
+
+          const metadata = {
+            ...eventPayload,
+            checkout_channel: "shopify_headless",
+            customer_name: customerName || null,
+            customer_email: email,
           };
 
           const { error: paymentError } = await supabase.from("payments").upsert(
@@ -184,12 +266,19 @@ export const Route = createFileRoute("/api/webhooks/shopify/orders")({
           );
 
           if (paymentError) {
-            console.error("Shopify paid-order payment ledger write failed", {
-              orderId,
-              sku,
-              error: paymentError,
-            });
+            console.error("Shopify paid-order payment ledger write failed", { orderId, sku, error: paymentError });
             return Response.json({ ok: false, error: "Payment ledger write failed" }, { status: 500 });
+          }
+
+          const { error: eventCompleteError } = await supabase
+            .from("payment_events")
+            .update({ processed: true, processed_at: new Date().toISOString() })
+            .eq("paystack_ref", reference)
+            .eq("event", "orders/paid");
+
+          if (eventCompleteError) {
+            console.error("Shopify paid-order event completion failed", { orderId, sku, error: eventCompleteError });
+            return Response.json({ ok: false, error: "Payment event completion failed" }, { status: 500 });
           }
           queued += 1;
         }
@@ -201,7 +290,8 @@ export const Route = createFileRoute("/api/webhooks/shopify/orders")({
           order_id: orderId,
           queued_products: queued,
           skipped_products: skipped,
-          idempotency: "shopify-order-id-plus-product-sku",
+          duplicate_products: duplicates,
+          idempotency: "payment_events(paystack_ref,event)+payments(paystack_ref)",
         });
       },
     },
