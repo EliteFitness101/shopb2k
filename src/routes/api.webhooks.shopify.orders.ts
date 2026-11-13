@@ -129,8 +129,7 @@ export const Route = createFileRoute("/api/webhooks/shopify/orders")({
             .filter(
               (product) =>
                 product.published === true &&
-                String(product.fulfillment_mode ?? "").toLowerCase() === "digital" &&
-                !String(product.sku ?? "").startsWith("MX-"),
+                String(product.fulfillment_mode ?? "").toLowerCase() === "digital",
             )
             .map((product) => [String(product.sku), product]),
         );
