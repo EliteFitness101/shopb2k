@@ -35,14 +35,6 @@ type ShopifyPaidOrder = {
 const normalizeDomain = (value: string) =>
   value.replace(/^https?:\/\//i, "").replace(/\/$/, "").toLowerCase();
 
-function minorUnitAmount(amount: number, currency: string) {
-  const digits = new Intl.NumberFormat("en", {
-    style: "currency",
-    currency,
-  }).resolvedOptions().maximumFractionDigits;
-  return Math.round(amount * 10 ** digits);
-}
-
 function lineTotal(item: ShopifyLineItem) {
   const unitPrice = Number(item.price);
   const quantity = Number(item.quantity ?? 0);
