@@ -58,3 +58,62 @@ begin
   returning j.*;
 end;
 $function$;
+
+-- Test records must not attach to a real auth user or synchronize identity state.
+create or replace function public.attach_verified_auth_user_to_payment()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'public', 'auth', 'pg_temp'
+as $function$
+declare
+  v_user_id uuid;
+begin
+  if coalesce(new.metadata->>'test_mode', 'false') = 'true' then
+    return new;
+  end if;
+  if new.user_id is not null or coalesce(new.customer_email, '') = '' then
+    return new;
+  end if;
+  select u.id into v_user_id
+  from auth.users u
+  join public.profiles p on p.id = u.id
+  where lower(u.email) = lower(new.customer_email)
+    and u.email_confirmed_at is not null
+  order by u.created_at
+  limit 1;
+  if v_user_id is not null then
+    new.user_id := v_user_id;
+  end if;
+  return new;
+end;
+$function$;
+
+create or replace function public.resofit_identity_payment_sync()
+returns trigger
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+begin
+  if coalesce(new.metadata->>'test_mode', 'false') = 'true' then
+    return new;
+  end if;
+  if new.user_id is not null then
+    begin
+      perform private.sync_resofit_ecosystem_identity(
+        new.user_id,
+        new.rsid,
+        null,
+        null,
+        new.funnel_origin,
+        coalesce(new.metadata, '{}'::jsonb),
+        null
+      );
+    exception when others then
+      null;
+    end;
+  end if;
+  return new;
+end;
+$function$;
