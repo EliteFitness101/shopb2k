@@ -1,0 +1,38 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { PDFDocument, StandardFonts, rgb } from "npm:pdf-lib@1.17.1";
+const admin=createClient(Deno.env.get("SUPABASE_URL")??"",Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")??"",{auth:{persistSession:false,autoRefreshToken:false}});
+const origins=new Set(["https://resofit.fit","https://www.resofit.fit","https://shop.resofit.fit"]);
+const cors=(origin:string|null)=>({"Access-Control-Allow-Origin":origin&&origins.has(origin)?origin:"https://resofit.fit","Access-Control-Allow-Methods":"GET, OPTIONS","Access-Control-Allow-Headers":"authorization, apikey, x-client-info","Vary":"Origin"});
+const wrap=(text:string,font:any,size:number,width:number)=>{const lines:string[]=[];let line="";for(const word of text.split(/\s+/)){const next=line?line+" "+word:word;if(font.widthOfTextAtSize(next,size)>width&&line){lines.push(line);line=word;}else line=next;}if(line)lines.push(line);return lines;};
+async function makePdf(){
+ const pdf=await PDFDocument.create();pdf.setTitle("NaijaFit 7-Day Smart Meal Plan");pdf.setAuthor("ResoFit / ResoFlex");pdf.setSubject("General Nigerian meal planning and wellness education");
+ const regular=await pdf.embedFont(StandardFonts.Helvetica),bold=await pdf.embedFont(StandardFonts.HelveticaBold);
+ const ink=rgb(.1,.1,.11),gold=rgb(.72,.58,.34),muted=rgb(.32,.32,.34);let page:any,y=0;
+ const newPage=()=>{page=pdf.addPage([595,842]);page.drawRectangle({x:0,y:0,width:595,height:842,color:rgb(.985,.982,.972)});page.drawRectangle({x:0,y:790,width:595,height:52,color:ink});page.drawText("NAIJAFIT / RESOFIT",{x:42,y:809,size:12,font:bold,color:gold});page.drawText("A PRACTICAL SEVEN-DAY STARTER",{x:42,y:28,size:8,font:regular,color:muted});y=755;};
+ const para=(t:string,size=10,strong=false,gap=7)=>{const font=strong?bold:regular;for(const line of wrap(t,font,size,510)){if(y<62)newPage();page.drawText(line,{x:42,y,size,font,color:strong?ink:muted});y-=size+5;}y-=gap;};
+ const head=(t:string)=>{if(y<100)newPage();y-=4;page.drawText(t,{x:42,y,size:13,font:bold,color:gold});y-=22;};
+ newPage();page.drawText("7-Day Smart Meal Plan",{x:42,y:715,size:25,font:bold,color:ink});y=678;
+ para("A flexible Nigerian-food guide for everyday meal planning. Use familiar foods, choose portions that suit your appetite and activity, and swap ingredients based on budget, preference and availability.",11,false,10);
+ para("No payment required. No special foods or supplements required. This guide is general education, not a personalized prescription.",9,true,12);
+ head("HOW TO USE THE PLAN");para("Choose meals that fit your day. Drink water regularly. Include a protein source and vegetables or fruit where practical. Repeat meals you enjoy and adjust portions to your needs. Scale movement prompts to your current ability.");
+ const days=[
+ ["DAY 1","Breakfast: oats, banana and eggs. Lunch: jollof rice, grilled chicken and vegetables. Dinner: beans, boiled plantain and greens. Snack: orange and groundnuts.","Movement: comfortable walk for 15-25 minutes. Optional: sit-to-stand, wall push-up and hip bridge, 2 easy sets."],
+ ["DAY 2","Breakfast: pap, moi moi and fruit. Lunch: ofada rice, beans or lean beef, and vegetables. Dinner: grilled fish, sweet potato and salad. Snack: plain yoghurt or fortified soy yoghurt with fruit.","Movement: light mobility or dancing for 15-25 minutes at a conversational pace."],
+ ["DAY 3","Breakfast: whole-grain bread, eggs and tomato. Lunch: beans, rice, grilled fish and vegetables. Dinner: chicken pepper soup, yam and greens. Snack: seasonal fruit with nuts.","Movement: comfortable walk, then gentle stretching. Take breaks as needed."],
+ ["DAY 4","Breakfast: boiled yam with egg and tomato sauce. Lunch: rice, beans, chicken and vegetables. Dinner: efo riro with fish or beans and a moderate swallow portion. Snack: banana.","Movement: 2 easy rounds of sit-to-stand, wall push-up, supported calf raise and bird dog."],
+ ["DAY 5","Breakfast: oats, pawpaw and eggs. Lunch: sweet potato, grilled chicken and vegetables. Dinner: beans porridge, fish and greens. Snack: watermelon and groundnuts.","Movement: walk or cycle comfortably for 20 minutes. Reduce time if you are new to exercise."],
+ ["DAY 6","Breakfast: moi moi and fruit. Lunch: jollof rice, fish and vegetables. Dinner: boiled plantain, egg sauce and salad. Snack: pear or seasonal fruit.","Movement: choose an activity you enjoy. Finish feeling able to continue another day."],
+ ["DAY 7","Breakfast: pap, eggs and fruit. Lunch: yam, fish and vegetable sauce. Dinner: beans, rice and vegetables. Snack: pawpaw with yoghurt or fortified soy yoghurt.","Movement: gentle walk or rest. Review which meals and habits were easiest to repeat."]
+ ];
+ for(const d of days){head(d[0]);para(d[1],9.5,false,2);para(d[2],9.5,true,7);}
+ head("EASY FOOD SWAPS");para("Protein: eggs, beans, moi moi, fish, chicken, lean meat, tofu or fortified soy options. Staples: rice, yam, plantain, potatoes, oats, maize, beans or whole-grain bread. Use affordable seasonal vegetables and fruit. Swap foods that do not suit your budget, preference or tolerance.");
+ head("DAILY HABIT CHECKLIST");for(const x of ["Drink water regularly.","Include protein at main meals where practical.","Add vegetables or fruit when available.","Move in a way that feels comfortable for your current ability.","Prepare one item that makes tomorrow easier.","Protect a consistent sleep and wind-down routine."])para("[ ] "+x,9.5,false,1);
+ head("IMPORTANT HEALTH NOTE");para("This guide is general nutrition and wellness education, not medical advice or an individualized dietetic or exercise prescription. It does not promise weight loss or a specific result. If pregnant, managing a medical condition, recovering from injury, or unsure whether a change is appropriate, consult a qualified health professional. Stop activity if you experience sharp pain, dizziness or unusual shortness of breath.");
+ for(const p of pdf.getPages())p.drawText("RESOFIT DIGITAL GUIDE | PERSONAL USE",{x:345,y:28,size:7,font:regular,color:gold});return await pdf.save();
+}
+Deno.serve(async(req)=>{const origin=req.headers.get("origin");if(req.method==="OPTIONS")return new Response("ok",{status:204,headers:cors(origin)});if(req.method!=="GET")return new Response("Method not allowed",{status:405,headers:cors(origin)});if(origin&&!origins.has(origin))return new Response("Origin not allowed",{status:403,headers:cors(origin)});
+ try{const {data:p,error:e}=await admin.from("products").select("sku,published,variant_price,fulfillment_mode").eq("sku","naijafit-7day-free").maybeSingle();if(e||!p||p.published!==true||Number(p.variant_price)!==0||p.fulfillment_mode!=="digital")return new Response("Free product is not currently available",{status:404,headers:cors(origin)});
+ const {data:x,error:xe}=await admin.from("resofit_product_experience_config").select("product_sku").eq("product_sku","naijafit-7day-free").maybeSingle();if(xe||!x)return new Response("Free product delivery is not configured",{status:503,headers:cors(origin)});
+ const bytes=await makePdf();return new Response(bytes,{status:200,headers:{...cors(origin),"Content-Type":"application/pdf",'Content-Disposition':'attachment; filename="NaijaFit-7-Day-Smart-Meal-Plan.pdf"',"Content-Length":String(bytes.byteLength),"Cache-Control":"public, max-age=300, s-maxage=300","X-Content-Type-Options":"nosniff"}});
+ }catch(error){console.error("free product download failed",error);return new Response("Unable to generate the free guide",{status:500,headers:cors(origin)});}});

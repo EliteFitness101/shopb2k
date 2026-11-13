@@ -13,6 +13,7 @@ import { RecentlyViewed, recordRecentlyViewed } from "@/components/RecentlyViewe
 import { PRODUCT_BY_HANDLE_QUERY, approxUSD, formatMoney, storefrontApiRequest, RESOFIT_SUPABASE_URL, type ShopifyProductNode } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { track } from "@/lib/tracking";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/product/$handle")({
   loader: async ({ params }) => {
@@ -95,6 +96,7 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
   const addItem = useCartStore((s) => s.addItem);
   const isLoading = useCartStore((s) => s.isLoading);
   const isResoFitTrial = product.sku === "RESO-PT-TRIAL-7D";
+  const isNaijaFitFree = product.sku === "naijafit-7day-free";
   const [trialStarting, setTrialStarting] = useState(false);
 
   useEffect(() => {
@@ -121,12 +123,37 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
 
   const handleAdd = async () => {
     if (!selectedVariant) return;
-    if (isResoFitTrial) {
+    if (isResoFitTrial || isNaijaFitFree) {
       setTrialStarting(true);
       try {
+        if (isNaijaFitFree) {
+          const response = await fetch(`${RESOFIT_SUPABASE_URL}/functions/v1/resofit-free-product-download`, { method: "GET", cache: "no-store" });
+          if (!response.ok) throw new Error("Your free plan is temporarily unavailable. Please try again.");
+          const contentType = response.headers.get("content-type") ?? "";
+          if (!contentType.toLowerCase().includes("application/pdf")) throw new Error("The free plan response was not a PDF. Please try again.");
+          const blob = await response.blob();
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const anchor = document.createElement("a");
+          anchor.href = downloadUrl;
+          anchor.download = "NaijaFit-7-Day-Smart-Meal-Plan.pdf";
+          document.body.appendChild(anchor);
+          anchor.click();
+          anchor.remove();
+          window.setTimeout(() => window.URL.revokeObjectURL(downloadUrl), 1500);
+          recordEngagement(product.id, "free_product_downloaded");
+          toast.success("Your free NaijaFit meal plan is ready.", { position: "top-center" });
+          return;
+        }
+        const { data: authData } = await supabase.auth.getSession();
+        const accessToken = authData.session?.access_token;
+        if (!accessToken) {
+          const returnTo = `${window.location.pathname}${window.location.search}`;
+          window.location.assign(`/auth?redirect=${encodeURIComponent(returnTo)}`);
+          return;
+        }
         const response = await fetch(`${RESOFIT_SUPABASE_URL}/functions/v1/resofit-entitlement`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
           body: JSON.stringify({ product_sku: product.sku }),
         });
         const payload = await response.json().catch(() => null) as { ok?: boolean; error?: string; end_at?: string } | null;
@@ -213,7 +240,7 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
           {experience.accessories?.length ? <div className="mt-4"><p className="text-[9px] uppercase tracking-widest text-gold">Consistency accessories</p><div className="mt-2 grid gap-2">{experience.accessories.map((a) => <Link key={a.sku} to="/product/$handle" params={{ handle: a.handle }} className="flex items-center justify-between rounded-xl border border-border p-3 text-[11px]"><span>{a.title}</span><span className="text-gold">₦{Number(a.variant_price || 0).toLocaleString()}</span></Link>)}</div></div> : null}
         </section>}
         {variants.length > 1 && variants[0].title !== "Default Title" && <div className="mt-8 border-t border-border/60 pt-6"><p className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">Option</p><div className="flex flex-wrap gap-2">{variants.map((v) => <button key={v.id} type="button" onClick={() => setVariantId(v.id)} disabled={!v.availableForSale} className={`rounded-sm border px-4 py-2 text-xs uppercase tracking-widest transition-colors ${v.id === variantId ? "border-gold bg-gold/10 text-gold" : "border-border text-muted-foreground hover:border-gold/60 hover:text-foreground"} disabled:line-through disabled:opacity-40`}>{v.title}</button>)}</div></div>}
-        <div className="mt-8 flex flex-wrap items-center gap-4">{!isResoFitTrial && <div className="flex h-12 items-center border border-border"><button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} className="h-full w-12 text-lg hover:text-gold" aria-label="Decrease quantity">−</button><span className="w-10 text-center">{qty}</span><button type="button" onClick={() => setQty((q) => q + 1)} className="h-full w-12 text-lg hover:text-gold" aria-label="Increase quantity">+</button></div>}<button type="button" onClick={handleAdd} disabled={trialStarting || isLoading || !selectedVariant?.availableForSale} className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full bg-gold px-6 text-xs font-semibold uppercase tracking-widest text-gold-foreground shadow-gold transition-transform hover:scale-[1.01] hover:bg-gold/90 disabled:opacity-50 sm:px-8">{trialStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : isResoFitTrial ? "Start 7-Day Trial" : isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : selectedVariant?.availableForSale ? ((product.fulfillmentMode ?? "").toLowerCase().includes("hybrid") ? "Get my bundle" : "Add to cart") : "Sold out"}</button></div>
+        <div className="mt-8 flex flex-wrap items-center gap-4">{!isResoFitTrial && !isNaijaFitFree && <div className="flex h-12 items-center border border-border"><button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} className="h-full w-12 text-lg hover:text-gold" aria-label="Decrease quantity">−</button><span className="w-10 text-center">{qty}</span><button type="button" onClick={() => setQty((q) => q + 1)} className="h-full w-12 text-lg hover:text-gold" aria-label="Increase quantity">+</button></div>}<button type="button" onClick={handleAdd} disabled={trialStarting || isLoading || !selectedVariant?.availableForSale} className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full bg-gold px-6 text-xs font-semibold uppercase tracking-widest text-gold-foreground shadow-gold transition-transform hover:scale-[1.01] hover:bg-gold/90 disabled:opacity-50 sm:px-8">{trialStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : isResoFitTrial ? "Start 7-Day Trial" : isNaijaFitFree ? "Get Free Meal Plan" : isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : selectedVariant?.availableForSale ? ((product.fulfillmentMode ?? "").toLowerCase().includes("hybrid") ? "Get my bundle" : "Add to cart") : "Sold out"}</button></div>
         <div className="mt-8 grid gap-3 sm:grid-cols-2"><div className="rounded-xl border border-border/60 bg-card/30 p-4"><div className="flex items-center gap-2 text-gold"><ShieldCheck className="h-4 w-4"/><span className="text-[10px] font-semibold uppercase tracking-widest text-foreground">Secure payment</span></div><p className="mt-2 text-xs leading-5 text-muted-foreground">Paystack checkout with payment options shown at checkout.</p></div><div className="rounded-xl border border-border/60 bg-card/30 p-4"><div className="flex items-center gap-2 text-gold"><Package className="h-4 w-4"/><span className="text-[10px] font-semibold uppercase tracking-widest text-foreground">Fulfillment</span></div><p className="mt-2 text-xs leading-5 text-muted-foreground">Digital delivery, physical delivery, or both according to the canonical product configuration.</p></div></div>
         <div className="mt-8 border-t border-border/60 pt-6 text-sm">{!((product.fulfillmentMode ?? "").toLowerCase().includes("digital") && !(product.fulfillmentMode ?? "").toLowerCase().includes("hybrid")) && <div className="space-y-3"><div className="flex items-start gap-3"><Truck className="mt-0.5 h-4 w-4 text-gold"/><span><strong className="text-foreground">Nigeria delivery:</strong> <span className="text-muted-foreground">Shipping options and charges are confirmed at checkout.</span></span></div><div className="flex items-start gap-3"><Truck className="mt-0.5 h-4 w-4 text-gold"/><span><strong className="text-foreground">International:</strong> <span className="text-muted-foreground">International fulfillment where supported.</span></span></div></div>}{((product.fulfillmentMode ?? "").toLowerCase().includes("digital") && !(product.fulfillmentMode ?? "").toLowerCase().includes("hybrid")) && <div className="flex items-start gap-3"><Package className="mt-0.5 h-4 w-4 text-gold"/><span><strong className="text-foreground">Digital delivery:</strong> <span className="text-muted-foreground">No physical shipping required.</span></span></div>}<div className="mt-3 flex items-start gap-3"><ShieldCheck className="mt-0.5 h-4 w-4 text-gold"/><span><strong className="text-foreground">Secure checkout:</strong> <span className="text-muted-foreground">ResoFit Paystack checkout · payment options shown at checkout.</span></span></div></div>
       </div>

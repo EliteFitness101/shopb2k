@@ -29,9 +29,16 @@ function AuthPage() {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const getReturnPath = () => {
+    const requested = new URLSearchParams(window.location.search).get("redirect");
+    return requested && requested.startsWith("/") && !requested.startsWith("//")
+      ? requested
+      : "/community/play";
+  };
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/community/play" });
+      if (data.session) navigate({ to: getReturnPath() as any });
     });
   }, [navigate]);
 
@@ -41,7 +48,7 @@ function AuthPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin + "/auth",
+          redirectTo: window.location.origin + "/auth" + window.location.search,
         },
       });
       if (error) throw error;
@@ -62,7 +69,7 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin + "/auth",
+            emailRedirectTo: window.location.origin + "/auth" + window.location.search,
             data: { full_name: name },
           },
         });
@@ -71,7 +78,7 @@ function AuthPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/community/play" });
+        navigate({ to: getReturnPath() as any });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Auth failed");
