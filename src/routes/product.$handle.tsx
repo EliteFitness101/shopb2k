@@ -21,6 +21,35 @@ export const Route = createFileRoute("/product/$handle")({
     if (!product) throw notFound();
     return { product };
   },
+  head: ({ loaderData }) => {
+    const product = loaderData?.product;
+    if (!product) return { meta: [{ title: "Product | ResoFit" }] };
+    const isNaijaFit = product.sku === "naijafit-7day-free";
+    const isTrainerTrial = product.sku === "RESO-PT-TRIAL-7D";
+    const title = isNaijaFit
+      ? "Free NaijaFit 7-Day Smart Meal Plan | ResoFit"
+      : isTrainerTrial
+        ? "Free 7-Day ResoFit Personal Trainer Trial"
+        : `${product.title} | ResoFit`;
+    const description = isNaijaFit
+      ? "Download the free seven-day Nigerian meal plan with daily meal ideas, familiar foods, practical swaps and simple movement prompts. No payment required."
+      : isTrainerTrial
+        ? "Start the ResoFit Personal Trainer free for seven days. Sign in to activate personalized meal and workout guidance, weekly programming and progress tracking."
+        : (product.description ?? `Explore ${product.title} at ResoFit.`).replace(/\\s+/g, " ").trim().slice(0, 160);
+    const canonical = `https://resofit.fit/product/${product.handle}`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "product" },
+        { property: "og:url", content: canonical },
+        { name: "twitter:card", content: "summary_large_image" },
+      ],
+      links: [{ rel: "canonical", href: canonical }],
+    };
+  },
   component: ProductPage,
   errorComponent: function ErrorComponent({ error, reset }) {
     const router = useRouter();
