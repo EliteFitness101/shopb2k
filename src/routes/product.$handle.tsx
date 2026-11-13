@@ -140,7 +140,8 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
           anchor.click();
           anchor.remove();
           window.setTimeout(() => window.URL.revokeObjectURL(downloadUrl), 1500);
-          recordEngagement(product.id, "free_product_downloaded");
+          recordEngagement(product.id, "click");
+          track("product_click", { product_id: product.sku || product.id, product_title: product.title, value: 0, currency: "NGN" });
           toast.success("Your free NaijaFit meal plan is ready.", { position: "top-center" });
           return;
         }
@@ -160,7 +161,8 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
         if (!response.ok || payload?.ok !== true) {
           throw new Error(payload?.error ?? (response.status === 401 ? "Sign in to start your ResoFit trial." : "Unable to start your trial."));
         }
-        recordEngagement(product.id, "trial_started");
+        recordEngagement(product.id, "click");
+        track("product_click", { product_id: product.sku || product.id, product_title: product.title, value: 0, currency: "NGN" });
         toast.success("Your 7-day Personal Trainer trial is active.", { position: "top-center" });
         window.location.assign("https://dashboard.resofit.fit/trainer");
       } catch (error) {
