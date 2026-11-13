@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.wellness-locator]
 verify_jwt = false
+
+[functions.resofit-free-product-download]
+verify_jwt = false
+
+[functions.resofit-entitlement]
+verify_jwt = false
