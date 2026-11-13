@@ -13,6 +13,7 @@ import { RecentlyViewed, recordRecentlyViewed } from "@/components/RecentlyViewe
 import { PRODUCT_BY_HANDLE_QUERY, approxUSD, formatMoney, storefrontApiRequest, RESOFIT_SUPABASE_URL, type ShopifyProductNode } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { track } from "@/lib/tracking";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/product/$handle")({
   loader: async ({ params }) => {
@@ -143,9 +144,16 @@ function ProductDetail({ product }: { product: ShopifyProductNode }) {
           toast.success("Your free NaijaFit meal plan is ready.", { position: "top-center" });
           return;
         }
+        const { data: authData } = await supabase.auth.getSession();
+        const accessToken = authData.session?.access_token;
+        if (!accessToken) {
+          const returnTo = `${window.location.pathname}${window.location.search}`;
+          window.location.assign(`/auth?redirect=${encodeURIComponent(returnTo)}`);
+          return;
+        }
         const response = await fetch(`${RESOFIT_SUPABASE_URL}/functions/v1/resofit-entitlement`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
           body: JSON.stringify({ product_sku: product.sku }),
         });
         const payload = await response.json().catch(() => null) as { ok?: boolean; error?: string; end_at?: string } | null;
