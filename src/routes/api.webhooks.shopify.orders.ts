@@ -104,12 +104,28 @@ export const Route = createFileRoute("/api/webhooks/shopify/orders")({
         });
         const webhookId = request.headers.get("x-shopify-webhook-id");
 
-        // Shopify test orders are recorded for audit but never written to the paid
-        // payments ledger. This prevents test checkouts from granting live access.
+        // Test orders use a non-success payment state and a tightly allowlisted
+        // delivery job. They can deliver only to the dedicated QA inbox and never
+        // satisfy the production entitlement/payment triggers.
         if (order.test === true) {
           const testReference = `shopify-test:${orderId}`;
-          const { error: testEventError } = await supabase.from("payment_events").upsert(
-            {
+          const testEmail = String(order.email ?? order.customer?.email ?? "").trim().toLowerCase();
+          const testRecipientAllowed = testEmail === "test@resofit.fit";
+          const { data: priorTestEvent, error: priorTestLookupError } = await supabase
+            .from("payment_events")
+            .select("id,processed")
+            .eq("paystack_ref", testReference)
+            .eq("event", "orders/paid_test")
+            .maybeSingle();
+          if (priorTestLookupError) {
+            console.error("Shopify test-order event lookup failed", { orderId, error: priorTestLookupError });
+            return Response.json({ ok: false, error: "Test-order event lookup failed" }, { status: 500 });
+          }
+          if (priorTestEvent?.processed === true) {
+            return Response.json({ ok: true, source: "shopify_test", order_id: orderId, duplicate: true });
+          }
+          if (!priorTestEvent) {
+            const { error: testEventInsertError } = await supabase.from("payment_events").insert({
               paystack_ref: testReference,
               event: "orders/paid_test",
               payload: {
@@ -121,27 +137,139 @@ export const Route = createFileRoute("/api/webhooks/shopify/orders")({
                 sku_list: [...grouped.keys()],
                 financial_status: "paid",
                 payment_verification: "verified_shopify_hmac_orders_paid_test",
-                delivery_mode: "test_audit_only_no_live_entitlement",
+                test_recipient_allowed: testRecipientAllowed,
               },
-              processed: true,
-              processed_at: new Date().toISOString(),
+              processed: false,
               signature_verified: true,
               source: "shopify_test",
-            },
-            { onConflict: "paystack_ref,event", ignoreDuplicates: true },
-          );
-          if (testEventError) {
-            console.error("Shopify test-order audit write failed", { orderId, error: testEventError });
-            return Response.json({ ok: false, error: "Test-order audit write failed" }, { status: 500 });
+            });
+            if (testEventInsertError && testEventInsertError.code !== "23505") {
+              console.error("Shopify test-order event insert failed", { orderId, error: testEventInsertError });
+              return Response.json({ ok: false, error: "Test-order event persistence failed" }, { status: 500 });
+            }
+          }
+
+          let testDeliveryQueued = 0;
+          if (testRecipientAllowed && grouped.size > 0) {
+            const testSkus = [...grouped.keys()];
+            const { data: testProducts, error: testProductError } = await supabase
+              .from("products")
+              .select("id,sku,title,product_type,fulfillment_mode,published")
+              .in("sku", testSkus);
+            if (testProductError) {
+              console.error("Shopify test-order product lookup failed", { orderId, error: testProductError });
+              return Response.json({ ok: false, error: "Test product verification failed" }, { status: 500 });
+            }
+            const testEligible = new Map(
+              (testProducts ?? [])
+                .filter((product) =>
+                  product.published === true &&
+                  String(product.fulfillment_mode ?? "").toLowerCase() === "digital",
+                )
+                .map((product) => [String(product.sku), product]),
+            );
+            const testCurrency = String(order.currency ?? order.presentment_currency ?? "").trim().toUpperCase();
+            if (!testCurrency) {
+              return Response.json({ ok: false, error: "Test order currency is missing" }, { status: 422 });
+            }
+            const testPaidAt = order.processed_at ?? order.updated_at ?? order.created_at ?? new Date().toISOString();
+            for (const [sku, line] of grouped) {
+              const product = testEligible.get(sku);
+              if (!product) continue;
+              const testPaymentReference = `shopify-test:${orderId}:${encodeURIComponent(sku)}`;
+              const testPaymentMetadata = {
+                test_mode: true,
+                source: "shopify_test",
+                checkout_channel: "shopify_test",
+                shop_domain: receivedStore,
+                shopify_order_id: orderId,
+                shopify_webhook_id: webhookId,
+                product_sku: sku,
+                quantity: line.quantity,
+                currency: testCurrency,
+                amount: line.total,
+                customer_email: "test@resofit.fit",
+                payment_verification: "verified_shopify_hmac_orders_paid_test",
+              };
+              const { error: testPaymentError } = await supabase.from("payments").upsert(
+                {
+                  user_id: null,
+                  amount: line.total,
+                  currency: testCurrency,
+                  status: "test_success",
+                  plan_type: product.title,
+                  paystack_ref: testPaymentReference,
+                  order_id: orderId,
+                  customer_email: "test@resofit.fit",
+                  paid_at: testPaidAt,
+                  product_sku: sku,
+                  funnel_origin: "shopify_test",
+                  metadata: testPaymentMetadata,
+                },
+                { onConflict: "paystack_ref" },
+              );
+              if (testPaymentError) {
+                console.error("Shopify test payment record failed", { orderId, sku, error: testPaymentError });
+                return Response.json({ ok: false, error: "Test payment persistence failed" }, { status: 500 });
+              }
+              const { data: testPayment, error: testPaymentLookupError } = await supabase
+                .from("payments")
+                .select("id")
+                .eq("paystack_ref", testPaymentReference)
+                .single();
+              if (testPaymentLookupError || !testPayment) {
+                console.error("Shopify test payment lookup failed", { orderId, sku, error: testPaymentLookupError });
+                return Response.json({ ok: false, error: "Test payment lookup failed" }, { status: 500 });
+              }
+              const { error: testJobError } = await supabase.from("digital_product_delivery_jobs").upsert(
+                {
+                  payment_id: testPayment.id,
+                  payment_reference: testPaymentReference,
+                  product_sku: sku,
+                  product_id: product.id,
+                  buyer_user_id: null,
+                  buyer_email: "test@resofit.fit",
+                  product_title: product.title,
+                  status: "queued",
+                  provenance: {
+                    test_mode: true,
+                    test_recipient: "test@resofit.fit",
+                    source: "shopify_test_order",
+                    shopify_order_id: orderId,
+                    shopify_webhook_id: webhookId,
+                    fulfillment_authority: "isolated_test_delivery_only",
+                  },
+                },
+                { onConflict: "payment_id,product_sku", ignoreDuplicates: true },
+              );
+              if (testJobError) {
+                console.error("Shopify test delivery job enqueue failed", { orderId, sku, error: testJobError });
+                return Response.json({ ok: false, error: "Test delivery queue write failed" }, { status: 500 });
+              }
+              testDeliveryQueued += 1;
+            }
+          }
+
+          const { error: testEventCompleteError } = await supabase
+            .from("payment_events")
+            .update({ processed: true, processed_at: new Date().toISOString() })
+            .eq("paystack_ref", testReference)
+            .eq("event", "orders/paid_test");
+          if (testEventCompleteError) {
+            console.error("Shopify test-order event completion failed", { orderId, error: testEventCompleteError });
+            return Response.json({ ok: false, error: "Test-order event completion failed" }, { status: 500 });
           }
           return Response.json({
             ok: true,
             source: "shopify_test",
             order_id: orderId,
             recorded: true,
+            test_recipient_allowed: testRecipientAllowed,
             paid_ledger_write: false,
+            payment_state: testDeliveryQueued > 0 ? "test_success_only" : "not_created",
             entitlement_granted: false,
-            delivery_queued: false,
+            delivery_queued: testDeliveryQueued,
+            delivery_recipient: testDeliveryQueued > 0 ? "test@resofit.fit" : null,
           });
         }
 
