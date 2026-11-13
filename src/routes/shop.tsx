@@ -38,17 +38,15 @@ export const Route = createFileRoute("/shop")({
   },
   head: () => ({
     meta: [
-      { title: "Shop — ResoFit Hardware" },
+      { title: "ResoFit Shop | Free Meal Plans, Coaching & Fitness Gear" },
       {
         name: "description",
-        content:
-          "Shop competition-grade barbells, bumper plates, dumbbells, and power racks with secure Paystack checkout.",
+        content: "Get the free NaijaFit 7-day Nigerian meal plan, start a 7-day ResoFit Personal Trainer trial, and explore digital wellness products and fitness equipment. Instant access to eligible digital offers.",
       },
-      { property: "og:title", content: "Shop — ResoFit Hardware" },
+      { property: "og:title", content: "ResoFit Shop | Free Meal Plans, Coaching & Fitness Gear" },
       {
         property: "og:description",
-        content:
-          "Competition-grade barbells, bumper plates, dumbbells, and power racks. Secure Paystack checkout.",
+        content: "Free NaijaFit meal plan, a 7-day Personal Trainer trial, digital wellness products and fitness equipment from ResoFit.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: SHOP_URL },
