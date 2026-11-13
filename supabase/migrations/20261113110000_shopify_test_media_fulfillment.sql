@@ -113,6 +113,12 @@ begin
     where status = 'generating'
       and generation_spec->>'shopify_test_mode' = 'true'
       and generation_spec->>'media_factory_entitled' = 'true'
+      and jsonb_typeof(generation_spec->'asset_slots') = 'array'
+      and not exists (
+        select 1
+        from jsonb_array_elements(generation_spec->'asset_slots') slot
+        where coalesce(slot->'runtime'->>'status','') not in ('submitted','completed')
+      )
   loop
     v_token := encode(gen_random_bytes(32), 'hex');
     update public.digital_product_factory_jobs
@@ -161,6 +167,54 @@ begin
   return v_count;
 end;
 $function$;
+
+
+-- Mark generated test-order media as non-publishable at the asset registry boundary.
+create or replace function public.tag_shopify_test_factory_assets()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'public', 'pg_temp'
+as $function$
+declare
+  v_job_spec jsonb;
+begin
+  if nullif(new.intelligence->>'factory_job_id','') is null then
+    return new;
+  end if;
+
+  begin
+    select generation_spec into v_job_spec
+    from public.digital_product_factory_jobs
+    where id = (new.intelligence->>'factory_job_id')::uuid;
+  exception when invalid_text_representation then
+    return new;
+  end;
+
+  if coalesce(v_job_spec->>'shopify_test_mode','false') = 'true' then
+    new.campaign := 'shopify_test_media_factory';
+    new.commercial_status := 'test_only';
+    new.intelligence := coalesce(new.intelligence,'{}'::jsonb) ||
+      jsonb_build_object(
+        'test_only',true,
+        'publication_allowed',false,
+        'media_factory_entitled',true,
+        'shopify_test_order_id',v_job_spec->>'shopify_order_id'
+      );
+    new.publish_blockers := case
+      when jsonb_typeof(coalesce(new.publish_blockers,'[]'::jsonb)) = 'array'
+        then coalesce(new.publish_blockers,'[]'::jsonb) || jsonb_build_array('shopify_test_order_media_not_publishable')
+      else jsonb_build_array('shopify_test_order_media_not_publishable',coalesce(new.publish_blockers,'null'::jsonb))
+    end;
+  end if;
+  return new;
+end;
+$function$;
+
+drop trigger if exists trg_tag_shopify_test_factory_assets on public.content_asset_registry;
+create trigger trg_tag_shopify_test_factory_assets
+before insert or update of intelligence on public.content_asset_registry
+for each row execute function public.tag_shopify_test_factory_assets();
 
 revoke all on function public.start_shopify_test_media_job(uuid) from public, anon, authenticated;
 revoke all on function public.poll_shopify_test_media_jobs() from public, anon, authenticated;
