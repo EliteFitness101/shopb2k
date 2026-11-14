@@ -63,6 +63,20 @@ jobs:
             jq -r '.errors[]?.message // empty' /tmp/worker-scripts.json || true
           fi
 
+      - name: Resolve isolated workers.dev test hostname
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.SHOPB2K_WORKERS_DEPLOY_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          code="$(curl --silent --show-error -o /tmp/workers-subdomain.json -w '%{http_code}' \\
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \\
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain")"
+          test "$code" = "200" || { echo "::error::Unable to resolve the account workers.dev subdomain (HTTP $code). No production route will be changed."; exit 1; }
+          subdomain="$(jq -r '.result.subdomain // empty' /tmp/workers-subdomain.json)"
+          test -n "$subdomain" || { echo "::error::No workers.dev subdomain is registered for this Cloudflare account."; exit 1; }
+          echo "CLOUDFLARE_WORKERS_SUBDOMAIN=$subdomain" >> "$GITHUB_ENV"
+          echo "Isolated test hostname: test-upload-format.$subdomain.workers.dev"
+
       - name: Confirm existing Worker write-token secret
         if: success()
         env:
@@ -79,26 +93,30 @@ jobs:
         run: |
           set -euo pipefail
           npx wrangler whoami
-          jq 'del(.routes, ."$schema")' wrangler.jsonc > .wrangler-worker-only.jsonc
+          jq '.workers_dev = true | del(.routes, ."$schema")' wrangler.jsonc > .wrangler-worker-only.jsonc
           trap 'rm -f .wrangler-worker-only.jsonc' EXIT
           npx wrangler deploy --config .wrangler-worker-only.jsonc --name test-upload-format
 
-      - name: Verify real production R2 upload, ranged download, and cleanup
+      - name: Verify isolated R2 Worker upload, ranged download, and cleanup
         if: success()
         env:
           R2_WRITE_TOKEN: ${{ secrets.R2_WRITE_TOKEN }}
+          CLOUDFLARE_WORKERS_SUBDOMAIN: ${{ env.CLOUDFLARE_WORKERS_SUBDOMAIN }}
         run: |
           set -euo pipefail
           test -n "${R2_WRITE_TOKEN:-}" || { echo "::error::Missing R2_WRITE_TOKEN repository secret"; exit 1; }
+          test -n "${CLOUDFLARE_WORKERS_SUBDOMAIN:-}" || { echo "::error::Missing isolated workers.dev subdomain"; exit 1; }
           node <<'NODE'
           (async () => {
             const token = process.env.R2_WRITE_TOKEN;
             const runId = process.env.GITHUB_RUN_ID;
             const key = "elite/smoke/" + runId + ".txt";
             const payload = "ResoFit R2 probe " + runId;
-            const url = "https://media.resofit.fit/" + key.split("/").map(encodeURIComponent).join("/");
+            const baseUrl = "https://test-upload-format." + process.env.CLOUDFLARE_WORKERS_SUBDOMAIN + ".workers.dev";
+            const url = baseUrl + "/" + key.split("/").map(encodeURIComponent).join("/");
             const auth = { Authorization: "Bearer " + token };
-            const healthResponse = await fetch("https://media.resofit.fit/health");
+            console.log("Testing isolated Worker:", baseUrl);
+            const healthResponse = await fetch(baseUrl + "/health");
             const health = await healthResponse.json();
             console.log("R2 health:", JSON.stringify(health));
             if (!healthResponse.ok || health.bucket_binding_ready !== true) throw new Error("R2 primary bucket binding is not ready");
@@ -120,7 +138,7 @@ jobs:
 
             const missing = await fetch(url);
             if (missing.status !== 404) throw new Error("R2 object still exists after cleanup: " + missing.status);
-            console.log("PASS: production R2 PUT, range GET, DELETE and missing-object read-back verified.");
+            console.log("PASS: isolated R2 Worker PUT, range GET, DELETE and missing-object read-back verified. Production routes were not modified.");
           })().catch((error) => {
             console.error(error?.stack ?? String(error));
             process.exitCode = 1;
@@ -136,10 +154,10 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = "success" ]; then
             STATE="success"
-            DESCRIPTION="Cloudflare deployed and live R2 upload/range read-back passed"
+            DESCRIPTION="Isolated Cloudflare R2 Worker upload/range read-back passed"
           else
             STATE="failure"
-            DESCRIPTION="Cloudflare deploy or live R2 upload/range read-back failed"
+            DESCRIPTION="Isolated Cloudflare R2 Worker deploy or round-trip failed"
           fi
           PAYLOAD="$(jq -n --arg state "$STATE" --arg context "Cloudflare R2 Production Round-trip" --arg description "$DESCRIPTION" --arg target_url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" '{state:$state,context:$context,description:$description,target_url:$target_url}')"
           curl --fail --silent --show-error -X POST "https://api.github.com/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
