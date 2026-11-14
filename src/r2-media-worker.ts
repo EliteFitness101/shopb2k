@@ -204,10 +204,13 @@ async function handleWrite(request: Request, env: Env, key: string): Promise<Res
 }
 
 async function handleUpload(request: Request, env: Env): Promise<Response> {
-  if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405, headers: { Allow: "POST", "Cache-Control": "no-store" } });
   const url = new URL(request.url);
   const key = parseKey(url.searchParams.get("key") || "");
   if (!key) return json({ ok: false, error: "Invalid media key." }, 400);
+  if (request.method === "DELETE") {
+    return handleWrite(new Request(request.url, { method: "DELETE", headers: request.headers }), env, key);
+  }
+  if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405, headers: { Allow: "POST, DELETE", "Cache-Control": "no-store" } });
   return handleWrite(new Request(request.url, { method: "PUT", headers: request.headers, body: request.body }), env, key);
 }
 

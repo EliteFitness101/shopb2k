@@ -9,6 +9,7 @@ on:
       - "src/server.ts"
       - "src/r2-media-worker.ts"
       - "wrangler.jsonc"
+      - "wrangler.upload.jsonc"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/cloudflare-media-worker-deploy.yml"
@@ -106,44 +107,64 @@ jobs:
           set -euo pipefail
           test -n "${R2_WRITE_TOKEN:-}" || { echo "::error::Missing R2_WRITE_TOKEN repository secret"; exit 1; }
           test -n "${CLOUDFLARE_WORKERS_SUBDOMAIN:-}" || { echo "::error::Missing isolated workers.dev subdomain"; exit 1; }
-          node <<'NODE'
-          (async () => {
-            const token = process.env.R2_WRITE_TOKEN;
-            const runId = process.env.GITHUB_RUN_ID;
-            const key = "elite/smoke/" + runId + ".txt";
-            const payload = "ResoFit R2 probe " + runId;
-            const baseUrl = "https://test-upload-format." + process.env.CLOUDFLARE_WORKERS_SUBDOMAIN + ".workers.dev";
-            const url = baseUrl + "/" + key.split("/").map(encodeURIComponent).join("/");
-            const auth = { Authorization: "Bearer " + token };
-            console.log("Testing isolated Worker:", baseUrl);
-            const healthResponse = await fetch(baseUrl + "/health");
-            const health = await healthResponse.json();
-            console.log("R2 health:", JSON.stringify(health));
-            if (!healthResponse.ok || health.bucket_binding_ready !== true) throw new Error("R2 primary bucket binding is not ready");
+          BASE_URL="https://test-upload-format.$CLOUDFLARE_WORKERS_SUBDOMAIN.workers.dev"
+          KEY="elite/smoke/$GITHUB_RUN_ID.txt"
+          URL="$BASE_URL/$KEY"
+          PAYLOAD="ResoFit R2 probe $GITHUB_RUN_ID"
+          HEALTH_CODE="$(curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --output /tmp/r2-health.json --write-out '%{http_code}' "$BASE_URL/health")"
+          test "$HEALTH_CODE" = "200" || { cat /tmp/r2-health.json; echo "::error::Isolated R2 health failed: HTTP $HEALTH_CODE"; exit 1; }
+          jq -e '.ok == true and .bucket_binding_ready == true' /tmp/r2-health.json >/dev/null
+          UPLOAD_CODE="$(printf '%s' "$PAYLOAD" | curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --request PUT --header "Authorization: Bearer $R2_WRITE_TOKEN" --header 'Content-Type: text/plain' --data-binary @- --output /tmp/r2-upload.json --write-out '%{http_code}' "$URL")"
+          test "$UPLOAD_CODE" = "200" || { cat /tmp/r2-upload.json; echo "::error::Isolated R2 upload failed: HTTP $UPLOAD_CODE"; exit 1; }
+          jq -e '.ok == true' /tmp/r2-upload.json >/dev/null
+          RANGE_CODE="$(curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --header 'Range: bytes=0-5' --output /tmp/r2-range.txt --write-out '%{http_code}' "$URL")"
+          test "$RANGE_CODE" = "206" || { echo "::error::Isolated R2 range read failed: HTTP $RANGE_CODE"; exit 1; }
+          test "$(cat /tmp/r2-range.txt)" = "${PAYLOAD:0:6}" || { echo "::error::Isolated R2 range bytes mismatch"; exit 1; }
+          DELETE_CODE="$(curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --request DELETE --header "Authorization: Bearer $R2_WRITE_TOKEN" --output /tmp/r2-delete.json --write-out '%{http_code}' "$URL")"
+          test "$DELETE_CODE" = "200" || { cat /tmp/r2-delete.json; echo "::error::Isolated R2 cleanup failed: HTTP $DELETE_CODE"; exit 1; }
+          MISSING_CODE="$(curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --output /dev/null --write-out '%{http_code}' "$URL")"
+          test "$MISSING_CODE" = "404" || { echo "::error::Isolated R2 object remains after cleanup: HTTP $MISSING_CODE"; exit 1; }
+          echo "PASS: isolated R2 Worker PUT, range GET, DELETE and missing-object read-back verified."
 
-            const upload = await fetch(url, { method: "PUT", headers: { ...auth, "Content-Type": "text/plain" }, body: payload });
-            const uploadBody = await upload.text();
-            console.log("R2 upload:", upload.status, uploadBody.slice(0, 400));
-            if (upload.status !== 200 || !uploadBody.includes('"ok":true')) throw new Error("R2 upload failed");
+      - name: Deploy dedicated production upload gateway
+        if: success()
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.SHOPB2K_WORKERS_DEPLOY_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+          R2_WRITE_TOKEN: ${{ secrets.R2_WRITE_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "${R2_WRITE_TOKEN:-}" || { echo "::error::Missing R2_WRITE_TOKEN repository secret"; exit 1; }
+          printf '%s' "$R2_WRITE_TOKEN" | npx wrangler secret put R2_WRITE_TOKEN --config wrangler.upload.jsonc --name resofit-upload-gateway
+          npx wrangler deploy --config wrangler.upload.jsonc
 
-            const range = await fetch(url, { headers: { Range: "bytes=0-5" } });
-            const rangeBody = await range.text();
-            console.log("R2 ranged read:", range.status, range.headers.get("Content-Range"));
-            if (range.status !== 206 || rangeBody !== payload.slice(0, 6)) throw new Error("R2 ranged read-back failed");
-
-            const cleanup = await fetch(url, { method: "DELETE", headers: auth });
-            const cleanupBody = await cleanup.text();
-            console.log("R2 cleanup:", cleanup.status, cleanupBody.slice(0, 300));
-            if (cleanup.status !== 200) throw new Error("R2 cleanup failed");
-
-            const missing = await fetch(url);
-            if (missing.status !== 404) throw new Error("R2 object still exists after cleanup: " + missing.status);
-            console.log("PASS: isolated R2 Worker PUT, range GET, DELETE and missing-object read-back verified. Production routes were not modified.");
-          })().catch((error) => {
-            console.error(error?.stack ?? String(error));
-            process.exitCode = 1;
-          });
-          NODE
+      - name: Verify production upload gateway R2 write, CDN read-back, and cleanup
+        if: success()
+        env:
+          R2_WRITE_TOKEN: ${{ secrets.R2_WRITE_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "${R2_WRITE_TOKEN:-}" || { echo "::error::Missing R2_WRITE_TOKEN repository secret"; exit 1; }
+          BASE_URL="https://upload.resofit.fit"
+          KEY="test/smoke/$GITHUB_RUN_ID.txt"
+          ENCODED_KEY="$(jq -rn --arg key "$KEY" '$key|@uri')"
+          UPLOAD_URL="$BASE_URL/api/ingest-media?key=$ENCODED_KEY"
+          PUBLIC_URL="https://media.resofit.fit/$KEY"
+          PAYLOAD="ResoFit production R2 upload $GITHUB_RUN_ID"
+          printf '%s' "$PAYLOAD" > /tmp/r2-production-payload.txt
+          HEALTH_CODE="$(curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --output /tmp/r2-production-health.json --write-out '%{http_code}' "$BASE_URL/health")"
+          test "$HEALTH_CODE" = "200" || { cat /tmp/r2-production-health.json; echo "::error::Production upload health failed: HTTP $HEALTH_CODE"; exit 1; }
+          jq -e '.ok == true and .provider == "cloudflare_r2" and .bucket_binding_ready == true' /tmp/r2-production-health.json >/dev/null
+          UPLOAD_CODE="$(curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --request POST --header "Authorization: Bearer $R2_WRITE_TOKEN" --header 'Content-Type: text/plain' --header 'Cache-Control: no-store' --data-binary @/tmp/r2-production-payload.txt --output /tmp/r2-production-upload.json --write-out '%{http_code}' "$UPLOAD_URL")"
+          test "$UPLOAD_CODE" = "200" || { cat /tmp/r2-production-upload.json; echo "::error::Production R2 upload failed: HTTP $UPLOAD_CODE"; exit 1; }
+          jq -e '.ok == true' /tmp/r2-production-upload.json >/dev/null
+          READ_CODE="$(curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --header 'Cache-Control: no-cache' --output /tmp/r2-production-readback.txt --write-out '%{http_code}' "$PUBLIC_URL")"
+          test "$READ_CODE" = "200" || { echo "::error::Production media CDN read-back failed: HTTP $READ_CODE"; exit 1; }
+          cmp -s /tmp/r2-production-payload.txt /tmp/r2-production-readback.txt || { echo "::error::Production media CDN read-back bytes differ"; exit 1; }
+          DELETE_CODE="$(curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --request DELETE --header "Authorization: Bearer $R2_WRITE_TOKEN" --output /tmp/r2-production-delete.json --write-out '%{http_code}' "$UPLOAD_URL")"
+          test "$DELETE_CODE" = "200" || { cat /tmp/r2-production-delete.json; echo "::error::Production R2 cleanup failed: HTTP $DELETE_CODE"; exit 1; }
+          MISSING_CODE="$(curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --header 'Cache-Control: no-cache' --output /dev/null --write-out '%{http_code}' "$PUBLIC_URL")"
+          test "$MISSING_CODE" = "404" || { echo "::error::Production R2 smoke object remains after cleanup: HTTP $MISSING_CODE"; exit 1; }
+          echo "PASS: upload.resofit.fit -> resofit-cdn -> media.resofit.fit write/read/delete verified."
 
       - name: Publish live R2 verification status
         if: always()
@@ -154,10 +175,10 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = "success" ]; then
             STATE="success"
-            DESCRIPTION="Isolated Cloudflare R2 Worker upload/range read-back passed"
+            DESCRIPTION="Isolated and production upload gateway R2 write/read-back/cleanup passed"
           else
             STATE="failure"
-            DESCRIPTION="Isolated Cloudflare R2 Worker deploy or round-trip failed"
+            DESCRIPTION="Isolated or production Cloudflare R2 Worker deploy/round-trip failed"
           fi
           PAYLOAD="$(jq -n --arg state "$STATE" --arg context "Cloudflare R2 Production Round-trip" --arg description "$DESCRIPTION" --arg target_url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" '{state:$state,context:$context,description:$description,target_url:$target_url}')"
           curl --fail --silent --show-error -X POST "https://api.github.com/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
