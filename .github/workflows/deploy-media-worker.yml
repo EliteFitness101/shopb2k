@@ -57,17 +57,30 @@ jobs:
           set -euo pipefail
           test -n "${CLOUDFLARE_API_TOKEN:-}" || { echo "::error::Missing CLOUDFLARE_API_TOKEN repository secret"; exit 1; }
           test -n "${CLOUDFLARE_ACCOUNT_ID:-}" || { echo "::error::Missing CLOUDFLARE_ACCOUNT_ID repository secret"; exit 1; }
-          # Keep the generated TanStack/Vite bundle and aliases, but do not
-          # steal media/content/upload routes owned by the dedicated R2 Worker.
+          # Use Nitro's generated deploy config so the Worker entrypoint and
+          # asset paths remain relative to the generated server bundle. Remove
+          # routes so this app Worker cannot take the dedicated media/upload hosts.
           node <<'NODE'
           const fs = require("fs");
-          const source = ".wrangler/deploy/config.json";
-          const target = ".wrangler/deploy/config-no-routes.json";
+          const path = require("path");
+          const source = ".output/server/wrangler.json";
+          const target = ".output/server/wrangler-no-routes.json";
           const config = JSON.parse(fs.readFileSync(source, "utf8"));
+          const candidates = [];
+          if (config.main) {
+            candidates.push(path.resolve(".output/server", config.main));
+            candidates.push(path.resolve(config.main));
+          }
+          candidates.push(path.resolve(".output/server/index.mjs"));
+          const entry = candidates.find(candidate => fs.existsSync(candidate));
+          if (!entry) throw new Error("Generated Nitro Worker entrypoint not found: " + JSON.stringify(candidates));
+          config.main = path.relative(path.resolve(".output/server"), entry).split(path.sep).join("/");
+          const bucket = (config.r2_buckets || []).some(item => item.binding === "MEDIA_BUCKET" && item.bucket_name === "resofit-cdn");
+          if (!bucket) throw new Error("Generated app Worker config is missing the existing MEDIA_BUCKET -> resofit-cdn binding");
           delete config.routes;
           delete config.route;
           config.name = "shopb2k";
           fs.writeFileSync(target, JSON.stringify(config, null, 2));
-          console.log("Prepared shopb2k app Worker config without media route takeover.");
+          console.log("Prepared shopb2k app Worker config:", JSON.stringify({ main: config.main, r2_bucket: "resofit-cdn", routes_removed: true }));
           NODE
-          npx --yes wrangler@4 deploy --config .wrangler/deploy/config-no-routes.json --name shopb2k
+          npx --yes wrangler@4 deploy --config .output/server/wrangler-no-routes.json --name shopb2k
