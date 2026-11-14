@@ -126,7 +126,7 @@ jobs:
           test "$MISSING_CODE" = "404" || { echo "::error::Isolated R2 object remains after cleanup: HTTP $MISSING_CODE"; exit 1; }
           echo "PASS: isolated R2 Worker PUT, range GET, DELETE and missing-object read-back verified."
 
-      - name: Deploy dedicated production upload gateway
+      - name: Deploy dedicated production R2 media and upload gateway
         if: success()
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.SHOPB2K_WORKERS_DEPLOY_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
@@ -154,17 +154,25 @@ jobs:
           HEALTH_CODE="$(curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --output /tmp/r2-production-health.json --write-out '%{http_code}' "$BASE_URL/health")"
           test "$HEALTH_CODE" = "200" || { cat /tmp/r2-production-health.json; echo "::error::Production upload health failed: HTTP $HEALTH_CODE"; exit 1; }
           jq -e '.ok == true and .provider == "cloudflare_r2" and .bucket_binding_ready == true' /tmp/r2-production-health.json >/dev/null
+          CONTENT_HEALTH_CODE="$(curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --output /tmp/r2-content-health.json --write-out '%{http_code}' 'https://content.resofit.fit/health')"
+          test "$CONTENT_HEALTH_CODE" = "200" || { cat /tmp/r2-content-health.json; echo "::error::Production content CDN health failed: HTTP $CONTENT_HEALTH_CODE"; exit 1; }
+          jq -e '.ok == true and .provider == "cloudflare_r2" and .bucket_binding_ready == true' /tmp/r2-content-health.json >/dev/null
           UPLOAD_CODE="$(curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --request POST --header "Authorization: Bearer $R2_WRITE_TOKEN" --header 'Content-Type: text/plain' --header 'Cache-Control: no-store' --data-binary @/tmp/r2-production-payload.txt --output /tmp/r2-production-upload.json --write-out '%{http_code}' "$UPLOAD_URL")"
           test "$UPLOAD_CODE" = "200" || { cat /tmp/r2-production-upload.json; echo "::error::Production R2 upload failed: HTTP $UPLOAD_CODE"; exit 1; }
           jq -e '.ok == true' /tmp/r2-production-upload.json >/dev/null
           READ_CODE="$(curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --header 'Cache-Control: no-cache' --output /tmp/r2-production-readback.txt --write-out '%{http_code}' "$PUBLIC_URL")"
           test "$READ_CODE" = "200" || { echo "::error::Production media CDN read-back failed: HTTP $READ_CODE"; exit 1; }
           cmp -s /tmp/r2-production-payload.txt /tmp/r2-production-readback.txt || { echo "::error::Production media CDN read-back bytes differ"; exit 1; }
+          CONTENT_READ_CODE="$(curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --header 'Cache-Control: no-cache' --output /tmp/r2-content-readback.txt --write-out '%{http_code}' "https://content.resofit.fit/$KEY")"
+          test "$CONTENT_READ_CODE" = "200" || { echo "::error::Production content CDN read-back failed: HTTP $CONTENT_READ_CODE"; exit 1; }
+          cmp -s /tmp/r2-production-payload.txt /tmp/r2-content-readback.txt || { echo "::error::Production content CDN read-back bytes differ"; exit 1; }
           DELETE_CODE="$(curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --request DELETE --header "Authorization: Bearer $R2_WRITE_TOKEN" --output /tmp/r2-production-delete.json --write-out '%{http_code}' "$UPLOAD_URL")"
           test "$DELETE_CODE" = "200" || { cat /tmp/r2-production-delete.json; echo "::error::Production R2 cleanup failed: HTTP $DELETE_CODE"; exit 1; }
           MISSING_CODE="$(curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --header 'Cache-Control: no-cache' --output /dev/null --write-out '%{http_code}' "$PUBLIC_URL")"
           test "$MISSING_CODE" = "404" || { echo "::error::Production R2 smoke object remains after cleanup: HTTP $MISSING_CODE"; exit 1; }
-          echo "PASS: upload.resofit.fit -> resofit-cdn -> media.resofit.fit write/read/delete verified."
+          CONTENT_MISSING_CODE="$(curl --silent --show-error --user-agent 'ResoFit-R2-Smoke/1.0' --header 'Cache-Control: no-cache' --output /dev/null --write-out '%{http_code}' "https://content.resofit.fit/$KEY")"
+          test "$CONTENT_MISSING_CODE" = "404" || { echo "::error::Production content CDN smoke object remains after cleanup: HTTP $CONTENT_MISSING_CODE"; exit 1; }
+          echo "PASS: upload.resofit.fit -> resofit-cdn -> media.resofit.fit and content.resofit.fit write/read/delete verified."
 
       - name: Publish live R2 verification status
         if: always()
