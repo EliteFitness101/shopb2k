@@ -88,6 +88,18 @@ function Shop() {
             Every piece spec'd, tested, and shipped from our Lagos workshop. Prices in ₦ with ≈USD
             shown. Shipping calculated at secure checkout.
           </p>
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <Link
+              to="/shop/collection/$slug"
+              params={{ slug: "elite-creator-fitness" }}
+              className="inline-flex min-h-12 items-center justify-center rounded-full bg-gold px-6 text-xs font-semibold uppercase tracking-widest text-gold-foreground transition-colors hover:bg-gold/90"
+            >
+              Explore verified creator listings
+            </Link>
+            <span className="text-xs text-muted-foreground">
+              Supplier link-outs · ResoFit checkout not enabled
+            </span>
+          </div>
         </div>
       </section>
 
