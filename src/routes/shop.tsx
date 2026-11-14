@@ -22,8 +22,6 @@ import { track } from "@/lib/tracking";
 
 type SortKey = "featured" | "newest" | "price_asc" | "price_desc";
 
-const SHOP_URL = "https://resofit.fit/shop";
-
 export const Route = createFileRoute("/shop")({
   loader: async () => {
     try {
@@ -36,23 +34,26 @@ export const Route = createFileRoute("/shop")({
       return { products: null };
     }
   },
-  head: () => ({
-    meta: [
-      { title: "ResoFit Shop | Free Meal Plans, Coaching & Fitness Gear" },
-      {
-        name: "description",
-        content: "Get the free NaijaFit 7-day Nigerian meal plan, start a 7-day ResoFit Personal Trainer trial, and explore digital wellness products and fitness equipment. Instant access to eligible digital offers.",
-      },
-      { property: "og:title", content: "ResoFit Shop | Free Meal Plans, Coaching & Fitness Gear" },
-      {
-        property: "og:description",
-        content: "Free NaijaFit meal plan, a 7-day Personal Trainer trial, digital wellness products and fitness equipment from ResoFit.",
-      },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: SHOP_URL },
-    ],
-    links: [{ rel: "canonical", href: SHOP_URL }],
-  }),
+  head: ({ matches }) => {
+    const pathname = matches.at(-1)?.pathname ?? "/shop";
+    const canonicalUrl = new URL(pathname, "https://www.resofit.fit").toString();
+    return {
+      meta: [
+        { title: "ResoFit Shop | Free Meal Plans, Coaching & Fitness Gear" },
+        {
+          name: "description",
+          content: "Get the free NaijaFit 7-day Nigerian meal plan, start a 7-day ResoFit Personal Trainer trial, and explore digital wellness products and fitness equipment. Instant access to eligible digital offers.",
+        },
+        { property: "og:title", content: "ResoFit Shop | Free Meal Plans, Coaching & Fitness Gear" },
+        {
+          property: "og:description",
+          content: "Free NaijaFit meal plan, a 7-day Personal Trainer trial, digital wellness products and fitness equipment from ResoFit.",
+        },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonicalUrl },
+      ],
+    };
+  },
   validateSearch: (s: { q?: string; type?: string; vendor?: string; sort?: string }) => ({
     q: typeof s.q === "string" ? s.q : undefined,
     type: typeof s.type === "string" ? (s.type as string) : undefined,
