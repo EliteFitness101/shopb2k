@@ -68,8 +68,8 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.SHOPB2K_WORKERS_DEPLOY_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           set -euo pipefail
-          code="$(curl --silent --show-error -o /tmp/workers-subdomain.json -w '%{http_code}' \\
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \\
+          code="$(curl --silent --show-error -o /tmp/workers-subdomain.json -w '%{http_code}' \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain")"
           test "$code" = "200" || { echo "::error::Unable to resolve the account workers.dev subdomain (HTTP $code). No production route will be changed."; exit 1; }
           subdomain="$(jq -r '.result.subdomain // empty' /tmp/workers-subdomain.json)"
