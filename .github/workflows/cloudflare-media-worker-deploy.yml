@@ -116,9 +116,24 @@ jobs:
             const url = baseUrl + "/" + key.split("/").map(encodeURIComponent).join("/");
             const auth = { Authorization: "Bearer " + token };
             console.log("Testing isolated Worker:", baseUrl);
-            const healthResponse = await fetch(baseUrl + "/health");
-            const health = await healthResponse.json();
-            console.log("R2 health:", JSON.stringify(health));
+            const healthResponse = await fetch(baseUrl + "/health", { headers: { Accept: "application/json" } });
+            const healthText = await healthResponse.text();
+            const contentType = healthResponse.headers.get("content-type") || "(missing)";
+            let health;
+            try {
+              health = JSON.parse(healthText);
+            } catch {
+              console.error("Health response was not JSON:", JSON.stringify({
+                status: healthResponse.status,
+                statusText: healthResponse.statusText,
+                contentType,
+                server: healthResponse.headers.get("server"),
+                cfRay: healthResponse.headers.get("cf-ray"),
+                bodyPrefix: healthText.slice(0, 800)
+              }));
+              throw new Error("Isolated Worker /health did not return JSON");
+            }
+            console.log("R2 health:", JSON.stringify({ status: healthResponse.status, contentType, body: health }));
             if (!healthResponse.ok || health.bucket_binding_ready !== true) throw new Error("R2 primary bucket binding is not ready");
 
             const upload = await fetch(url, { method: "PUT", headers: { ...auth, "Content-Type": "text/plain" }, body: payload });
