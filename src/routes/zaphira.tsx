@@ -216,13 +216,29 @@ function ZaphiraPage() {
                 </div>
                 <div className="w-full rounded-3xl border border-[#D4AF37]/40 bg-black/35 p-6">
                   <div className="relative mb-5 overflow-hidden rounded-2xl border border-[#D4AF37]/50 bg-black/50 shadow-xl shadow-rose-950/30">
-                    <img
-                      src="https://www.dropbox.com/scl/fi/ckd5xzkvlknyy1h24l23q/3567EF97-443D-4312-8378-38D42FBDD09B.png?rlkey=r46zu4ydoxrcyxmue5l2b4wv6&raw=1"
-                      alt="Zaphira (MsZap) — official BIGO live-room cover"
-                      className="aspect-[4/3] w-full object-cover object-center"
-                      loading="eager"
-                      fetchPriority="high"
-                    />
+                    <div className="grid aspect-[4/3] grid-cols-[1.2fr_.8fr] gap-1">
+                      <img
+                        src="https://www.dropbox.com/scl/fi/ckd5xzkvlknyy1h24l23q/3567EF97-443D-4312-8378-38D42FBDD09B.png?rlkey=r46zu4ydoxrcyxmue5l2b4wv6&raw=1"
+                        alt="Zaphira (MsZap) — official BIGO live-room cover"
+                        className="h-full w-full object-cover object-center"
+                        loading="eager"
+                        fetchPriority="high"
+                      />
+                      <div className="grid grid-rows-2 gap-1">
+                        <img
+                          src="https://www.dropbox.com/scl/fi/7vfpdt9stjk7t90443x9c/7B99CCD7-49AB-4783-9905-539B6A3E7A95.png?rlkey=7tixt3w7tkfu6pktyyelkdb8i&raw=1"
+                          alt="MsZap creator cover image"
+                          className="h-full w-full object-cover object-center"
+                          loading="lazy"
+                        />
+                        <img
+                          src="https://www.dropbox.com/scl/fi/g9x6hg41b5jpux8s5bl9n/2F3F2D49-8B19-4502-8E42-E0E948AE5F0D.png?rlkey=yxmpfqdxl19s7azrt9g3uzw8k&raw=1"
+                          alt="MsZap ResoFlex partner cover image"
+                          className="h-full w-full object-cover object-center"
+                          loading="lazy"
+                        />
+                      </div>
+                    </div>
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent px-4 pb-3 pt-10 text-left">
                       <span className="inline-flex rounded-full border border-[#D4AF37]/60 bg-black/55 px-3 py-1 text-[10px] font-bold uppercase tracking-[.18em] text-[#FDE68A]">MsZap · Official live room</span>
                     </div>
