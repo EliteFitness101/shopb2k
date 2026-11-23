@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ProductImage } from "@/components/ProductImage";
 import { RESOFIT_CATALOG_URL } from "@/lib/shopify";
+import { withAttribution } from "@/lib/attribution";
+import { track } from "@/lib/tracking";
 
 type PartnerProduct = { handle: string; title: string; body_html: string | null; variant_price: number; variant_inventory_qty: number; image_src: string | null; product_type: string; sku: string | null; fulfillment_mode: string };
 
@@ -24,7 +26,11 @@ async function loadPartnerProducts(): Promise<PartnerProduct[]> {
 const formatNgn = (amount: number) => new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(amount);
 
 const referral = "ZAPHIRA";
-const attribution = "utm_source=bigo&utm_medium=affiliate&ref=zaphira";
+const attribution = "ref=zaphira&utm_source=bigo&utm_medium=affiliate&utm_campaign=zaphira_partner&utm_content=mszap_storefront";
+const partnerHref = (path: string) => withAttribution(`${path}?${attribution}`);
+function trackPartnerProductClick(product: PartnerProduct) {
+  track("product_click", { sku: product.sku ?? product.handle, product_id: product.sku ?? product.handle, product_title: product.title, value: product.variant_price, currency: "NGN", partner_ref: "zaphira", funnel_origin: "zaphira_partner" });
+}
 
 const coaching = [
   {
@@ -281,7 +287,7 @@ function ZaphiraPage() {
           ) : (
             <div className="rounded-2xl border border-[#D4AF37]/20 p-8 text-center text-sm text-zinc-400">
               The live product feed is temporarily unavailable. Open the ResoFit shop to browse current listings.
-              <a href={`/shop?${attribution}`} className="mt-4 inline-block text-[#FDE68A] underline">Open ResoFit shop</a>
+              <a href={partnerHref("/shop")} className="mt-4 inline-block text-[#FDE68A] underline">Open ResoFit shop</a>
             </div>
           )}
         </div>
