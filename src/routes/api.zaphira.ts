@@ -9,7 +9,7 @@ const hmac = (key: Buffer | string, value: string) => createHmac("sha256", key).
 const encode = (value: string) => encodeURIComponent(value).replace(/[!'()*]/g, (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase());
 
 function xmlValues(xml: string, tag: string) {
-  return [...xml.matchAll(new RegExp("<" + tag + ">([\\s\\S]*?)</" + tag + ">", "g"))].map((m) =>
+  return [...xml.matchAll(new RegExp("<" + tag + ">([\s\S]*?)</" + tag + ">", "g"))].map((m) =>
     m[1].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'"),
   );
 }
@@ -28,14 +28,14 @@ async function listR2(prefix: string) {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([k, v]) => k + "=" + v).join("&");
   const now = new Date();
-  const amzDate = now.toISOString().replace(/[:-]|\\.\\d{3}/g, "");
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "");
   const date = amzDate.slice(0, 8);
   const payloadHash = sha256("");
-  const canonicalHeaders = "host:" + host + "\\n" + "x-amz-content-sha256:" + payloadHash + "\\n" + "x-amz-date:" + amzDate + "\\n";
+  const canonicalHeaders = "host:" + host + "\n" + "x-amz-content-sha256:" + payloadHash + "\n" + "x-amz-date:" + amzDate + "\n";
   const signedHeaders = "host;x-amz-content-sha256;x-amz-date";
-  const canonicalRequest = ["GET", path, query, canonicalHeaders, signedHeaders, payloadHash].join("\\n");
+  const canonicalRequest = ["GET", path, query, canonicalHeaders, signedHeaders, payloadHash].join("\n");
   const scope = date + "/" + REGION + "/" + SERVICE + "/aws4_request";
-  const stringToSign = ["AWS4-HMAC-SHA256", amzDate, scope, sha256(canonicalRequest)].join("\\n");
+  const stringToSign = ["AWS4-HMAC-SHA256", amzDate, scope, sha256(canonicalRequest)].join("\n");
   const kDate = hmac("AWS4" + secret, date);
   const kRegion = hmac(kDate, REGION);
   const kService = hmac(kRegion, SERVICE);
@@ -57,7 +57,7 @@ async function listR2(prefix: string) {
 }
 
 function parseJsonp(text: string) {
-  const match = text.match(/^jsonp\\w+\\(([\\s\\S]+?)\\);?\\s*$/);
+  const match = text.match(/^jsonp\w+\(([\s\S]+?)\);?\s*$/);
   if (!match) throw new Error("BIGO token response was not valid JSONP");
   return JSON.parse(match[1]);
 }
@@ -112,11 +112,11 @@ export const Route = createFileRoute("/api/zaphira")({
           }
           if (mode !== "media") return Response.json({ ok: false, error: "Unsupported mode" }, { status: 400 });
           const [clips, covers] = await Promise.all([listR2("partner/zaphira/clips/"), listR2("partner/zaphira/covers/")]);
-          const coverByBase = new Map(covers.map((item) => [item.key.split("/").pop()!.replace(/\\.(jpg|jpeg|png|webp)$/i, "").toLowerCase(), item]));
-          const media = clips.filter((item) => /\\.(mp4|webm|mov|m4v)$/i.test(item.key)).map((item) => {
-            const base = item.key.split("/").pop()!.replace(/\\.(mp4|webm|mov|m4v)$/i, "").toLowerCase();
+          const coverByBase = new Map(covers.map((item) => [item.key.split("/").pop()!.replace(/\.(jpg|jpeg|png|webp)$/i, "").toLowerCase(), item]));
+          const media = clips.filter((item) => /\.(mp4|webm|mov|m4v)$/i.test(item.key)).map((item) => {
+            const base = item.key.split("/").pop()!.replace(/\.(mp4|webm|mov|m4v)$/i, "").toLowerCase();
             const cover = coverByBase.get(base) || covers.find((candidate) => candidate.key.split("/").pop()!.toLowerCase().startsWith(base));
-            const publicBase = (process.env.R2_PUBLIC_BASE_URL || "https://media.resofit.fit").replace(/\\/$/, "");
+            const publicBase = (process.env.R2_PUBLIC_BASE_URL || "https://media.resofit.fit").replace(/\/$/, "");
             const publicUrl = (key: string) => publicBase + "/" + key.split("/").map(encodeURIComponent).join("/");
             return { key: item.key, url: publicUrl(item.key), poster: cover ? publicUrl(cover.key) : null, size: item.size, lastModified: item.lastModified };
           });
