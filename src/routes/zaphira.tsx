@@ -5,7 +5,8 @@ import { RESOFIT_CATALOG_URL } from "@/lib/shopify";
 import { withAttribution } from "@/lib/attribution";
 import { track } from "@/lib/tracking";
 
-type ZaphiraClip = { key: string; url: string; poster: string | null; size: number; lastModified: string | null };\ntype PartnerProduct = { handle: string; title: string; body_html: string | null; variant_price: number; variant_inventory_qty: number; image_src: string | null; product_type: string | null; sku: string | null; fulfillment_mode: string | null };
+type ZaphiraClip = { key: string; url: string; poster: string | null; size: number; lastModified: string | null };
+type PartnerProduct = { handle: string; title: string; body_html: string | null; variant_price: number; variant_inventory_qty: number; image_src: string | null; product_type: string | null; sku: string | null; fulfillment_mode: string | null };
 
 const recommendedHandles = ["25-steel-boned-latex-waist-shaper", "fitness-evolution-guide", "heritage-meal-plan", "90-day-body-transformation-kit", "b2k-001", "b2k-002", "b2k-003", "b2k-004", "b2k-elite-90-day-vip-bundle-subscriptions", "b2k-elite-90-day-vip-bundle", "buttgrowthb2k™-ultimate-curves-kit", "resoflex-hips-booty-oil", "glutes-sculpt-kit", "resoflex-sculpt-long-sleeve-biker-set"];
 
@@ -107,9 +108,21 @@ export const Route = createFileRoute("/zaphira")({
 
 function ZaphiraPage() {
   const { recommendedProducts } = Route.useLoaderData();
-  const [copied, setCopied] = useState(false);\n  const [clips, setClips] = useState<ZaphiraClip[]>([]);\n  const [liveState, setLiveState] = useState<"checking" | "live" | "offline" | "unknown">("checking");
+  const [copied, setCopied] = useState(false);
+  const [clips, setClips] = useState<ZaphiraClip[]>([]);
+  const [liveState, setLiveState] = useState<"checking" | "live" | "offline" | "unknown">("checking");
 
-  useEffect(() => {\n    let active = true;\n    const loadMedia = async () => { try { const response = await fetch("/api/zaphira?mode=media", { cache: "no-store" }); const data = await response.json(); if (active && data.ok && Array.isArray(data.clips)) setClips(data.clips); } catch { /* retain portrait fallback */ } };\n    const loadLive = async () => { try { const response = await fetch("/api/zaphira?mode=live", { cache: "no-store" }); const data = await response.json(); if (active) setLiveState(data.ok ? (data.isLive ? "live" : "offline") : "unknown"); } catch { if (active) setLiveState("unknown"); } };\n    void loadMedia(); void loadLive();\n    const liveTimer = window.setInterval(loadLive, 45000);\n    const mediaTimer = window.setInterval(loadMedia, 300000);\n    return () => { active = false; window.clearInterval(liveTimer); window.clearInterval(mediaTimer); };\n  }, []);\n\n  async function copyReferral() {
+  useEffect(() => {
+    let active = true;
+    const loadMedia = async () => { try { const response = await fetch("/api/zaphira?mode=media", { cache: "no-store" }); const data = await response.json(); if (active && data.ok && Array.isArray(data.clips)) setClips(data.clips); } catch { /* retain portrait fallback */ } };
+    const loadLive = async () => { try { const response = await fetch("/api/zaphira?mode=live", { cache: "no-store" }); const data = await response.json(); if (active) setLiveState(data.ok ? (data.isLive ? "live" : "offline") : "unknown"); } catch { if (active) setLiveState("unknown"); } };
+    void loadMedia(); void loadLive();
+    const liveTimer = window.setInterval(loadLive, 45000);
+    const mediaTimer = window.setInterval(loadMedia, 300000);
+    return () => { active = false; window.clearInterval(liveTimer); window.clearInterval(mediaTimer); };
+  }, []);
+
+  async function copyReferral() {
     try {
       await navigator.clipboard.writeText(referral);
       setCopied(true);
