@@ -207,17 +207,29 @@ function ZaphiraPage() {
           </div>
           <div className="mx-auto w-full max-w-sm">
             <div className="rounded-[2rem] bg-gradient-to-br from-[#FDE68A] via-[#BE123C] to-[#B48A1E] p-1.5 shadow-2xl shadow-rose-950/40">
-              <div className="flex aspect-[4/5] flex-col items-center justify-between rounded-[1.7rem] bg-gradient-to-b from-[#4C0519] via-[#17060c] to-[#09090B] p-7 text-center">
+              <div className="flex min-h-[28rem] flex-col items-center justify-between rounded-[1.7rem] bg-gradient-to-b from-[#4C0519] via-[#17060c] to-[#09090B] p-7 text-center">
                 <div className="flex w-full justify-between text-[10px] font-bold uppercase tracking-widest text-[#FDE68A]">
-                  <span>VIP partner</span><span>BIGO LIVE</span>
+                  <span>MsZap · Official room</span><span>BIGO LIVE</span>
                 </div>
-                <div className="relative flex h-56 w-56 items-center justify-center rounded-full border border-dashed border-[#D4AF37]/60">
-                  <div className="absolute h-44 w-44 rounded-full border border-rose-500/40" />
-                  <span className="font-serif text-8xl text-[#D4AF37]">Z</span>
+                <div className="w-full rounded-3xl border border-[#D4AF37]/40 bg-black/35 p-6">
+                  <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-[#D4AF37]/60 bg-rose-950/60">
+                    <span className="font-serif text-4xl text-[#FDE68A]">Z</span>
+                  </div>
+                  <p className="font-serif text-2xl font-bold text-white">Zaphira · MsZap</p>
+                  <p className="mt-2 text-xs leading-6 text-zinc-300">Open her BIGO room to watch the live session or the room content available from BIGO.</p>
+                  <a
+                    href="https://www.bigo.tv/sid/2922257558_155842428_1795452190?c=0&p=2&t=0&b=891792825&h=MsZap&mk=v2.hIc9gIFPi_3edGZE-3_j25duBQgAEXK3IQSnYOrWLY_nErcXIr1DOw"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#BE123C] to-[#881337] px-5 py-4 text-sm font-extrabold text-white shadow-lg shadow-rose-950/40 transition hover:brightness-110"
+                    data-testid="zaphira-bigo-live-link"
+                  >
+                    Watch MsZap on BIGO <span aria-hidden="true">↗</span>
+                  </a>
                 </div>
                 <div className="w-full rounded-2xl border border-[#D4AF37]/30 bg-black/40 p-4">
-                  <p className="font-serif text-xl font-bold">Zaphira · MsZap</p>
-                  <p className="mt-1 text-xs text-[#FDE68A]">ResoFlex Elite Partner</p>
+                  <p className="text-xs font-bold text-[#FDE68A]">ResoFlex™ Elite Partner</p>
+                  <p className="mt-1 text-[10px] text-zinc-400">BIGO room link supplied for MsZap</p>
                 </div>
               </div>
             </div>
