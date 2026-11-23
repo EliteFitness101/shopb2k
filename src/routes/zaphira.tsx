@@ -271,7 +271,7 @@ function ZaphiraPage() {
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {recommendedProducts.map((product) => (
                 <article key={product.handle} className="overflow-hidden rounded-3xl border border-[#D4AF37]/20 bg-white/[.04]">
-                  <a href={`https://shop.resofit.fit/product/${product.handle}?${attribution}`} className="block">
+                  <a href={partnerHref(`/product/${product.handle}`)} onClick={() => trackPartnerProductClick(product)} className="block">
                     <ProductImage src={product.image_src} title={product.title} category={product.product_type} aspect="square" fit="contain" priority />
                   </a>
                   <div className="p-5">
@@ -279,7 +279,7 @@ function ZaphiraPage() {
                     <h3 className="mt-2 text-lg font-bold">{product.title}</h3>
                     <p className="mt-3 text-xl font-extrabold text-[#FDE68A]">{formatNgn(product.variant_price)}</p>
                     <p className="mt-1 text-[11px] text-zinc-500">{product.fulfillment_mode === "digital" ? "Digital delivery · Paystack checkout" : "Inventory verified · Paystack checkout"}</p>
-                    <a href={`https://shop.resofit.fit/product/${product.handle}?${attribution}`} className="mt-5 block rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B48A1E] px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wider text-black">View product & checkout</a>
+                    <a href={partnerHref(`/product/${product.handle}`)} onClick={() => trackPartnerProductClick(product)} className="mt-5 block rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B48A1E] px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wider text-black">View product & checkout</a>
                   </div>
                 </article>
               ))}
@@ -304,7 +304,7 @@ function ZaphiraPage() {
               supplied by the canonical store rather than duplicated on this partner page.
             </p>
           </div>
-          <a href={`/shop?${attribution}`} className="rounded-xl border border-[#D4AF37]/50 px-7 py-4 text-center text-sm font-bold text-[#FDE68A]">
+          <a href={partnerHref("/shop")} className="rounded-xl border border-[#D4AF37]/50 px-7 py-4 text-center text-sm font-bold text-[#FDE68A]">
             Browse ResoFit shop →
           </a>
         </div>
