@@ -277,7 +277,7 @@ function ZaphiraPage() {
               <h2 className="mt-3 font-serif text-3xl font-bold sm:text-4xl">MsZap’s recommended <span className="text-[#D4AF37]">training essentials</span></h2>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-400">Published Shopify products, current prices and product imagery. Select an item to view its live product page and Shopify checkout.</p>
             </div>
-            <a href={`https://shop.resofit.fit?${attribution}`} className="rounded-full border border-[#D4AF37]/50 px-5 py-3 text-xs font-bold uppercase tracking-wider text-[#FDE68A]">View all MsZap picks</a>
+            <a href={partnerHref("/collections/mszap-recommended-essentials")} className="rounded-full border border-[#D4AF37]/50 px-5 py-3 text-xs font-bold uppercase tracking-wider text-[#FDE68A]">View all MsZap picks</a>
           </div>
           {recommendedProducts.length > 0 ? (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
