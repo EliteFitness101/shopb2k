@@ -27,7 +27,7 @@ const formatNgn = (amount: number) => new Intl.NumberFormat("en-NG", { style: "c
 
 const referral = "ZAPHIRA";
 const attribution = "ref=zaphira&utm_source=bigo&utm_medium=affiliate&utm_campaign=zaphira_partner&utm_content=mszap_storefront";
-const partnerHref = (path: string) => withAttribution(`${path}?${attribution}`);
+const partnerHref = (path: string) => withAttribution(`https://shop.resofit.fit${path}?${attribution}`);
 function trackPartnerProductClick(product: PartnerProduct) {
   track("product_click", { sku: product.sku ?? product.handle, product_id: product.sku ?? product.handle, product_title: product.title, value: product.variant_price, currency: "NGN", partner_ref: "zaphira", funnel_origin: "zaphira_partner" });
 }
