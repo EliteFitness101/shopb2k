@@ -1,5 +1,27 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { ProductImage } from "@/components/ProductImage";
+import { RESOFIT_CATALOG_URL } from "@/lib/shopify";
+
+type PartnerProduct = { handle: string; title: string; body_html: string | null; variant_price: number; variant_inventory_qty: number; image_src: string | null; product_type: string; sku: string | null };
+
+const recommendedHandles = ["25-steel-boned-latex-waist-shaper", "resoflex-fit-bands", "resoflex-pro-foam-roller-mat-recovery-set"];
+
+async function loadPartnerProducts(): Promise<PartnerProduct[]> {
+  try {
+    const url = new URL(RESOFIT_CATALOG_URL);
+    url.searchParams.set("limit", "200");
+    const response = await fetch(url.toString(), { cache: "no-store" });
+    if (!response.ok) return [];
+    const payload = await response.json() as { data?: PartnerProduct[] };
+    const products = Array.isArray(payload.data) ? payload.data : [];
+    return recommendedHandles.map((handle) => products.find((product) => product.handle === handle && product.variant_inventory_qty > 0)).filter((product): product is PartnerProduct => Boolean(product));
+  } catch {
+    return [];
+  }
+}
+
+const formatNgn = (amount: number) => new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(amount);
 
 const referral = "ZAPHIRA";
 const attribution = "utm_source=bigo&utm_medium=affiliate&ref=zaphira";
@@ -9,7 +31,7 @@ const coaching = [
     tier: "01 · SPRINT",
     name: "Hourglass Glow 30-Day Live Sprint",
     duration: "30 days",
-    price: "₦45,000",
+    price: "Enquire for confirmed pricing",
     description:
       "A guided group coaching sprint with live workouts, waist and glute routines, and practical nutrition accountability.",
     features: [
@@ -23,7 +45,7 @@ const coaching = [
     tier: "02 · PRIVATE",
     name: "MsZap VIP 1-on-1 Live Coaching",
     duration: "Monthly",
-    price: "₦135,000",
+    price: "Enquire for confirmed pricing",
     description:
       "A private coaching relationship with direct live check-ins and a structured personal routine.",
     features: [
@@ -57,6 +79,7 @@ function whatsappRequest(name: string) {
 }
 
 export const Route = createFileRoute("/zaphira")({
+  loader: async () => ({ recommendedProducts: await loadPartnerProducts() }),
   head: () => ({
     meta: [
       { title: "Zaphira (MsZap) | ResoFlex Elite Partner — ResoFit" },
@@ -77,6 +100,7 @@ export const Route = createFileRoute("/zaphira")({
 });
 
 function ZaphiraPage() {
+  const { recommendedProducts } = Route.useLoaderData();
   const [copied, setCopied] = useState(false);
 
   async function copyReferral() {
@@ -164,7 +188,7 @@ function ZaphiraPage() {
             </div>
             <div className="mt-10 grid max-w-xl grid-cols-3 gap-3">
               {[
-                ["25-Bone", "Waist shaper feature"],
+                ["25 Steel-Boned", "Waist shaper option"],
                 ["Live 1:1", "Private coaching"],
                 ["ZAPHIRA", "Partner referral"],
               ].map(([value, label]) => (
@@ -224,6 +248,42 @@ function ZaphiraPage() {
               </a>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section id="recommended-products" className="border-y border-[#D4AF37]/15 bg-[#10090B]">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+          <div className="mb-9 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[.25em] text-[#D4AF37]">Live ResoFit catalogue</p>
+              <h2 className="mt-3 font-serif text-3xl font-bold sm:text-4xl">MsZap’s recommended <span className="text-[#D4AF37]">training essentials</span></h2>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-400">Live product records, current catalogue pricing, inventory and product imagery. Select an item to view its full details and secure ResoFit checkout.</p>
+            </div>
+            <a href={`/shop?${attribution}`} className="rounded-full border border-[#D4AF37]/50 px-5 py-3 text-xs font-bold uppercase tracking-wider text-[#FDE68A]">Browse full shop</a>
+          </div>
+          {recommendedProducts.length > 0 ? (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {recommendedProducts.map((product) => (
+                <article key={product.handle} className="overflow-hidden rounded-3xl border border-[#D4AF37]/20 bg-white/[.04]">
+                  <a href={`/product/${product.handle}?${attribution}`} className="block">
+                    <ProductImage src={product.image_src} title={product.title} category={product.product_type} aspect="square" fit="contain" priority />
+                  </a>
+                  <div className="p-5">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">{product.product_type}</p>
+                    <h3 className="mt-2 text-lg font-bold">{product.title}</h3>
+                    <p className="mt-3 text-xl font-extrabold text-[#FDE68A]">{formatNgn(product.variant_price)}</p>
+                    <p className="mt-1 text-[11px] text-zinc-500">Catalogue inventory available · Live ResoFit listing</p>
+                    <a href={`/product/${product.handle}?${attribution}`} className="mt-5 block rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B48A1E] px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wider text-black">View product & checkout</a>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-[#D4AF37]/20 p-8 text-center text-sm text-zinc-400">
+              The live product feed is temporarily unavailable. Open the ResoFit shop to browse current listings.
+              <a href={`/shop?${attribution}`} className="mt-4 inline-block text-[#FDE68A] underline">Open ResoFit shop</a>
+            </div>
+          )}
         </div>
       </section>
 
