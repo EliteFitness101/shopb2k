@@ -76,12 +76,14 @@ export function captureAttributionFromUrl() {
 /** Append persisted attribution params to a URL without clobbering existing values. */
 export function withAttribution(targetUrl: string): string {
   try {
-    const url = new URL(targetUrl);
+    const isAbsolute = /^[a-z][a-z0-9+.-]*:\/\//i.test(targetUrl);
+    const base = typeof window !== "undefined" ? window.location.origin : "https://www.resofit.fit";
+    const url = new URL(targetUrl, base);
     const attr = getAttribution();
     for (const [key, value] of Object.entries(attr)) {
       if (value && !url.searchParams.has(key)) url.searchParams.set(key, value);
     }
-    return url.toString();
+    return isAbsolute ? url.toString() : `${url.pathname}${url.search}${url.hash}`;
   } catch {
     return targetUrl;
   }
