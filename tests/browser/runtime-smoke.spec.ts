@@ -220,5 +220,5 @@ test("Shopify product detail exposes the native add-to-cart checkout path", asyn
   expect(response, "Shopify product page should return an HTTP response").not.toBeNull();
   expect(response!.status(), "Shopify product page should not return a 4xx/5xx response").toBeLessThan(400);
   await expect(page.getByRole("heading", { name: "25 Steel Boned Latex Waist Shaper" })).toBeVisible({ timeout: 15000 });
-  await expect(page.getByRole("button", { name: /Add to cart/i })).toBeVisible({ timeout: 15000 });
+  await expect(page.getByTestId("standalone-add-to-cart")).toBeVisible({ timeout: 15000 });
 });
