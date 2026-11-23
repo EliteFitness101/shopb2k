@@ -1,0 +1,1 @@
+Production browser verification trigger for the Zaphira partner storefront.
