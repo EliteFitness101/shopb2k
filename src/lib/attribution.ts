@@ -7,6 +7,7 @@ const STORAGE_KEY = "resofit:attribution:v2";
 const COOKIE_KEY = "resofit_attribution_v2";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 90;
 const TRACKED_PARAMS = [
+  "ref",
   "rsid",
   "ttclid",
   "funnel_origin",
