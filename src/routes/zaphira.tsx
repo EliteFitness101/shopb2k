@@ -237,6 +237,36 @@ function ZaphiraPage() {
         </div>
       </section>
 
+      <section id="mszap-gallery" className="mx-auto max-w-6xl px-4 pb-8 sm:px-6">
+        <div className="mb-7 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[.25em] text-[#D4AF37]">MsZap · ResoFlex™ Elite Partner</p>
+            <h2 className="mt-2 font-serif text-2xl font-bold text-white sm:text-3xl">The MsZap edit</h2>
+          </div>
+          <p className="max-w-md text-sm leading-6 text-zinc-400">A closer look at your creator partner and live-coaching experience.</p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {[
+            { src: "https://www.dropbox.com/scl/fi/ckd5xzkvlknyy1h24l23q/3567EF97-443D-4312-8378-38D42FBDD09B.png?rlkey=r46zu4ydoxrcyxmue5l2b4wv6&raw=1", alt: "MsZap portrait, ResoFlex Elite Partner" },
+            { src: "https://www.dropbox.com/scl/fi/7vfpdt9stjk7t90443x9c/7B99CCD7-49AB-4783-9905-539B6A3E7A95.png?rlkey=7tixt3w7tkfu6pktyyelkdb8i&raw=1", alt: "MsZap creator portrait" },
+            { src: "https://www.dropbox.com/scl/fi/g9x6hg41b5jpux8s5bl9n/2F3F2D49-8B19-4502-8E42-E0E948AE5F0D.png?rlkey=yxmpfqdxl19s7azrt9g3uzw8k&raw=1", alt: "MsZap ResoFlex partner portrait" },
+          ].map((image, index) => (
+            <figure key={image.src} className="group overflow-hidden rounded-3xl border border-[#D4AF37]/25 bg-[#090909] shadow-[0_18px_60px_rgba(0,0,0,.35)]">
+              <img
+                src={image.src}
+                alt={image.alt}
+                loading={index === 0 ? "eager" : "lazy"}
+                fetchPriority={index === 0 ? "high" : "auto"}
+                className="aspect-[3/4] w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+              />
+              <figcaption className="border-t border-white/10 px-4 py-3 text-xs font-semibold tracking-wide text-[#FDE68A]">
+                {index === 0 ? "THE PARTNER" : index === 1 ? "THE CREATOR" : "THE EXPERIENCE"}
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>
+
       <section id="coaching" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
         <div className="mb-10 max-w-2xl">
           <p className="text-xs font-bold uppercase tracking-[.25em] text-[#D4AF37]">B2K-ELITE aligned</p>
