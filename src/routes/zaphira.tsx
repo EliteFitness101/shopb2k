@@ -7,7 +7,7 @@ import { track } from "@/lib/tracking";
 
 type PartnerProduct = { handle: string; title: string; body_html: string | null; variant_price: number; variant_inventory_qty: number; image_src: string | null; product_type: string | null; sku: string | null; fulfillment_mode: string | null };
 
-const recommendedHandles = ["25-steel-boned-latex-waist-shaper", "fitness-evolution-guide", "heritage-meal-plan", "90-day-body-transformation-kit", "b2k-001", "b2k-002", "b2k-003", "b2k-004", "buttgrowthb2k™-ultimate-curves-kit", "resoflex-hips-booty-oil", "glutes-sculpt-kit", "resoflex-sculpt-long-sleeve-biker-set"];
+const recommendedHandles = ["25-steel-boned-latex-waist-shaper", "fitness-evolution-guide", "heritage-meal-plan", "90-day-body-transformation-kit", "b2k-001", "b2k-002", "b2k-003", "b2k-004", "b2k-elite-90-day-vip-bundle-subscriptions", "b2k-elite-90-day-vip-bundle", "buttgrowthb2k™-ultimate-curves-kit", "resoflex-hips-booty-oil", "glutes-sculpt-kit", "resoflex-sculpt-long-sleeve-biker-set"];
 
 async function loadPartnerProducts(): Promise<PartnerProduct[]> {
   try {
