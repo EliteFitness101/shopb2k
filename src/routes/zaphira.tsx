@@ -99,6 +99,9 @@ export const Route = createFileRoute("/zaphira")({
         property: "og:description",
         content: "Live coaching enquiries and ResoFlex equipment, powered by ResoFit.",
       },
+      { property: "og:image", content: "https://www.dropbox.com/scl/fi/ckd5xzkvlknyy1h24l23q/3567EF97-443D-4312-8378-38D42FBDD09B.png?rlkey=r46zu4ydoxrcyxmue5l2b4wv6&raw=1" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://www.dropbox.com/scl/fi/ckd5xzkvlknyy1h24l23q/3567EF97-443D-4312-8378-38D42FBDD09B.png?rlkey=r46zu4ydoxrcyxmue5l2b4wv6&raw=1" },
     ],
     links: [{ rel: "canonical", href: "https://www.resofit.fit/zaphira" }],
   }),
@@ -212,8 +215,33 @@ function ZaphiraPage() {
                   <span>MsZap · Official room</span><span>BIGO LIVE</span>
                 </div>
                 <div className="w-full rounded-3xl border border-[#D4AF37]/40 bg-black/35 p-6">
-                  <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-[#D4AF37]/60 bg-rose-950/60">
-                    <span className="font-serif text-4xl text-[#FDE68A]">Z</span>
+                  <div className="relative mb-5 overflow-hidden rounded-2xl border border-[#D4AF37]/50 bg-black/50 shadow-xl shadow-rose-950/30">
+                    <div className="grid aspect-[4/3] grid-cols-[1.2fr_.8fr] gap-1">
+                      <img
+                        src="https://www.dropbox.com/scl/fi/ckd5xzkvlknyy1h24l23q/3567EF97-443D-4312-8378-38D42FBDD09B.png?rlkey=r46zu4ydoxrcyxmue5l2b4wv6&raw=1"
+                        alt="Zaphira (MsZap) — official BIGO live-room cover"
+                        className="h-full w-full object-cover object-center"
+                        loading="eager"
+                        fetchPriority="high"
+                      />
+                      <div className="grid grid-rows-2 gap-1">
+                        <img
+                          src="https://www.dropbox.com/scl/fi/7vfpdt9stjk7t90443x9c/7B99CCD7-49AB-4783-9905-539B6A3E7A95.png?rlkey=7tixt3w7tkfu6pktyyelkdb8i&raw=1"
+                          alt="MsZap creator cover image"
+                          className="h-full w-full object-cover object-center"
+                          loading="lazy"
+                        />
+                        <img
+                          src="https://www.dropbox.com/scl/fi/g9x6hg41b5jpux8s5bl9n/2F3F2D49-8B19-4502-8E42-E0E948AE5F0D.png?rlkey=yxmpfqdxl19s7azrt9g3uzw8k&raw=1"
+                          alt="MsZap ResoFlex partner cover image"
+                          className="h-full w-full object-cover object-center"
+                          loading="lazy"
+                        />
+                      </div>
+                    </div>
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent px-4 pb-3 pt-10 text-left">
+                      <span className="inline-flex rounded-full border border-[#D4AF37]/60 bg-black/55 px-3 py-1 text-[10px] font-bold uppercase tracking-[.18em] text-[#FDE68A]">MsZap · Official live room</span>
+                    </div>
                   </div>
                   <p className="font-serif text-2xl font-bold text-white">Zaphira · MsZap</p>
                   <p className="mt-2 text-xs leading-6 text-zinc-300">Open her BIGO room to watch the live session or the room content available from BIGO.</p>
