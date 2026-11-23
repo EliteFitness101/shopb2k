@@ -188,8 +188,8 @@ function ZaphiraPage() {
               <a href="#coaching" className="rounded-xl bg-gradient-to-r from-[#BE123C] to-[#881337] px-6 py-4 text-center text-sm font-bold text-white shadow-lg shadow-rose-950/40">
                 Explore live coaching
               </a>
-              <a href={`https://shop.resofit.fit?${attribution}`} className="rounded-xl border border-[#D4AF37]/50 bg-black/40 px-6 py-4 text-center text-sm font-bold text-[#FDE68A]">
-                Shop equipment & wellness
+              <a href={partnerHref("/collections/mszap-recommended-essentials")} className="rounded-xl border border-[#D4AF37]/50 bg-black/40 px-6 py-4 text-center text-sm font-bold text-[#FDE68A]">
+                Shop MsZap recommendations
               </a>
             </div>
             <div className="mt-10 grid max-w-xl grid-cols-3 gap-3">
@@ -311,13 +311,11 @@ function ZaphiraPage() {
             <p className="text-xs font-bold uppercase tracking-[.25em] text-[#D4AF37]">ResoFlex partner storefront</p>
             <h2 className="mt-3 font-serif text-3xl font-bold">Shop the equipment. Build your routine.</h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400">
-              Browse the live ResoFit catalogue for waist shapers, resistance equipment and
-              available wellness products. Product availability, prices and secure payment are
-              supplied by the canonical store rather than duplicated on this partner page.
+              Browse MsZap’s curated, published Shopify collection for verified products, current pricing, stock status and secure checkout. Your ZAPHIRA referral attribution is preserved when you continue to the store.
             </p>
           </div>
-          <a href={partnerHref("/shop")} className="rounded-xl border border-[#D4AF37]/50 px-7 py-4 text-center text-sm font-bold text-[#FDE68A]">
-            Browse ResoFit shop →
+          <a href={partnerHref("/collections/mszap-recommended-essentials")} className="rounded-xl border border-[#D4AF37]/50 px-7 py-4 text-center text-sm font-bold text-[#FDE68A]">
+            Shop MsZap recommendations →
           </a>
         </div>
       </section>
