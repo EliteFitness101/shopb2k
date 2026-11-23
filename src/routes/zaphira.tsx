@@ -291,7 +291,7 @@ function ZaphiraPage() {
                     <h3 className="mt-2 text-lg font-bold">{product.title}</h3>
                     <p className="mt-3 text-xl font-extrabold text-[#FDE68A]">{formatNgn(product.variant_price)}</p>
                     <p className="mt-1 text-[11px] text-zinc-500">{product.fulfillment_mode === "digital" ? "Digital delivery · Shopify checkout" : "Physical / hybrid fulfillment · Shopify checkout"}</p>
-                    <a href={partnerHref(`/product/${product.handle}`)} onClick={() => trackPartnerProductClick(product)} className="mt-5 block rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B48A1E] px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wider text-black">View product & checkout</a>
+                    <a href={partnerHref(`/products/${product.handle}`)} onClick={() => trackPartnerProductClick(product)} className="mt-5 block rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B48A1E] px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wider text-black">View product & checkout</a>
                   </div>
                 </article>
               ))}
