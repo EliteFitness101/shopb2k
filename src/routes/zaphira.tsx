@@ -5,7 +5,7 @@ import { RESOFIT_CATALOG_URL } from "@/lib/shopify";
 import { withAttribution } from "@/lib/attribution";
 import { track } from "@/lib/tracking";
 
-type PartnerProduct = { handle: string; title: string; body_html: string | null; variant_price: number; variant_inventory_qty: number; image_src: string | null; product_type: string; sku: string | null; fulfillment_mode: string };
+type PartnerProduct = { handle: string; title: string; body_html: string | null; variant_price: number; variant_inventory_qty: number; image_src: string | null; product_type: string | null; sku: string | null; fulfillment_mode: string | null };
 
 const recommendedHandles = ["25-steel-boned-latex-waist-shaper", "res-dig-reset", "fitness-evolution"];
 
@@ -272,7 +272,7 @@ function ZaphiraPage() {
               {recommendedProducts.map((product) => (
                 <article key={product.handle} className="overflow-hidden rounded-3xl border border-[#D4AF37]/20 bg-white/[.04]">
                   <a href={partnerHref(`/product/${product.handle}`)} onClick={() => trackPartnerProductClick(product)} className="block">
-                    <ProductImage src={product.image_src} title={product.title} category={product.product_type} aspect="square" fit="contain" priority />
+                    <ProductImage src={product.image_src} title={product.title} category={product.product_type ?? "Wellness"} aspect="square" fit="contain" priority />
                   </a>
                   <div className="p-5">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">{product.product_type}</p>
