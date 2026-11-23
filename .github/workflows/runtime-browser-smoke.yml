@@ -2,6 +2,8 @@ name: ResoFit deployed browser smoke
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [qa/zaphira-production-smoke]
   deployment_status:
   workflow_dispatch:
 permissions:
