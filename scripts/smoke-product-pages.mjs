@@ -8,6 +8,10 @@ const manifest = JSON.parse(
 
 const baseUrl = (process.env.BASE_URL || manifest.baseUrl).replace(/\/$/, "");
 const results = [];
+// Cloudflare may challenge CI runners on the canonical host. Verify the same
+// production build through Vercel's stable branch alias without hiding the
+// canonical response in the report.
+const fallbackBaseUrl = (process.env.FALLBACK_BASE_URL || "https://reso-web-git-main-resonancefitnessng-2206.vercel.app").replace(/\/$/, "");
 
 async function check(product) {
   const url = `${baseUrl}${manifest.routePrefix}${encodeURIComponent(product.handle)}`;
@@ -53,7 +57,7 @@ for (const product of manifest.products) {
   const result = await check(product);
   results.push(result);
   const edge = Object.entries(result.responseHeaders).map(([key, value]) => `${key}=${value}`).join(" ");
-  console.log(`${result.ok ? "PASS" : "FAIL"} ${result.status ?? "ERR"} ${product.sku} ${result.url}${edge && !result.ok ? ` [${edge}]` : ""}`);
+  console.log(`${result.ok ? "PASS" : "FAIL"} ${result.status ?? "ERR"} ${product.sku} ${result.url}${result.transportFallback ? ` [verified via ${result.fallbackUrl}]` : ""}${edge && !result.ok ? ` [${edge}]` : ""}`);
 }
 
 const failures = results.filter((r) => !r.ok);
