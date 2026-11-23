@@ -3,9 +3,9 @@ import { useState } from "react";
 import { ProductImage } from "@/components/ProductImage";
 import { RESOFIT_CATALOG_URL } from "@/lib/shopify";
 
-type PartnerProduct = { handle: string; title: string; body_html: string | null; variant_price: number; variant_inventory_qty: number; image_src: string | null; product_type: string; sku: string | null };
+type PartnerProduct = { handle: string; title: string; body_html: string | null; variant_price: number; variant_inventory_qty: number; image_src: string | null; product_type: string; sku: string | null; fulfillment_mode: string };
 
-const recommendedHandles = ["25-steel-boned-latex-waist-shaper", "resoflex-fit-bands", "resoflex-pro-foam-roller-mat-recovery-set"];
+const recommendedHandles = ["25-steel-boned-latex-waist-shaper", "res-dig-reset", "fitness-evolution"];
 
 async function loadPartnerProducts(): Promise<PartnerProduct[]> {
   try {
@@ -15,7 +15,7 @@ async function loadPartnerProducts(): Promise<PartnerProduct[]> {
     if (!response.ok) return [];
     const payload = await response.json() as { data?: PartnerProduct[] };
     const products = Array.isArray(payload.data) ? payload.data : [];
-    return recommendedHandles.map((handle) => products.find((product) => product.handle === handle && product.variant_inventory_qty > 0)).filter((product): product is PartnerProduct => Boolean(product));
+    return recommendedHandles.map((handle) => products.find((product) => product.handle === handle && (product.fulfillment_mode === "digital" || product.variant_inventory_qty > 0))).filter((product): product is PartnerProduct => Boolean(product));
   } catch {
     return [];
   }
@@ -150,7 +150,7 @@ function ZaphiraPage() {
             <Link to="/" className="hover:text-[#FDE68A]">ResoFit home</Link>
           </nav>
           <a
-            href={`/shop?${attribution}`}
+            href={`https://shop.resofit.fit?${attribution}`}
             className="rounded-full border border-[#D4AF37]/50 px-4 py-2 text-xs font-semibold text-[#FDE68A]"
           >
             Shop ResoFlex
@@ -182,7 +182,7 @@ function ZaphiraPage() {
               <a href="#coaching" className="rounded-xl bg-gradient-to-r from-[#BE123C] to-[#881337] px-6 py-4 text-center text-sm font-bold text-white shadow-lg shadow-rose-950/40">
                 Explore live coaching
               </a>
-              <a href={`/shop?${attribution}`} className="rounded-xl border border-[#D4AF37]/50 bg-black/40 px-6 py-4 text-center text-sm font-bold text-[#FDE68A]">
+              <a href={`https://shop.resofit.fit?${attribution}`} className="rounded-xl border border-[#D4AF37]/50 bg-black/40 px-6 py-4 text-center text-sm font-bold text-[#FDE68A]">
                 Shop equipment & wellness
               </a>
             </div>
@@ -259,21 +259,21 @@ function ZaphiraPage() {
               <h2 className="mt-3 font-serif text-3xl font-bold sm:text-4xl">MsZap’s recommended <span className="text-[#D4AF37]">training essentials</span></h2>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-400">Live product records, current catalogue pricing, inventory and product imagery. Select an item to view its full details and secure ResoFit checkout.</p>
             </div>
-            <a href={`/shop?${attribution}`} className="rounded-full border border-[#D4AF37]/50 px-5 py-3 text-xs font-bold uppercase tracking-wider text-[#FDE68A]">Browse full shop</a>
+            <a href={`https://shop.resofit.fit?${attribution}`} className="rounded-full border border-[#D4AF37]/50 px-5 py-3 text-xs font-bold uppercase tracking-wider text-[#FDE68A]">Browse full shop</a>
           </div>
           {recommendedProducts.length > 0 ? (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {recommendedProducts.map((product) => (
                 <article key={product.handle} className="overflow-hidden rounded-3xl border border-[#D4AF37]/20 bg-white/[.04]">
-                  <a href={`/product/${product.handle}?${attribution}`} className="block">
+                  <a href={`https://shop.resofit.fit/product/${product.handle}?${attribution}`} className="block">
                     <ProductImage src={product.image_src} title={product.title} category={product.product_type} aspect="square" fit="contain" priority />
                   </a>
                   <div className="p-5">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">{product.product_type}</p>
                     <h3 className="mt-2 text-lg font-bold">{product.title}</h3>
                     <p className="mt-3 text-xl font-extrabold text-[#FDE68A]">{formatNgn(product.variant_price)}</p>
-                    <p className="mt-1 text-[11px] text-zinc-500">Catalogue inventory available · Live ResoFit listing</p>
-                    <a href={`/product/${product.handle}?${attribution}`} className="mt-5 block rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B48A1E] px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wider text-black">View product & checkout</a>
+                    <p className="mt-1 text-[11px] text-zinc-500">{product.fulfillment_mode === "digital" ? "Digital delivery · Paystack checkout" : "Inventory verified · Paystack checkout"}</p>
+                    <a href={`https://shop.resofit.fit/product/${product.handle}?${attribution}`} className="mt-5 block rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B48A1E] px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wider text-black">View product & checkout</a>
                   </div>
                 </article>
               ))}
