@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ProductImage } from "@/components/ProductImage";
 import { RESOFIT_CATALOG_URL } from "@/lib/shopify";
 import { withAttribution } from "@/lib/attribution";
 import { track } from "@/lib/tracking";
 
-type PartnerProduct = { handle: string; title: string; body_html: string | null; variant_price: number; variant_inventory_qty: number; image_src: string | null; product_type: string | null; sku: string | null; fulfillment_mode: string | null };
+type ZaphiraClip = { key: string; url: string; poster: string | null; size: number; lastModified: string | null };\ntype PartnerProduct = { handle: string; title: string; body_html: string | null; variant_price: number; variant_inventory_qty: number; image_src: string | null; product_type: string | null; sku: string | null; fulfillment_mode: string | null };
 
 const recommendedHandles = ["25-steel-boned-latex-waist-shaper", "fitness-evolution-guide", "heritage-meal-plan", "90-day-body-transformation-kit", "b2k-001", "b2k-002", "b2k-003", "b2k-004", "b2k-elite-90-day-vip-bundle-subscriptions", "b2k-elite-90-day-vip-bundle", "buttgrowthb2k™-ultimate-curves-kit", "resoflex-hips-booty-oil", "glutes-sculpt-kit", "resoflex-sculpt-long-sleeve-biker-set"];
 
@@ -107,9 +107,9 @@ export const Route = createFileRoute("/zaphira")({
 
 function ZaphiraPage() {
   const { recommendedProducts } = Route.useLoaderData();
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(false);\n  const [clips, setClips] = useState<ZaphiraClip[]>([]);\n  const [liveState, setLiveState] = useState<"checking" | "live" | "offline" | "unknown">("checking");
 
-  async function copyReferral() {
+  useEffect(() => {\n    let active = true;\n    const loadMedia = async () => { try { const response = await fetch("/api/zaphira?mode=media", { cache: "no-store" }); const data = await response.json(); if (active && data.ok && Array.isArray(data.clips)) setClips(data.clips); } catch { /* retain portrait fallback */ } };\n    const loadLive = async () => { try { const response = await fetch("/api/zaphira?mode=live", { cache: "no-store" }); const data = await response.json(); if (active) setLiveState(data.ok ? (data.isLive ? "live" : "offline") : "unknown"); } catch { if (active) setLiveState("unknown"); } };\n    void loadMedia(); void loadLive();\n    const liveTimer = window.setInterval(loadLive, 45000);\n    const mediaTimer = window.setInterval(loadMedia, 300000);\n    return () => { active = false; window.clearInterval(liveTimer); window.clearInterval(mediaTimer); };\n  }, []);\n\n  async function copyReferral() {
     try {
       await navigator.clipboard.writeText(referral);
       setCopied(true);
@@ -224,7 +224,8 @@ function ZaphiraPage() {
                     className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#BE123C] to-[#881337] px-5 py-4 text-sm font-extrabold text-white shadow-lg shadow-rose-950/40 transition hover:brightness-110"
                     data-testid="zaphira-bigo-live-link"
                   >
-                    Watch MsZap on BIGO <span aria-hidden="true">↗</span>
+                    <span className={`h-2.5 w-2.5 rounded-full ${liveState === "live" ? "bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,.9)]" : liveState === "offline" ? "bg-red-500" : "bg-amber-400"}`} aria-hidden="true" />
+                    {liveState === "live" ? "LIVE NOW · WATCH MSZAP" : liveState === "offline" ? "MSZAP OFFLINE · OPEN BIGO" : "CHECK LIVE STATUS · OPEN BIGO"} <span aria-hidden="true">↗</span>
                   </a>
                 </div>
                 <div className="w-full rounded-2xl border border-[#D4AF37]/30 bg-black/40 p-4">
@@ -245,26 +246,42 @@ function ZaphiraPage() {
           </div>
           <p className="max-w-md text-sm leading-6 text-zinc-400">A closer look at your creator partner and live-coaching experience.</p>
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {[
-            { src: "https://www.dropbox.com/scl/fi/ckd5xzkvlknyy1h24l23q/3567EF97-443D-4312-8378-38D42FBDD09B.png?rlkey=r46zu4ydoxrcyxmue5l2b4wv6&raw=1", alt: "MsZap portrait, ResoFlex Elite Partner" },
-            { src: "https://www.dropbox.com/scl/fi/7vfpdt9stjk7t90443x9c/7B99CCD7-49AB-4783-9905-539B6A3E7A95.png?rlkey=7tixt3w7tkfu6pktyyelkdb8i&raw=1", alt: "MsZap creator portrait" },
-            { src: "https://www.dropbox.com/scl/fi/g9x6hg41b5jpux8s5bl9n/2F3F2D49-8B19-4502-8E42-E0E948AE5F0D.png?rlkey=yxmpfqdxl19s7azrt9g3uzw8k&raw=1", alt: "MsZap ResoFlex partner portrait" },
-          ].map((image, index) => (
-            <figure key={image.src} className="group overflow-hidden rounded-3xl border border-[#D4AF37]/25 bg-[#090909] shadow-[0_18px_60px_rgba(0,0,0,.35)]">
-              <img
-                src={image.src}
-                alt={image.alt}
-                loading={index === 0 ? "eager" : "lazy"}
-                fetchPriority={index === 0 ? "high" : "auto"}
-                className="aspect-[3/4] w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-              />
-              <figcaption className="border-t border-white/10 px-4 py-3 text-xs font-semibold tracking-wide text-[#FDE68A]">
-                {index === 0 ? "THE PARTNER" : index === 1 ? "THE CREATOR" : "THE EXPERIENCE"}
-              </figcaption>
-            </figure>
-          ))}
-        </div>
+        {clips.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {clips.map((clip) => (
+              <figure key={clip.key} className="group overflow-hidden rounded-3xl border border-[#D4AF37]/25 bg-[#090909] shadow-[0_18px_60px_rgba(0,0,0,.35)]">
+                <video
+                  src={clip.url}
+                  poster={clip.poster || undefined}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  controls
+                  aria-label="MsZap creator video"
+                  className="aspect-[9/16] w-full bg-black object-cover"
+                />
+                <figcaption className="border-t border-white/10 px-4 py-3 text-xs font-semibold tracking-wide text-[#FDE68A]">
+                  MSZAP · CREATOR EDIT
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {[
+              { src: "https://www.dropbox.com/scl/fi/ckd5xzkvlknyy1h24l23q/3567EF97-443D-4312-8378-38D42FBDD09B.png?rlkey=r46zu4ydoxrcyxmue5l2b4wv6&raw=1", alt: "MsZap portrait, ResoFlex Elite Partner" },
+              { src: "https://www.dropbox.com/scl/fi/7vfpdt9stjk7t90443x9c/7B99CCD7-49AB-4783-9905-539B6A3E7A95.png?rlkey=7tixt3w7tkfu6pktyyelkdb8i&raw=1", alt: "MsZap creator portrait" },
+              { src: "https://www.dropbox.com/scl/fi/g9x6hg41b5jpux8s5bl9n/2F3F2D49-8B19-4502-8E42-E0E948AE5F0D.png?rlkey=yxmpfqdxl19s7azrt9g3uzw8k&raw=1", alt: "MsZap ResoFlex partner portrait" },
+            ].map((image, index) => (
+              <figure key={image.src} className="group overflow-hidden rounded-3xl border border-[#D4AF37]/25 bg-[#090909] shadow-[0_18px_60px_rgba(0,0,0,.35)]">
+                <img src={image.src} alt={image.alt} loading={index === 0 ? "eager" : "lazy"} fetchPriority={index === 0 ? "high" : "auto"} className="aspect-[3/4] w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+                <figcaption className="border-t border-white/10 px-4 py-3 text-xs font-semibold tracking-wide text-[#FDE68A]">{index === 0 ? "THE PARTNER" : index === 1 ? "THE CREATOR" : "THE EXPERIENCE"}</figcaption>
+              </figure>
+            ))}
+          </div>
+        )}
       </section>
 
       <section id="coaching" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
