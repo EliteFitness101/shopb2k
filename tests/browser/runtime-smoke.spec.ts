@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 const BASE_URL = process.env.BASE_URL ?? "http://127.0.0.1:4173";
 const appUrl = (path: string) => new URL(path, BASE_URL).toString();
-const routes = ["/", "/me", "/product/resoflex-hips-booty-oil"] as const;
+const routes = ["/", "/me", "/zaphira", "/product/res-dig-reset"] as const;
 
 for (const route of routes) {
   test(`built production app route ${route} renders without uncaught exceptions`, async ({ page }) => {
@@ -18,13 +18,13 @@ for (const route of routes) {
 }
 
 test("product detail renders server-loaded product data without the client loading placeholder", async ({ page }) => {
-  const response = await page.goto(appUrl("/product/resoflex-hips-booty-oil"), {
+  const response = await page.goto(appUrl("/product/res-dig-reset"), {
     waitUntil: "domcontentloaded",
     timeout: 45000,
   });
   expect(response, "product detail should return an HTTP response").not.toBeNull();
   expect(response!.status(), "product detail should not return a 5xx response").toBeLessThan(400);
-  await expect(page.getByRole("heading", { name: "ResoFlex Hips & Booty Oil" })).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole("heading", { name: "ResoFit 7-Day Meal & Workout Reset" })).toBeVisible({ timeout: 15000 });
   await expect(page.getByText("Loading product details…")).toHaveCount(0);
 });
 
@@ -174,4 +174,69 @@ test("mobile navigation exposes the personalized assessment destination", async 
   await expect(mobileMenu).toHaveCount(1);
   await expect(mobileMenu.locator('summary[aria-label="Open menu"]')).toHaveCount(1);
   await expect(mobileMenu.locator('a[href="/me"]').filter({ hasText: "Start My Personalized Plan" })).toHaveAttribute("href", "/me");
+});
+
+test("Zaphira partner page shows live products and preserves affiliate links to shop.resofit.fit", async ({ page }) => {
+  const response = await page.goto(appUrl("/zaphira"), { waitUntil: "domcontentloaded", timeout: 45000 });
+  expect(response, "Zaphira partner page should return an HTTP response").not.toBeNull();
+  expect(response!.status(), "Zaphira partner page should not return a 4xx/5xx response").toBeLessThan(400);
+  await expect(page.getByText("Zaphira · MsZap")).toBeVisible({ timeout: 15000 });
+  const links = page.locator('a[href^="https://shop.resofit.fit/product/"]');
+  await expect(links).toHaveCount(6, { timeout: 15000 });
+  const hrefs = await links.evaluateAll((nodes) => nodes.map((node) => (node as HTMLAnchorElement).href));
+  const paths = new Set(hrefs.map((href) => new URL(href).pathname));
+  expect(paths.size).toBe(3);
+  for (const href of hrefs) {
+    const url = new URL(href);
+    expect(url.searchParams.get("ref")).toBe("zaphira");
+    expect(url.searchParams.get("utm_source")).toBe("bigo");
+  }
+});
+
+test("shop.resofit.fit renders the three live recommended products", async ({ page }) => {
+  const response = await page.goto("https://shop.resofit.fit/", { waitUntil: "domcontentloaded", timeout: 45000 });
+  expect(response, "Shop subdomain should return an HTTP response").not.toBeNull();
+  expect(response!.status(), "Shop subdomain should not return a 4xx/5xx response").toBeLessThan(400);
+  const cards = page.locator('[data-testid="live-recommended-product"]');
+  await expect(cards).toHaveCount(3, { timeout: 30000 });
+  const skus = await cards.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-sku")));
+  expect(skus).toContain("PAYSTACK-25_STEEL_BONED_LATEX_SHAPER");
+  expect(skus).toContain("res-dig-reset");
+  expect(skus).toContain("SHOPIFY-PRODUCT-10410533650712");
+});
+
+test("Zaphira referral survives live product checkout initialization without charging Paystack", async ({ page }) => {
+  let checkoutPayload: Record<string, unknown> | null = null;
+  await page.route("**/functions/v1/paystack-init", async (route) => {
+    checkoutPayload = route.request().postDataJSON() as Record<string, unknown>;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        authorization_url: "https://checkout.paystack.com/mock-zaphira-production-smoke",
+        reference: "RF-ZAPHIRA-SMOKE",
+      }),
+    });
+  });
+  await page.route("https://checkout.paystack.com/mock-zaphira-production-smoke", async (route) => {
+    await route.fulfill({ status: 200, contentType: "text/html", body: "<title>Mock Paystack Checkout</title>" });
+  });
+
+  await page.goto(
+    "https://shop.resofit.fit/product/res-dig-reset?ref=zaphira&utm_source=bigo&utm_medium=affiliate",
+    { waitUntil: "domcontentloaded", timeout: 45000 },
+  );
+  const buyButton = page.getByRole("button", { name: "Secure checkout with Paystack" });
+  await expect(buyButton).toBeVisible({ timeout: 20000 });
+  await buyButton.click();
+  await page.getByLabel("Full name").fill("Zaphira Smoke Test");
+  await page.getByLabel("Email address").fill("checkout-smoke@resofit.fit");
+  await page.getByLabel("Phone number").fill("+2348000000000");
+  await page.getByRole("button", { name: "Continue to secure checkout" }).click();
+  await page.waitForURL("https://checkout.paystack.com/mock-zaphira-production-smoke");
+  expect(checkoutPayload?.sku).toBe("res-dig-reset");
+  expect(checkoutPayload?.ref).toBe("zaphira");
+  expect(checkoutPayload?.utm_source).toBe("bigo");
+  expect(checkoutPayload?.utm_medium).toBe("affiliate");
+  expect(checkoutPayload?.funnel_origin).toBe("zaphira_partner_storefront");
 });
