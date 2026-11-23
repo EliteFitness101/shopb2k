@@ -7,7 +7,7 @@ import { track } from "@/lib/tracking";
 
 type PartnerProduct = { handle: string; title: string; body_html: string | null; variant_price: number; variant_inventory_qty: number; image_src: string | null; product_type: string | null; sku: string | null; fulfillment_mode: string | null };
 
-const recommendedHandles = ["25-steel-boned-latex-waist-shaper", "res-dig-reset", "fitness-evolution"];
+const recommendedHandles = ["25-steel-boned-latex-waist-shaper", "fitness-evolution-guide", "heritage-meal-plan", "90-day-body-transformation-kit"];
 
 async function loadPartnerProducts(): Promise<PartnerProduct[]> {
   try {
@@ -156,7 +156,7 @@ function ZaphiraPage() {
             <Link to="/" className="hover:text-[#FDE68A]">ResoFit home</Link>
           </nav>
           <a
-            href={`https://shop.resofit.fit?${attribution}`}
+            href={partnerHref("/collections/mszap-recommended-essentials")}
             className="rounded-full border border-[#D4AF37]/50 px-4 py-2 text-xs font-semibold text-[#FDE68A]"
           >
             Shop ResoFlex
@@ -273,24 +273,24 @@ function ZaphiraPage() {
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
           <div className="mb-9 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[.25em] text-[#D4AF37]">Live ResoFit catalogue</p>
+              <p className="text-xs font-bold uppercase tracking-[.25em] text-[#D4AF37]">Live Shopify recommendations</p>
               <h2 className="mt-3 font-serif text-3xl font-bold sm:text-4xl">MsZap’s recommended <span className="text-[#D4AF37]">training essentials</span></h2>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-400">Live product records, current catalogue pricing, inventory and product imagery. Select an item to view its full details and secure ResoFit checkout.</p>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-400">Published Shopify products, current prices and product imagery. Select an item to view its live product page and Shopify checkout.</p>
             </div>
-            <a href={`https://shop.resofit.fit?${attribution}`} className="rounded-full border border-[#D4AF37]/50 px-5 py-3 text-xs font-bold uppercase tracking-wider text-[#FDE68A]">Browse full shop</a>
+            <a href={`https://shop.resofit.fit?${attribution}`} className="rounded-full border border-[#D4AF37]/50 px-5 py-3 text-xs font-bold uppercase tracking-wider text-[#FDE68A]">View all MsZap picks</a>
           </div>
           {recommendedProducts.length > 0 ? (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {recommendedProducts.map((product) => (
                 <article key={product.handle} className="overflow-hidden rounded-3xl border border-[#D4AF37]/20 bg-white/[.04]">
-                  <a href={partnerHref(`/product/${product.handle}`)} onClick={() => trackPartnerProductClick(product)} className="block">
+                  <a href={partnerHref(`/products/${product.handle}`)} onClick={() => trackPartnerProductClick(product)} className="block">
                     <ProductImage src={product.image_src} title={product.title} category={product.product_type ?? "Wellness"} aspect="square" fit="contain" priority />
                   </a>
                   <div className="p-5">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">{product.product_type}</p>
                     <h3 className="mt-2 text-lg font-bold">{product.title}</h3>
                     <p className="mt-3 text-xl font-extrabold text-[#FDE68A]">{formatNgn(product.variant_price)}</p>
-                    <p className="mt-1 text-[11px] text-zinc-500">{product.fulfillment_mode === "digital" ? "Digital delivery · Paystack checkout" : "Inventory verified · Paystack checkout"}</p>
+                    <p className="mt-1 text-[11px] text-zinc-500">{product.fulfillment_mode === "digital" ? "Digital delivery · Shopify checkout" : "Physical / hybrid fulfillment · Shopify checkout"}</p>
                     <a href={partnerHref(`/product/${product.handle}`)} onClick={() => trackPartnerProductClick(product)} className="mt-5 block rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B48A1E] px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wider text-black">View product & checkout</a>
                   </div>
                 </article>
@@ -298,8 +298,8 @@ function ZaphiraPage() {
             </div>
           ) : (
             <div className="rounded-2xl border border-[#D4AF37]/20 p-8 text-center text-sm text-zinc-400">
-              The live product feed is temporarily unavailable. Open the ResoFit shop to browse current listings.
-              <a href={partnerHref("/shop")} className="mt-4 inline-block text-[#FDE68A] underline">Open ResoFit shop</a>
+              The live product feed is temporarily unavailable. Open MsZap’s Shopify collection to browse current listings.
+              <a href={partnerHref("/collections/mszap-recommended-essentials")} className="mt-4 inline-block text-[#FDE68A] underline">Open ResoFit shop</a>
             </div>
           )}
         </div>
