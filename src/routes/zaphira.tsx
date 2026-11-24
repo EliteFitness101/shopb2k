@@ -153,9 +153,7 @@ function ZaphiraPage() {
       <header className="sticky top-0 z-30 border-b border-white/10 bg-[#09090B]/90 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <a href="#top" className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#D4AF37]/50 bg-gradient-to-br from-[#BE123C] to-[#4C0519] font-serif text-xl font-bold text-[#FDE68A]">
-              Z
-            </span>
+            <img src="https://www.dropbox.com/scl/fi/ckd5xzkvlknyy1h24l23q/3567EF97-443D-4312-8378-38D42FBDD09B.png?rlkey=r46zu4ydoxrcyxmue5l2b4wv6&raw=1" alt="MsZap" className="h-10 w-10 rounded-xl border border-[#D4AF37]/50 object-cover" />
             <span>
               <span className="block font-serif text-sm font-bold tracking-[.18em]">ZAPHIRA</span>
               <span className="block text-[10px] uppercase tracking-widest text-[#D4AF37]">
@@ -225,8 +223,8 @@ function ZaphiraPage() {
                   <span>MsZap · Official room</span><span>BIGO LIVE</span>
                 </div>
                 <div className="w-full rounded-3xl border border-[#D4AF37]/40 bg-black/35 p-6">
-                  <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-[#D4AF37]/60 bg-rose-950/60">
-                    <span className="font-serif text-4xl text-[#FDE68A]">Z</span>
+                  <div className="mx-auto mb-5 h-28 w-28 overflow-hidden rounded-full border-2 border-[#D4AF37]/70 bg-rose-950/60 shadow-[0_0_28px_rgba(212,175,55,.22)]">
+                    <img src="https://www.dropbox.com/scl/fi/ckd5xzkvlknyy1h24l23q/3567EF97-443D-4312-8378-38D42FBDD09B.png?rlkey=r46zu4ydoxrcyxmue5l2b4wv6&raw=1" alt="MsZap live room cover" className="h-full w-full object-cover" />
                   </div>
                   <p className="font-serif text-2xl font-bold text-white">Zaphira · MsZap</p>
                   <p className="mt-2 text-xs leading-6 text-zinc-300">Open her BIGO room to watch the live session or the room content available from BIGO.</p>
